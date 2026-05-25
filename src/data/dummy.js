@@ -1,4 +1,4 @@
-export const DUMMY_DATA = {
+const RAW_DUMMY_DATA = {
   piso2: {
     poniente: [
       {
@@ -234,8 +234,91 @@ export const DUMMY_DATA = {
   }
 };
 
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const injectMockDates = (data) => {
+  const processed = JSON.parse(JSON.stringify(data));
+  const now = new Date();
+  
+  for (const floor in processed) {
+    for (const sector in processed[floor]) {
+      processed[floor][sector].forEach(room => {
+        room.beds.forEach(bed => {
+          if (bed.status === 'occupied') {
+            bed.projectedDays = getRandomInt(4, 12);
+            // Some are outliers, some are normal
+            const elapsedDays = bed.projectedDays + getRandomInt(-4, 3);
+            const assignedDate = new Date(now.getTime() - elapsedDays * 24 * 60 * 60 * 1000);
+            bed.assignedAt = assignedDate.toISOString();
+            bed.grdName = "Diagnóstico de Prueba";
+            bed.diagnosis = ["10410 - MH ENFERMEDADES METABÓLICAS"];
+          }
+        });
+      });
+    }
+  }
+  return processed;
+};
+
+export const DUMMY_DATA = injectMockDates(RAW_DUMMY_DATA);
+
+export const WAITING_LIST = [
+  {
+    id: 'W1',
+    name: 'Roberto Muñoz Rojas',
+    age: 65,
+    requestedAt: new Date(Date.now() - (26 * 60 * 60 * 1000)).toISOString(), // 26 hours ago
+    diagnosis: 'Neumonía Grave - Insuficiencia Respiratoria',
+    priority: 1,
+    origin: 'Urgencia',
+    bedTypeRequired: 'UCI'
+  },
+  {
+    id: 'W2',
+    name: 'Elena Valenzuela Soto',
+    age: 72,
+    requestedAt: new Date(Date.now() - (15 * 60 * 60 * 1000)).toISOString(), // 15 hours ago
+    diagnosis: 'Post-Op Fractura de Cadera',
+    priority: 2,
+    origin: 'Pabellón',
+    bedTypeRequired: 'Cuidados Medios'
+  },
+  {
+    id: 'W3',
+    name: 'Marcos Antipán Llanquileo',
+    age: 45,
+    requestedAt: new Date(Date.now() - (4 * 60 * 60 * 1000)).toISOString(), // 4 hours ago
+    diagnosis: 'Observación por Dolor Torácico',
+    priority: 3,
+    origin: 'Urgencia',
+    bedTypeRequired: 'Cuidados Básicos'
+  },
+  {
+    id: 'W4',
+    name: 'Sofia Huilcamán Necul',
+    age: 28,
+    requestedAt: new Date(Date.now() - (2 * 60 * 60 * 1000)).toISOString(), // 2 hours ago
+    diagnosis: 'Pielonefritis Aguda',
+    priority: 2,
+    origin: 'CAE',
+    bedTypeRequired: 'Cuidados Básicos'
+  },
+  {
+    id: 'W5',
+    name: 'Juan Carlos Pérez',
+    age: 58,
+    requestedAt: new Date(Date.now() - (30 * 60 * 60 * 1000)).toISOString(), // 30 hours ago
+    diagnosis: 'ACV en Evolución',
+    priority: 1,
+    origin: 'Urgencia',
+    bedTypeRequired: 'UTI'
+  }
+];
+
 export const getBedTypeClass = (type) => {
-  return 'type-' + type.toLowerCase().replace(' ', '-').replace('í', 'i').replace('ó', 'o');
+  return 'type-' + type.toLowerCase().replace(' ', '-').replace('á', 'a').replace('í', 'i').replace('ó', 'o');
 };
 
 export const getIconColor = (type) => {

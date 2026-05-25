@@ -1,0 +1,90 @@
+// Especialidades médicas y odontológicas - Superintendencia de Salud Chile 2026
+export const ESPECIALIDADES_MEDICAS = [
+  // MEDICINA INTERNA Y AFINES
+  { grupo: 'Medicina Interna', especialidades: [
+    'Medicina Interna',
+    'Cardiología',
+    'Endocrinología',
+    'Gastroenterología',
+    'Hematología',
+    'Infectología',
+    'Nefrología',
+    'Neumología',
+    'Neurología',
+    'Oncología Médica',
+    'Reumatología',
+    'Geriatría',
+    'Medicina Intensiva (UCI/UTI)',
+    'Medicina de Urgencias',
+    'Hospitalización Domiciliaria',
+  ]},
+  // CIRUGÍA
+  { grupo: 'Cirugía', especialidades: [
+    'Cirugía General',
+    'Cirugía Cardiovascular y Torácica',
+    'Cirugía de Cabeza y Cuello',
+    'Cirugía de Columna',
+    'Cirugía de Mano',
+    'Cirugía Digestiva',
+    'Cirugía Oncológica',
+    'Cirugía Plástica y Reconstructiva',
+    'Cirugía Vascular Periférica',
+    'Neurocirugía',
+    'Traumatología y Ortopedia',
+    'Urología',
+  ]},
+  // GINECOLOGÍA Y OBSTETRICIA
+  { grupo: 'Ginecología y Obstetricia', especialidades: [
+    'Ginecología',
+    'Obstetricia',
+    'Medicina Materno-Fetal',
+    'Oncología Ginecológica',
+    'Uroginecología',
+  ]},
+  // PEDIATRÍA
+  { grupo: 'Pediatría', especialidades: [
+    'Pediatría General',
+    'Cardiología Pediátrica',
+    'Endocrinología Pediátrica',
+    'Gastroenterología Pediátrica',
+    'Hematología Oncología Pediátrica',
+    'Infectología Pediátrica',
+    'Neonatología',
+    'Neurología Pediátrica',
+    'Neumología Pediátrica',
+    'Nefrología Pediátrica',
+  ]},
+  // DIAGNÓSTICO Y PROCEDIMIENTOS
+  { grupo: 'Diagnóstico y Procedimientos', especialidades: [
+    'Anatomía Patológica',
+    'Imagenología y Radiología',
+    'Laboratorio Clínico',
+    'Medicina Nuclear',
+    'Anestesiología y Reanimación',
+  ]},
+  // ESPECIALIDADES MÉDICAS OTRAS
+  { grupo: 'Otras Especialidades Médicas', especialidades: [
+    'Dermatología',
+    'Oftalmología',
+    'Otorrinolaringología',
+    'Psiquiatría',
+    'Física y Rehabilitación (Fisiatría)',
+    'Medicina Física y Rehabilitación',
+    'Medicina Paliativa y del Dolor',
+    'Medicina del Trabajo',
+    'Medicina Legal',
+    'Genética Clínica',
+  ]},
+  // ODONTOLOGÍA
+  { grupo: 'Odontología y Especialidades Odontológicas', especialidades: [
+    'Odontología General',
+    'Cirugía Maxilofacial',
+    'Endodoncia',
+    'Ortodoncia y Ortopedia Maxilar',
+    'Periodoncia',
+    'Rehabilitación Oral',
+    'Radiología Oral y Maxilofacial',
+    'Odontopediatría',
+    'Implantología',
+  ]},
+];

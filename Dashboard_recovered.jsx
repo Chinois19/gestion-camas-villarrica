@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { Bed, User, LayoutDashboard, Map, Info, Layers, Search, X, Activity, Pencil, LogOut, CheckCircle, Filter } from 'lucide-react';
-import { getBedTypeClass, getIconColor } from '../data/dummy';
+import { DUMMY_DATA, getBedTypeClass, getIconColor, WAITING_LIST } from '../data/dummy';
 import WaitingList from './WaitingList';
 import AssignmentModal from './AssignmentModal';
 import EditGrdModal from './EditGrdModal';
 import PatientDetailModal from './PatientDetailModal';
-import DischargeModal from './DischargeModal';
-import InterconsultaModal from './InterconsultaModal';
 import { DndContext, useDroppable } from '@dnd-kit/core';
 
 const checkCompatibility = (bed, patient) => {
@@ -145,13 +143,13 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
   );
 }
 
-export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, user }) {
+export default function Dashboard({ searchQuery }) {
+  const [bedsData, setBedsData] = useState(DUMMY_DATA);
+  const [waitingList, setWaitingList] = useState(WAITING_LIST);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [pendingAssignment, setPendingAssignment] = useState(null); // { patient, bedId, roomId, serviceMismatch, bedType }
   const [editingGrdBed, setEditingGrdBed] = useState(null); // { roomId, bed }
   const [viewingPatient, setViewingPatient] = useState(null);
-  const [dischargingPatient, setDischargingPatient] = useState(null); // { roomId, bed }
-  const [requestingIC, setRequestingIC] = useState(null); // { roomId, bed }
   
   const [selectedFloor, setSelectedFloor] = useState('todos');
   const [selectedSector, setSelectedSector] = useState('todos');
@@ -241,121 +239,21 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
               ...room,
               beds: room.beds.map(bed => bed.id === bedId ? { ...bed, ...updates } : bed)
             };
-          }
-          return room;
-        });
-      }
-    }
-    setBedsData(newBedsData);
-  };
-
-  const handleDischarge = (roomId, bedId) => {
-    let targetBed = null;
-    for (const floor in bedsData) {
-      for (const sector in bedsData[floor]) {
-        const room = bedsData[floor][sector].find(r => r.roomId === roomId);
-        if (room) {
-          targetBed = room.beds.find(b => b.id === bedId);
-          break;
-        }
-      }
-      if (targetBed) break;
-    }
-    if (targetBed) {
-      setDischargingPatient({ roomId, bed: targetBed });
-    }
-  };
-
-  const handleDischargeConfirm = (formData) => {
-    if (!dischargingPatient) return;
-    const { roomId, bed } = dischargingPatient;
-    const bedId = bed.id;
-
-    if (formData.destino === 'Hospitalización domiciliaria') {
-      updateBedState(roomId, bedId, { 
-        status: 'cleaning', 
-        patient: null, 
-        diagnosis: null, 
-        grdId: null, 
-        grdName: null, 
-        projectedDays: null,
-        interconsultas: []
-      });
-
-      if (onHodomSubmit) {
-        onHodomSubmit({
-          patientName: bed.patient,
-          rut: formData.rut,
-          edad: parseInt(formData.edad) || 0,
-          sexo: formData.sexo,
-          roomId,
-          bedId,
-          diagnostico: bed.diagnosis || [bed.grdName] || [],
-          prevision: formData.prevision,
-          direccion: formData.direccion,
-          hodomChecks: formData.hodomChecks,
-          hodomObservaciones: formData.observaciones
-        });
-      }
-    } else {
-      updateBedState(roomId, bedId, { 
-        status: 'cleaning', 
-        patient: null, 
-        diagnosis: null, 
-        grdId: null, 
-        grdName: null, 
-        projectedDays: null,
-        interconsultas: []
-      });
-    }
-    setDischargingPatient(null);
-  };
-
-  const handleInterconsultaConfirm = (formData) => {
-    if (!requestingIC) return;
-    const { roomId, bed } = requestingIC;
-    const bedId = bed.id;
-
-    const newIC = {
-      id: `ic-${Date.now()}`,
-      especialidadDestino: formData.especialidadDestino,
-      tipoRequerimiento: formData.tipoRequerimiento,
-      profesionalDeriva: formData.profesionalDeriva || 'Dr. Médico Tratante',
-      solicitadaAt: new Date().toISOString(),
-      resumenHistoria: formData.resumenHistoria,
-      estado: 'pendiente'
-    };
-
-    setBedsData(prev => {
-      const next = JSON.parse(JSON.stringify(prev));
-      const floors = ['piso4', 'piso3', 'piso2'];
-      for (const f of floors) {
-        if (!next[f]) continue;
-        for (const s in next[f]) {
-          next[f][s] = next[f][s].map(room => {
-            if (room.roomId === roomId) {
-              return {
-                ...room,
-                beds: room.beds.map(b => {
-                  if (b.id === bedId) {
-                    const currentICs = b.interconsultas || [];
-                    return {
-                      ...b,
-                      interconsultas: [...currentICs, newIC]
-                    };
-                  }
-                  return b;
-                })
-              };
-            }
-            return room;
-          });
-        }
-      }
-      return next;
+              <select className="glass-input" style={{ width: '100%' }} value={icFilter} onChange={(e) => setIcFilter(e.target.value)}>
+                <option value="todos">Todos los Pacientes</option>
+                <option value="pendiente">Cualquier IC Pendiente</option>
+                <option disabled>────── IC PENDIENTE POR ESPECIALIDAD ──────</option>
+                {ESPECIALIDADES_MEDICAS.map((grupo, i) => (
+                  <optgroup key={i} label={grupo.grupo}>
+                    {grupo.especialidades.map(esp => (
+                      <option key={esp} value={`esp_${esp}`}>{esp}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+      grdName: null, 
+      projectedDays: null 
     });
-
-    setRequestingIC(null);
   };
 
   const handleFinishCleaning = (roomId, bedId) => {
@@ -640,38 +538,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         
         {editingGrdBed && (
           <EditGrdModal
-            bed={{ ...editingGrdBed.bed, roomId: editingGrdBed.roomId }}
+            bed={editingGrdBed.bed}
             availableBeds={availableBeds}
             onConfirm={confirmGrdEdit}
             onClose={() => setEditingGrdBed(null)}
-            onDischargeRequest={(b) => {
-              setDischargingPatient({ roomId: editingGrdBed.roomId, bed: b });
-              setEditingGrdBed(null);
-            }}
-            onRequestIC={(b) => {
-              setRequestingIC({ roomId: editingGrdBed.roomId, bed: b });
-              setEditingGrdBed(null);
-            }}
-            onFinishCleaning={(roomId, bedId) => {
-              handleFinishCleaning(editingGrdBed.roomId, bedId);
-              setEditingGrdBed(null);
-            }}
-          />
-        )}
-
-        {dischargingPatient && (
-          <DischargeModal
-            bed={dischargingPatient.bed}
-            onConfirm={handleDischargeConfirm}
-            onClose={() => setDischargingPatient(null)}
-          />
-        )}
-
-        {requestingIC && (
-          <InterconsultaModal
-            bed={requestingIC.bed}
-            onConfirm={handleInterconsultaConfirm}
-            onClose={() => setRequestingIC(null)}
           />
         )}
 
@@ -685,3 +555,37 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     </DndContext>
   );
 }
+
+        {viewingPatient && (
+          <PatientDetailModal
+            patient={viewingPatient}
+            onClose={() => setViewingPatient(null)}
+            onUpdate={(updatedPatient) => {
+              if (waitingList.some(p => p.id === updatedPatient.id)) {
+                setWaitingList(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
+              } else {
+                setBeds(prev => prev.map(r => ({
+                  ...r,
+                  beds: r.beds.map(b => b.patient?.id === updatedPatient.id ? { ...b, patient: updatedPatient } : b)
+                })));
+              }
+              setViewingPatient(updatedPatient);
+            }}
+          />
+        )}
+            onDischargeRequest={(bed) => {
+              setDischargingPatient({ type: 'bed', roomId: editingGrdBed.roomId, bedId: bed.id, bed });
+            }}
+            onRequestIC={(bed) => {
+              setRequestingIC({ ...bed, roomId: editingGrdBed.roomId });
+            }}
+              }}
+            />
+          )
+        })()}
+        {editingGrdBed && (() => {
+            const liveBed = allBeds.find(b => b.roomId === editingGrdBed.roomId && b.id === editingGrdBed.bed.id) || editingGrdBed.bed;
+            return (
+            <EditGrdModal
+              bed={{ ...liveBed, roomId: editingGrdBed.roomId }}
+              allBeds={allBeds}
