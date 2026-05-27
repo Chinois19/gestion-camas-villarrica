@@ -68,6 +68,16 @@ const UserManagement = ({ notify }) => {
     }
   };
 
+  const handleDeleteUser = (id, username) => {
+    if (username === 'admin') {
+      if (notify) notify('No puedes eliminar al administrador principal.');
+      return;
+    }
+    if (window.confirm('¿Estás seguro de que deseas eliminar este profesional?')) {
+      setUsers(users.filter(u => u.id !== id));
+      if (notify) notify('Profesional eliminado correctamente.');
+    }
+  };
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -149,7 +159,9 @@ const UserManagement = ({ notify }) => {
                 <td>
                   <div className="action-buttons">
                     <button className="action-btn" title="Editar"><Edit2 size={16} /></button>
-                    <button className="action-btn delete" title="Eliminar"><Trash2 size={16} /></button>
+                    <button className="action-btn delete" title="Eliminar" onClick={() => handleDeleteUser(user.id, user.username)}>
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </td>
               </tr>
