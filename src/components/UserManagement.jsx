@@ -1,15 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPlus, Search, Shield, User, Mail, MoreVertical, Trash2, Edit2, Check, X } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import './UserManagement.css';
 
+const defaultUsers = [
+  { id: 1, name: 'Super Administrador', username: 'admin', password: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', roleName: 'Super Administrador', status: 'active' },
+  { id: 2, name: 'Visor Institucional', username: 'visor', password: 'visor', email: 'visor@hospitalvillarrica.cl', role: 'visor', roleName: 'Visor Institucional', status: 'active' },
+  { id: 3, name: 'Médico General', username: 'medico', password: 'medico', email: 'medico@hospitalvillarrica.cl', role: 'medico_general', roleName: 'Médico General', status: 'active' },
+  { id: 4, name: 'Gestor de Camas', username: 'gestor', password: 'gestor', email: 'gestor@hospitalvillarrica.cl', role: 'gestor_camas', roleName: 'Gestor de Camas', status: 'active' },
+  { id: 5, name: 'Médico HODOM', username: 'hodom', password: 'hodom', email: 'hodom@hospitalvillarrica.cl', role: 'medico_hodom', roleName: 'Médico HODOM', status: 'active' },
+  { id: 6, name: 'Personal de Aseo', username: 'aseo', password: 'aseo', email: 'aseo@hospitalvillarrica.cl', role: 'personal_aseo', roleName: 'Personal de Aseo', status: 'active' }
+];
+
 const UserManagement = ({ notify }) => {
-  const [users, setUsers] = useState([
-    { id: 1, name: 'Admin Villarrica', username: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', status: 'active' },
-    { id: 2, name: 'Visor General', username: 'visor', email: 'visor@hospitalvillarrica.cl', role: 'visor', status: 'active' },
-    { id: 3, name: 'Dr. Roberto Soto', username: 'rsoto', email: 'rsoto@hospitalvillarrica.cl', role: 'medico_general', status: 'active' },
-    { id: 4, name: 'Enf. Maria Paz', username: 'mpaz', email: 'mpaz@hospitalvillarrica.cl', role: 'gestor_camas', status: 'active' },
-  ]);
+  const [users, setUsers] = useState(() => {
+    const saved = localStorage.getItem('villarrica_users_prod');
+    return saved ? JSON.parse(saved) : defaultUsers;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('villarrica_users_prod', JSON.stringify(users));
+  }, [users]);
 
   const [isAdding, setIsAdding] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -44,8 +55,8 @@ const UserManagement = ({ notify }) => {
       // 3. Enviar el correo usando EmailJS
       await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
       
-      const id = users.length + 1;
-      setUsers([...users, { ...newUser, id, status: 'active' }]);
+      const id = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
+      setUsers([...users, { ...newUser, id, status: 'active', password: generatedPassword }]);
       if (notify) notify(`Profesional ${newUser.name} agregado. Se enviaron sus credenciales al correo.`);
       setNewUser({ name: '', username: '', email: '', role: 'visor' });
       setIsAdding(false);

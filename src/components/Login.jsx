@@ -2,6 +2,15 @@ import React, { useState } from 'react';
 import { Activity, Lock, User, Eye, EyeOff, LogIn } from 'lucide-react';
 import './Login.css';
 
+const defaultUsers = [
+  { id: 1, name: 'Super Administrador', username: 'admin', password: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', roleName: 'Super Administrador', status: 'active' },
+  { id: 2, name: 'Visor Institucional', username: 'visor', password: 'visor', email: 'visor@hospitalvillarrica.cl', role: 'visor', roleName: 'Visor Institucional', status: 'active' },
+  { id: 3, name: 'Médico General', username: 'medico', password: 'medico', email: 'medico@hospitalvillarrica.cl', role: 'medico_general', roleName: 'Médico General', status: 'active' },
+  { id: 4, name: 'Gestor de Camas', username: 'gestor', password: 'gestor', email: 'gestor@hospitalvillarrica.cl', role: 'gestor_camas', roleName: 'Gestor de Camas', status: 'active' },
+  { id: 5, name: 'Médico HODOM', username: 'hodom', password: 'hodom', email: 'hodom@hospitalvillarrica.cl', role: 'medico_hodom', roleName: 'Médico HODOM', status: 'active' },
+  { id: 6, name: 'Personal de Aseo', username: 'aseo', password: 'aseo', email: 'aseo@hospitalvillarrica.cl', role: 'personal_aseo', roleName: 'Personal de Aseo', status: 'active' }
+];
+
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -14,55 +23,19 @@ const Login = ({ onLogin }) => {
     setIsLoading(true);
     setError('');
 
-    // Mock authentication
     setTimeout(() => {
-      if (username === 'admin' && password === 'admin') {
+      const savedUsers = localStorage.getItem('villarrica_users_prod');
+      const usersList = savedUsers ? JSON.parse(savedUsers) : defaultUsers;
+
+      const foundUser = usersList.find(u => u.username === username && u.password === password && u.status === 'active');
+
+      if (foundUser) {
         onLogin({
-          id: 1,
-          name: 'Super Administrador',
-          username: 'admin',
-          role: 'superadmin',
-          roleName: 'Super Administrador'
-        });
-      } else if (username === 'gestor' && password === 'gestor') {
-        onLogin({
-          id: 10,
-          name: 'Gestor de Camas',
-          username: 'gestor',
-          role: 'gestor_camas',
-          roleName: 'Gestor de Camas'
-        });
-      } else if (username === 'medico' && password === 'medico') {
-        onLogin({
-          id: 3,
-          name: 'Médico General',
-          username: 'medico',
-          role: 'medico_general',
-          roleName: 'Médico General'
-        });
-      } else if (username === 'hodom' && password === 'hodom') {
-        onLogin({
-          id: 5,
-          name: 'Médico HODOM',
-          username: 'hodom',
-          role: 'medico_hodom',
-          roleName: 'Médico HODOM'
-        });
-      } else if (username === 'aseo' && password === 'aseo') {
-        onLogin({
-          id: 4,
-          name: 'Personal de Aseo',
-          username: 'aseo',
-          role: 'personal_aseo',
-          roleName: 'Personal de Aseo'
-        });
-      } else if (username === 'visor' && password === 'visor') {
-        onLogin({
-          id: 2,
-          name: 'Visor Institucional',
-          username: 'visor',
-          role: 'visor',
-          roleName: 'Visor Institucional'
+          id: foundUser.id,
+          name: foundUser.name,
+          username: foundUser.username,
+          role: foundUser.role,
+          roleName: foundUser.roleName || foundUser.role // Fallback if newly created user doesn't have roleName
         });
       } else {
         setError('Usuario o contraseña incorrectos');
