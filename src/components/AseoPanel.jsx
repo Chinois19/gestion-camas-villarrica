@@ -175,13 +175,19 @@ export default function AseoPanel({ bedsData, onFinishCleaning, userRole }) {
 
                 {/* Action */}
                 <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end' }}>
-                  <button
-                    className="glass-button primary"
-                    style={{ padding: '8px 16px', fontSize: '0.85rem', background: 'var(--panel-bg)', borderColor: '#22c55e', color: '#22c55e' }}
-                    onClick={() => onFinishCleaning(bed.roomId, bed.id)}
-                  >
-                    <CheckCircle size={16} /> Finalizar Aseo
-                  </button>
+                  {userRole !== 'visor' ? (
+                    <button
+                      className="glass-button primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem', background: 'var(--panel-bg)', borderColor: '#22c55e', color: '#22c55e' }}
+                      onClick={() => onFinishCleaning(bed.roomId, bed.id)}
+                    >
+                      <CheckCircle size={16} /> Finalizar Aseo
+                    </button>
+                  ) : (
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontStyle: 'italic', padding: '8px 0' }}>
+                      Solo lectura
+                    </div>
+                  )}
                 </div>
               </div>
             );

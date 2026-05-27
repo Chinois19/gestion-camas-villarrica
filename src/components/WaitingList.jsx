@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, TrendingUp, User, ArrowRight, AlertCircle, CheckCircle, Filter } from 'lucide-react';
+import { Clock, TrendingUp, User, ArrowRight, AlertCircle, CheckCircle, Filter, LogOut } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 
 const calculateWaitTime = (requestedAt) => {
@@ -19,11 +19,22 @@ const getTierClass = (totalHours) => {
   return 'tier-standard';
 };
 
-function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewDetails }) {
+function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewDetails, onEditPatient, onDischargeWaiting, isVisor }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `patient-${patient.id}`,
-    data: { patient }
+    data: { patient },
+    disabled: isVisor
   });
+
+  const handleCardClick = (e) => {
+    e.stopPropagation();
+    if (onSelect) onSelect(patient);
+  };
+
+  const handleCardDoubleClick = (e) => {
+    e.stopPropagation();
+    if (!isVisor && onEditPatient) onEditPatient(patient);
+  };
 
   const tierClass = getTierClass(waitTime.totalHours);
   const style = transform ? {
@@ -36,7 +47,8 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
       style={style} 
       {...listeners} 
       {...attributes}
-      onClick={() => { if (onSelect) onSelect(patient); }}
+      onClick={handleCardClick}
+      onDoubleClick={handleCardDoubleClick}
       className={`glass-panel waiting-card ${tierClass} ${isDragging ? 'dragging' : ''} ${isSelected ? 'selected' : ''}`}
     >
       <div className="waiting-card-header" style={{ position: 'relative' }}>
@@ -57,7 +69,7 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
             <User size={14} />
           </div>
           <div className="patient-info-mini">
-            <span className="p-name">{patient.name}</span>
+            <span className="p-name" style={{ marginRight: '4px' }}>{patient.name}</span>
             <span className="p-age">{patient.age} años • {patient.origin}</span>
           </div>
         </div>
@@ -71,24 +83,35 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
             <span className="label">Requerido:</span>
             <span className="value">{patient.bedTypeRequired}</span>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button 
-              className="glass-button secondary" 
-              style={{ padding: '4px 8px', fontSize: '0.75rem', position: 'relative', zIndex: 10 }} 
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); if (onViewDetails) onViewDetails(patient); }}
-            >
-              Ver Detalles
-            </button>
-          </div>
+          {!isVisor && (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                className="glass-button secondary" 
+                style={{ padding: '4px 8px', fontSize: '0.75rem', position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '4px' }} 
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); if (onDischargeWaiting) onDischargeWaiting(patient); }}
+              >
+                <LogOut size={12} /> Dar Alta
+              </button>
+              <button 
+                className="glass-button primary" 
+                style={{ padding: '4px 8px', fontSize: '0.75rem', position: 'relative', zIndex: 10, background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', border: '1px solid rgba(168, 85, 247, 0.4)' }} 
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); if (onEditPatient) onEditPatient(patient); }}
+              >
+                Editar
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-export default function WaitingList({ patients, onSelectPatient, onViewPatient, selectedPatientId }) {
+export default function WaitingList({ patients, onSelectPatient, onViewPatient, selectedPatientId, onEditPatient, onDischargeWaiting, userRole }) {
   const [timers, setTimers] = useState({});
+  const isVisor = userRole === 'visor';
   const [activeTier, setActiveTier] = useState('todos'); // 'critical' | 'warning' | 'standard' | 'todos'
 
   useEffect(() => {
@@ -184,13 +207,10 @@ export default function WaitingList({ patients, onSelectPatient, onViewPatient, 
             isSelected={selectedPatientId === patient.id}
             onSelect={onSelectPatient}
             onViewDetails={onViewPatient}
+            onEditPatient={onEditPatient}
+            userRole={userRole}
           />
         ))}
-        {sortedPatients.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            No hay pacientes en esta categoría.
-          </div>
-        )}
       </div>
     </div>
   );

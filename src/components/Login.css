@@ -1,79 +1,111 @@
+/* ═══════════════════════════════════════════════════════════════
+   Login.css — Antigravity Auth Screen
+═══════════════════════════════════════════════════════════════ */
+
 .login-page {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Use the generated background image */
-  background-image: url('/hospital_villarrica_bg.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  position: relative;
   overflow: hidden;
-  z-index: 10000;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg-color);
 }
 
+/* Ambient glow blobs */
 .login-background {
-  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
 }
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+}
+.blob-1 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%);
+  top: -120px;
+  left: -100px;
+  animation: float-blob1 12s ease-in-out infinite;
+}
+.blob-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%);
+  bottom: -80px;
+  right: -60px;
+  animation: float-blob2 15s ease-in-out infinite;
+}
+@keyframes float-blob1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px, 20px); } }
+@keyframes float-blob2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-20px, -30px); } }
 
+/* Login Card */
 .login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: relative;
   z-index: 1;
   width: 100%;
+  max-width: 400px;
   padding: 20px;
 }
 
 .login-card {
-  width: 100%;
-  max-width: 380px;
-  padding: 40px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  /* Deep glassmorphism effect */
-  background: rgba(20, 30, 40, 0.45) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5) !important;
-  color: #ffffff !important;
+  padding: 40px 36px;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 24px;
+  box-shadow:
+    0 24px 64px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(255,255,255,0.05),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  animation: card-in 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes card-in { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+
+/* Inner highlight line */
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  border-radius: 50%;
 }
 
 .login-header {
-  text-align: left;
+  text-align: center;
+  margin-bottom: 32px;
 }
 
 .login-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: #ffffff;
-  letter-spacing: -0.02em;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #ffffff 30%, rgba(0,212,255,0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 6px;
 }
 
 .login-subtitle {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.38);
   font-weight: 400;
+  letter-spacing: 0.02em;
 }
 
+/* Form */
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
+  gap: 14px;
 }
 
 .input-wrapper {
@@ -82,187 +114,166 @@
   align-items: center;
 }
 
+.input-wrapper input {
+  width: 100%;
+  background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 13px;
+  padding: 13px 42px 13px 16px;
+  color: rgba(255,255,255,0.92);
+  font-family: var(--font, 'Outfit', sans-serif);
+  font-size: 0.92rem;
+  outline: none;
+  transition: all 0.25s ease;
+}
+.input-wrapper input:focus {
+  border-color: rgba(0,212,255,0.35);
+  background: rgba(0,0,0,0.36);
+  box-shadow: 0 0 0 3px rgba(0,212,255,0.08), 0 0 20px rgba(0,212,255,0.06);
+}
+.input-wrapper input::placeholder { color: rgba(255,255,255,0.22); }
+
 .input-icon {
   position: absolute;
-  right: 16px;
-  color: rgba(255, 255, 255, 0.7);
+  right: 13px;
+  color: rgba(255,255,255,0.3);
   pointer-events: none;
 }
 
 .password-toggle {
   position: absolute;
-  right: 16px;
+  right: 12px;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255,255,255,0.3);
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0;
+  padding: 4px;
+  transition: color 0.2s;
 }
+.password-toggle:hover { color: rgba(255,255,255,0.65); }
 
-.password-toggle:hover {
-  color: #ffffff;
-}
-
-.input-wrapper input {
-  width: 100%;
-  padding: 14px 44px 14px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 12px;
-  color: #ffffff;
-  font-size: 0.95rem;
-  font-family: var(--font-family);
-  transition: all 0.2s ease;
-}
-
-.input-wrapper input::placeholder {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.input-wrapper input:focus {
-  outline: none;
-  border-color: #22c55e;
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
-}
-
+/* Form Options */
 .form-options {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  margin-top: -4px;
+  margin: 2px 0;
 }
 
 .remember-me {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.4);
+  user-select: none;
 }
-
-.remember-me input {
-  accent-color: #22c55e;
+.remember-me input[type="checkbox"] { display: none; }
+.checkmark {
   width: 16px;
   height: 16px;
-  cursor: pointer;
+  border-radius: 5px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.remember-me input:checked + .checkmark {
+  background: rgba(0,212,255,0.18);
+  border-color: rgba(0,212,255,0.4);
 }
 
+/* Error */
 .login-error {
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  color: #fca5a5;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 0.85rem;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: #ff8585;
   text-align: center;
 }
 
+/* Submit Button */
 .login-submit {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(to right, #84cc16, #16a34a);
-  color: #ffffff;
-  border: none;
-  border-radius: 12px;
-  font-size: 1.05rem;
+  border-radius: 13px;
+  border: 1px solid rgba(0,212,255,0.3);
+  background: linear-gradient(135deg, rgba(0,212,255,0.14) 0%, rgba(0,212,255,0.06) 100%);
+  color: rgba(255,255,255,0.9);
+  font-family: var(--font, 'Outfit', sans-serif);
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  transition: all 0.2s ease;
+  box-shadow: 0 0 24px rgba(0,212,255,0.08);
   margin-top: 4px;
-  box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);
+  letter-spacing: 0.01em;
 }
-
 .login-submit:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.5);
+  background: linear-gradient(135deg, rgba(0,212,255,0.22) 0%, rgba(0,212,255,0.1) 100%);
+  border-color: rgba(0,212,255,0.55);
+  box-shadow: 0 0 32px rgba(0,212,255,0.18), 0 4px 16px rgba(0,0,0,0.3);
+  transform: translateY(-1px);
 }
+.login-submit:active:not(:disabled) { transform: translateY(0); }
+.login-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.login-submit:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.login-submit:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.login-signup {
-  text-align: center;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.85);
-  margin-top: 8px;
-}
-
-.login-signup a {
-  color: #ffffff;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.login-signup a:hover {
-  text-decoration: underline;
-}
-
-.login-footer {
-  text-align: center;
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin-top: 16px;
-}
-
+/* Spinner */
 .spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(0,212,255,0.2);
+  border-top-color: rgba(0,212,255,0.8);
   border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 1s ease-in-out infinite;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Footer links */
+.login-signup {
+  text-align: center;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.28);
+  margin-top: 6px;
+}
+.login-signup a { color: rgba(0,212,255,0.65); text-decoration: none; }
+.login-signup a:hover { color: rgba(0,212,255,0.9); }
+
+.login-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.16);
+  letter-spacing: 0.04em;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Ensure overrides from theme-light don't break the glassmorphism */
-body.theme-light .login-page {
-  background-image: url('/hospital_villarrica_bg.png') !important;
-  background-size: cover !important;
-  background-position: center !important;
-}
-
+/* Light theme overrides */
+body.theme-light .login-page { background: var(--bg-color); }
 body.theme-light .login-card {
-  background: rgba(20, 30, 40, 0.45) !important;
-  color: #ffffff !important;
+  background: rgba(255,255,255,0.75);
+  border-color: rgba(0,0,0,0.1);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.08);
 }
-
-body.theme-light .login-title, 
-body.theme-light .login-subtitle, 
-body.theme-light .input-wrapper input,
-body.theme-light .remember-me,
-body.theme-light .login-signup,
-body.theme-light .login-signup a {
-  color: #ffffff !important;
-}
-
 body.theme-light .input-wrapper input {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255,255,255,0.8);
+  border-color: rgba(0,0,0,0.12);
+  color: var(--text-primary);
 }
-
-body.theme-light .input-wrapper input::placeholder {
-  color: rgba(255, 255, 255, 0.7) !important;
-}
-
-body.theme-light .input-icon, 
-body.theme-light .password-toggle {
-  color: rgba(255, 255, 255, 0.7) !important;
+body.theme-light .input-wrapper input::placeholder { color: rgba(0,0,0,0.3); }
+body.theme-light .login-title {
+  background: linear-gradient(135deg, #0f111a 30%, #0284c7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

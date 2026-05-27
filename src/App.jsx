@@ -1,181 +1,79 @@
 import { useState, useEffect } from 'react';
 import { 
   Activity, LayoutDashboard, FileText, Search, User, Settings, Sun, Moon, 
-  HeartPulse, Stethoscope, Users, CheckCircle2 
+  HeartPulse, Stethoscope, Users, Sparkles, LogOut, BarChart2
 } from 'lucide-react';
 import './App.css';
+import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import SolicitudForm from './components/SolicitudForm';
 import HodomPanel from './components/HodomPanel';
 import InterconsultasPanel from './components/InterconsultasPanel';
+import AseoPanel from './components/AseoPanel';
+import UserManagement from './components/UserManagement';
+import InfrastructureManagement from './components/InfrastructureManagement';
+import InsightsDashboard from './components/InsightsDashboard';
 import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
 
 // Pre-fill some realistic interconsultas in the DUMMY_DATA to make the initial view visually rich
 const initialBedsData = JSON.parse(JSON.stringify(DUMMY_DATA));
 
-// Inject initial interconsultas to some beds
-if (initialBedsData.piso2 && initialBedsData.piso2.poniente && initialBedsData.piso2.poniente[0]) {
-  initialBedsData.piso2.poniente[0].beds[0].interconsultas = [
-    {
-      id: "ic-mock-1",
-      especialidadDestino: "Cardiología",
-      tipoRequerimiento: "Evaluación pre-operatoria",
-      profesionalDeriva: "Dr. Marcelo González",
-      solicitadaAt: new Date(Date.now() - 3.5 * 3600 * 1000).toISOString(),
-      resumenHistoria: "Paciente con sospecha de insuficiencia valvular mitral. Requiere ecocardiograma doppler color antes de procedimiento quirúrgico programado.",
-      estado: "pendiente"
-    }
-  ];
-  initialBedsData.piso2.poniente[0].beds[0].rut = "14.283.472-K";
+// Clean start without initial interconsultas
 
-  initialBedsData.piso2.poniente[0].beds[2].interconsultas = [
-    {
-      id: "ic-mock-2",
-      especialidadDestino: "Neurología",
-      tipoRequerimiento: "Evaluación clínica de ACV",
-      profesionalDeriva: "Dra. Sofía Riquelme",
-      solicitadaAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
-      resumenHistoria: "Paciente ingresado por déficit focal agudo. Requiere evaluación por especialista para sugerencias de manejo y pronóstico neurológico.",
-      estado: "pendiente"
-    }
-  ];
-  initialBedsData.piso2.poniente[0].beds[2].rut = "9.482.103-5";
-}
-
-if (initialBedsData.piso3 && initialBedsData.piso3.poniente && initialBedsData.piso3.poniente[1]) {
-  initialBedsData.piso3.poniente[1].beds[0].interconsultas = [
-    {
-      id: "ic-mock-3",
-      especialidadDestino: "Ginecología",
-      tipoRequerimiento: "Control puerperal patológico",
-      profesionalDeriva: "Dr. Cristián Arriagada",
-      solicitadaAt: new Date(Date.now() - 1.2 * 3600 * 1000).toISOString(),
-      resumenHistoria: "Puérpera con alzas tensionales aisladas en período inmediato. Requiere evaluación por especialista para ajuste de dosis y esquema antihipertensivo.",
-      estado: "pendiente"
-    }
-  ];
-  initialBedsData.piso3.poniente[1].beds[0].rut = "18.394.028-3";
-}
-
-// Initial mock HODOM requests
-const initialHodomRequests = [
-  {
-    id: "hodom-mock-1",
-    patientName: "Juan Antonio Valenzuela",
-    rut: "11.238.948-2",
-    edad: 67,
-    sexo: "M",
-    roomId: "401",
-    bedId: "1",
-    diagnostico: ["J18 - Neumonía adquirida en la comunidad"],
-    solicitadaAt: new Date(Date.now() - 2.5 * 3600 * 1000).toISOString(),
-    estado: "pendiente",
-    prevision: "FONASA B",
-    direccion: "Camino Segunda Faja Km 4.2, Villarrica",
-    profesionalRequiere: "Dr. Claudio Tapia",
-    fecha: new Date().toLocaleDateString('es-CL'),
-    hora: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
-    hodomChecks: {
-      check1: true,
-      check2: true,
-      check3: true,
-      check4: false,
-      check5: true,
-      check6: true,
-      check7: true,
-      check8: false,
-      check9: true,
-      check10: true,
-      check11: true,
-      check12: false
-    },
-    hodomObservaciones: "Oxígeno dependiente intermitente. Requiere visita de kinesiología y control de parámetros vitales 2 veces al día."
-  },
-  {
-    id: "hodom-mock-2",
-    patientName: "Clara Ester Sepúlveda",
-    rut: "7.847.283-K",
-    edad: 82,
-    sexo: "F",
-    roomId: "311",
-    bedId: "2",
-    diagnostico: ["E11 - Diabetes mellitus no insulinodependiente con complicaciones renales"],
-    solicitadaAt: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
-    estado: "pendiente",
-    prevision: "ISAPRE",
-    direccion: "Avenida Colo Colo 1204, Villarrica",
-    profesionalRequiere: "Dra. Carmen Luz Silva",
-    fecha: new Date().toLocaleDateString('es-CL'),
-    hora: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
-    hodomChecks: {
-      check1: true,
-      check2: true,
-      check3: true,
-      check4: true,
-      check5: true,
-      check6: true,
-      check7: true,
-      check8: true,
-      check9: true,
-      check10: true,
-      check11: true,
-      check12: true
-    },
-    hodomObservaciones: "Paciente estable. Curaciones avanzadas por enfermería programadas los lunes, miércoles y viernes por pie diabético."
-  }
-];
+const initialHodomRequests = [];
 
 function App() {
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'solicitud' | 'hodom' | 'interconsultas'
+  // Auth state
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('villarrica_session');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [currentView, setCurrentView] = useState('dashboard');
+  const [editingPatient, setEditingPatient] = useState(null);
+  const [viewingPatient, setViewingPatient] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [theme, setTheme] = useState('dark');
-  
-  // Clinical state variables persistent in localStorage (or fallback to mock data)
+
+  // Clinical state — persisted in localStorage
   const [bedsData, setBedsData] = useState(() => {
-    const saved = localStorage.getItem('villarrica_bedsData');
+    const saved = localStorage.getItem('villarrica_bedsData_prod');
     return saved ? JSON.parse(saved) : initialBedsData;
   });
 
   const [waitingList, setWaitingList] = useState(() => {
-    const saved = localStorage.getItem('villarrica_waitingList');
+    const saved = localStorage.getItem('villarrica_waitingList_prod');
     return saved ? JSON.parse(saved) : WAITING_LIST;
   });
 
   const [hodomRequests, setHodomRequests] = useState(() => {
-    const saved = localStorage.getItem('villarrica_hodomRequests');
+    const saved = localStorage.getItem('villarrica_hodomRequests_prod');
     return saved ? JSON.parse(saved) : initialHodomRequests;
   });
-
-  // Role simulation for multi-disciplinary workflow testing
-  const [userRole, setUserRole] = useState('admin'); // 'admin' | 'hodom' | 'doctor' | 'gestor'
-  
-  const getRoleUser = () => {
-    if (userRole === 'admin') return { role: 'admin', name: 'Dr. Administrador UGP' };
-    if (userRole === 'hodom') return { role: 'hodom', name: 'Enf. HODOM Visitas' };
-    if (userRole === 'doctor') return { role: 'doctor', name: 'Dr. Interconsultor de Especialidad' };
-    return { role: 'gestor', name: 'Enf. Gestor de Camas' };
-  };
 
   useEffect(() => {
     document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
   }, [theme]);
 
-  // Persist states to local storage
-  useEffect(() => {
-    localStorage.setItem('villarrica_bedsData', JSON.stringify(bedsData));
-  }, [bedsData]);
+  // Persist states to localStorage
+  useEffect(() => { localStorage.setItem('villarrica_bedsData_prod', JSON.stringify(bedsData)); }, [bedsData]);
+  useEffect(() => { localStorage.setItem('villarrica_waitingList_prod', JSON.stringify(waitingList)); }, [waitingList]);
+  useEffect(() => { localStorage.setItem('villarrica_hodomRequests_prod', JSON.stringify(hodomRequests)); }, [hodomRequests]);
 
-  useEffect(() => {
-    localStorage.setItem('villarrica_waitingList', JSON.stringify(waitingList));
-  }, [waitingList]);
+  const handleLogin = (user) => {
+    setCurrentUser(user);
+    localStorage.setItem('villarrica_session', JSON.stringify(user));
+    setCurrentView('dashboard');
+  };
 
-  useEffect(() => {
-    localStorage.setItem('villarrica_hodomRequests', JSON.stringify(hodomRequests));
-  }, [hodomRequests]);
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('villarrica_session');
+    setCurrentView('dashboard');
+  };
 
-  // CLINICAL HANDLERS
+  // ── CLINICAL HANDLERS ──────────────────────────────────────────────────────
 
-  // Add HODOM Request (called from DischargeModal in Dashboard.jsx)
   const handleHodomSubmit = (reqData) => {
     const newReq = {
       id: `hodom-${Date.now()}`,
@@ -190,7 +88,7 @@ function App() {
       estado: 'pendiente',
       prevision: reqData.prevision || 'FONASA',
       direccion: reqData.direccion || 'No especificada',
-      profesionalRequiere: getRoleUser().name,
+      profesionalRequiere: currentUser?.name || 'Profesional',
       fecha: new Date().toLocaleDateString('es-CL'),
       hora: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
       hodomChecks: reqData.hodomChecks || {},
@@ -199,21 +97,18 @@ function App() {
     setHodomRequests(prev => [newReq, ...prev]);
   };
 
-  // Mark HODOM Request as done/admitted (frees the bed to 'cleaning' status!)
   const handleHodomMarkDone = (hodomId) => {
     const req = hodomRequests.find(r => r.id === hodomId);
     if (!req) return;
 
-    // Transition request status to approved
-    setHodomRequests(prev => prev.map(r => r.id === hodomId ? { ...r, estado: 'aprobado', aprobadoAt: new Date().toISOString() } : r));
+    setHodomRequests(prev => prev.map(r =>
+      r.id === hodomId ? { ...r, estado: 'aprobado', aprobadoAt: new Date().toISOString() } : r
+    ));
 
-    // Liberate corresponding bed in bedsData -> cleaning
+    // Liberar cama → cleaning
     setBedsData(prev => {
       const next = JSON.parse(JSON.stringify(prev));
-      const floors = ['piso4', 'piso3', 'piso2'];
-      let found = false;
-
-      for (const f of floors) {
+      for (const f of ['piso4', 'piso3', 'piso2']) {
         if (!next[f]) continue;
         for (const s in next[f]) {
           next[f][s] = next[f][s].map(room => {
@@ -221,21 +116,8 @@ function App() {
               return {
                 ...room,
                 beds: room.beds.map(bed => {
-                  if (bed.id === req.bedId) {
-                    found = true;
-                    return {
-                      ...bed,
-                      status: 'cleaning',
-                      cleaningAt: new Date().toISOString(),
-                      patient: null,
-                      diagnosis: null,
-                      grdId: null,
-                      grdName: null,
-                      severity: null,
-                      projectedDays: null,
-                      assignedAt: null,
-                      interconsultas: []
-                    };
+                  if (bed.id == req.bedId) {
+                    return { ...bed, status: 'cleaning', cleaningAt: new Date().toISOString(), patient: null, diagnosis: null, grdId: null, grdName: null, severity: null, projectedDays: null, assignedAt: null, interconsultas: [] };
                   }
                   return bed;
                 })
@@ -249,18 +131,41 @@ function App() {
     });
   };
 
-  // Delete HODOM Request
+  const handleHodomMarkDoneByBed = (roomId, bedId) => {
+    const req = hodomRequests.find(r => r.roomId === roomId && r.bedId == bedId && r.estado === 'pendiente');
+    if (req) {
+      handleHodomMarkDone(req.id);
+    } else {
+      handleFinishCleaning(roomId, bedId);
+    }
+  };
+
   const handleHodomDelete = (hodomId) => {
     setHodomRequests(prev => prev.filter(r => r.id !== hodomId));
   };
 
-  // Mark Interconsulta as Done/Atendida
+  const handleFinishCleaning = (roomId, bedId) => {
+    setBedsData(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      for (const f of ['piso4', 'piso3', 'piso2']) {
+        if (!next[f]) continue;
+        for (const s in next[f]) {
+          next[f][s] = next[f][s].map(room => {
+            if (room.roomId === roomId) {
+              return { ...room, beds: room.beds.map(bed => bed.id === bedId ? { ...bed, status: 'available', cleaningAt: null } : bed) };
+            }
+            return room;
+          });
+        }
+      }
+      return next;
+    });
+  };
+
   const handleMarkICDone = (roomId, bedId, icId, newState = 'realizada', observaciones = '') => {
     setBedsData(prev => {
       const next = JSON.parse(JSON.stringify(prev));
-      const floors = ['piso4', 'piso3', 'piso2'];
-
-      for (const f of floors) {
+      for (const f of ['piso4', 'piso3', 'piso2']) {
         if (!next[f]) continue;
         for (const s in next[f]) {
           next[f][s] = next[f][s].map(room => {
@@ -269,16 +174,7 @@ function App() {
                 ...room,
                 beds: room.beds.map(bed => {
                   if (bed.id === bedId) {
-                    const currentICs = bed.interconsultas || [];
-                    const updatedICs = currentICs.map(ic => 
-                      ic.id === icId 
-                        ? { ...ic, estado: newState, observaciones: observaciones, resueltaAt: new Date().toISOString() } 
-                        : ic
-                    );
-                    return {
-                      ...bed,
-                      interconsultas: updatedICs
-                    };
+                    return { ...bed, interconsultas: (bed.interconsultas || []).map(ic => ic.id === icId ? { ...ic, estado: newState, observaciones, resueltaAt: new Date().toISOString() } : ic) };
                   }
                   return bed;
                 })
@@ -292,30 +188,15 @@ function App() {
     });
   };
 
-  // Delete/cancel Interconsulta
   const handleDeleteIC = (roomId, bedId, icId) => {
     setBedsData(prev => {
       const next = JSON.parse(JSON.stringify(prev));
-      const floors = ['piso4', 'piso3', 'piso2'];
-
-      for (const f of floors) {
+      for (const f of ['piso4', 'piso3', 'piso2']) {
         if (!next[f]) continue;
         for (const s in next[f]) {
           next[f][s] = next[f][s].map(room => {
             if (room.roomId === roomId) {
-              return {
-                ...room,
-                beds: room.beds.map(bed => {
-                  if (bed.id === bedId) {
-                    const currentICs = bed.interconsultas || [];
-                    return {
-                      ...bed,
-                      interconsultas: currentICs.filter(ic => ic.id !== icId)
-                    };
-                  }
-                  return bed;
-                })
-              };
+              return { ...room, beds: room.beds.map(bed => bed.id === bedId ? { ...bed, interconsultas: (bed.interconsultas || []).filter(ic => ic.id !== icId) } : bed) };
             }
             return room;
           });
@@ -325,31 +206,75 @@ function App() {
     });
   };
 
-  // Add a newly requested patient from SolicitudForm to waitingList
-  const handleAddNewPatient = (newPatient) => {
-    setWaitingList(prev => [newPatient, ...prev]);
-    setCurrentView('dashboard');
+  const handleEditPatient = (patient) => {
+    setEditingPatient(patient);
+    setViewingPatient(null);
+    setCurrentView('solicitud');
   };
 
-  // Count pending items for badges
+  const handleViewPatient = (patient) => {
+    setViewingPatient(patient);
+    setEditingPatient(null);
+    setCurrentView('solicitud');
+  };
+
+  const handleAddNewPatient = (newPatient) => {
+    setWaitingList(prev => [newPatient, ...prev]);
+  };
+
+  // Pending counts for nav badges
   const pendingHodomCount = hodomRequests.filter(r => r.estado === 'pendiente').length;
-  
-  const getPendingICCount = () => {
+  const pendingICCount = (() => {
     let count = 0;
     Object.keys(bedsData).forEach(floor => {
       Object.keys(bedsData[floor]).forEach(sector => {
         bedsData[floor][sector].forEach(room => {
           room.beds.forEach(bed => {
-            if (bed.interconsultas) {
-              count += bed.interconsultas.filter(ic => ic.estado === 'pendiente').length;
-            }
+            if (bed.interconsultas) count += bed.interconsultas.filter(ic => ic.estado === 'pendiente').length;
           });
         });
       });
     });
     return count;
-  };
-  const pendingICCount = getPendingICCount();
+  })();
+  const cleaningCount = (() => {
+    let count = 0;
+    Object.keys(bedsData).forEach(floor => {
+      Object.keys(bedsData[floor]).forEach(sector => {
+        bedsData[floor][sector].forEach(room => {
+          room.beds.forEach(bed => { if (bed.status === 'cleaning') count++; });
+        });
+      });
+    });
+    return count;
+  })();
+
+  // ── LOGIN GATE ─────────────────────────────────────────────────────────────
+  if (!currentUser) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  // ── ROLE PERMISSIONS ───────────────────────────────────────────────────────
+  const isSuperAdmin = currentUser.role === 'superadmin';
+  const isGestor = currentUser.role === 'gestor_camas';
+  const isMedico = currentUser.role === 'medico_general';
+  const isAseo = currentUser.role === 'personal_aseo';
+  const isVisor = currentUser.role === 'visor';
+  const isHodom = currentUser.role === 'medico_hodom';
+
+  const canViewAll = isSuperAdmin || isVisor;
+
+  // Nav items visible by role
+  const navItems = [
+    { id: 'dashboard', label: 'Gestión de Camas', icon: <LayoutDashboard size={16} />, badge: null, show: canViewAll || isMedico || isGestor || isAseo },
+    { id: 'insights', label: 'Estadísticas', icon: <BarChart2 size={16} />, badge: null, show: canViewAll || isGestor || isMedico },
+    { id: 'interconsultas', label: 'Visor de IC', icon: <Stethoscope size={16} />, badge: pendingICCount, show: canViewAll || isMedico },
+    { id: 'hodom', label: 'HODOM', icon: <HeartPulse size={16} />, badge: pendingHodomCount, show: canViewAll || isHodom || isGestor },
+    { id: 'aseo', label: 'Aseo', icon: <Sparkles size={16} />, badge: cleaningCount, show: canViewAll || isAseo },
+    { id: 'solicitud', label: 'Solicitar Cama', icon: <FileText size={16} />, badge: null, show: isSuperAdmin || isGestor || isHodom, onClick: () => { setEditingPatient(null); setViewingPatient(null); setCurrentView('solicitud'); } },
+    { id: 'usuarios', label: 'Usuarios', icon: <Users size={16} />, badge: null, show: isSuperAdmin },
+    { id: 'infraestructura', label: 'Infraestructura', icon: <Settings size={16} />, badge: null, show: isSuperAdmin },
+  ].filter(item => item.show);
 
   return (
     <div className="app-container">
@@ -360,104 +285,71 @@ function App() {
           <h1 className="text-gradient">Gestión Camas</h1>
         </div>
 
-        {/* Global Search Bar - Only show if in dashboard */}
+        {/* Global Search Bar */}
         {currentView === 'dashboard' ? (
           <div className="search-container">
             <Search size={18} color="var(--text-secondary)" />
-            <input 
-              type="text" 
-              className="search-input" 
-              placeholder="Buscar paciente, cama o diagnóstico..." 
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Buscar paciente, cama o diagnóstico..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         ) : (
-          <div style={{ flex: 1 }}></div> /* Spacer */
+          <div style={{ flex: 1 }} />
         )}
 
-        <div className="user-profile" style={{ gap: '16px' }}>
-          {/* Navigation Links */}
-          <div style={{ display: 'flex', gap: '8px', marginRight: '8px' }}>
-            <button 
-              className={`glass-button ${currentView === 'dashboard' ? 'primary' : ''}`}
-              onClick={() => setCurrentView('dashboard')}
-            >
-              <LayoutDashboard size={18} /> Dashboard
-            </button>
-            <button 
-              className={`glass-button ${currentView === 'hodom' ? 'primary' : ''}`}
-              onClick={() => setCurrentView('hodom')}
-              style={{ position: 'relative' }}
-            >
-              <HeartPulse size={18} /> HODOM
-              {pendingHodomCount > 0 && (
-                <span className="nav-badge" style={{
-                  position: 'absolute', top: '-6px', right: '-6px',
-                  background: '#22c55e', color: 'white', fontSize: '0.7rem',
-                  fontWeight: 800, padding: '2px 6px', borderRadius: '50%',
-                  boxShadow: '0 0 8px rgba(34,197,94,0.6)'
-                }}>{pendingHodomCount}</span>
-              )}
-            </button>
-            <button 
-              className={`glass-button ${currentView === 'interconsultas' ? 'primary' : ''}`}
-              onClick={() => setCurrentView('interconsultas')}
-              style={{ position: 'relative' }}
-            >
-              <Stethoscope size={18} /> Interconsultas
-              {pendingICCount > 0 && (
-                <span className="nav-badge" style={{
-                  position: 'absolute', top: '-6px', right: '-6px',
-                  background: '#fb923c', color: 'white', fontSize: '0.7rem',
-                  fontWeight: 800, padding: '2px 6px', borderRadius: '50%',
-                  boxShadow: '0 0 8px rgba(251,146,60,0.6)'
-                }}>{pendingICCount}</span>
-              )}
-            </button>
-            <button 
-              className={`glass-button ${currentView === 'solicitud' ? 'primary' : ''}`}
-              onClick={() => setCurrentView('solicitud')}
-            >
-              <FileText size={18} /> Solicitar Cama
-            </button>
+        <div className="user-profile">
+          {/* Navigation */}
+          <div style={{ display: 'flex', gap: '4px', marginRight: '16px' }}>
+            {navItems.map(item => (
+              <button
+                key={item.id}
+                className={`glass-button ${currentView === item.id ? 'primary' : ''}`}
+                onClick={() => item.onClick ? item.onClick() : setCurrentView(item.id)}
+                style={{ position: 'relative', padding: '8px 14px', fontSize: '0.82rem' }}
+              >
+                {item.icon} {item.label}
+                {item.badge > 0 && (
+                  <span style={{
+                    position: 'absolute', top: '-6px', right: '-6px',
+                    background: item.id === 'hodom' ? '#22c55e' : item.id === 'aseo' ? '#f59e0b' : '#fb923c',
+                    color: 'white', fontSize: '0.65rem', fontWeight: 800,
+                    padding: '2px 5px', borderRadius: '50%',
+                    boxShadow: '0 0 8px rgba(0,0,0,0.4)'
+                  }}>{item.badge}</span>
+                )}
+              </button>
+            ))}
           </div>
 
-          {/* Interactive Role Switcher */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid var(--glass-border)', paddingLeft: '16px' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>ROL:</span>
-            <select
-              value={userRole}
-              onChange={(e) => setUserRole(e.target.value)}
-              className="glass-input"
-              style={{ padding: '4px 8px', fontSize: '0.8rem', width: '130px', margin: 0, fontWeight: 700, cursor: 'pointer' }}
-            >
-              <option value="admin">Administrador</option>
-              <option value="hodom">Equipo HODOM</option>
-              <option value="doctor">Médico Clínico</option>
-              <option value="gestor">Enf. Gestor</option>
-            </select>
-          </div>
-
+          {/* User info */}
           <div className="avatar">
             <User size={20} />
           </div>
           <div className="user-info" style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>{getRoleUser().name.split(' ')[0]}</span>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{userRole === 'admin' ? 'UGP Central' : 'Clínico'}</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{currentUser.name}</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{currentUser.roleName}</span>
           </div>
-          
+
           <div style={{ display: 'flex', gap: '8px', marginLeft: '8px' }}>
-            <button 
-              className="glass-button" 
+            <button
+              className="glass-button"
               style={{ padding: '8px' }}
               onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-              title={theme === 'light' ? "Modo Oscuro" : "Modo Claro"}
+              title={theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
             >
-              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
-            <button className="glass-button" style={{ padding: '8px' }}>
-              <Settings size={20} />
+            <button
+              className="glass-button"
+              style={{ padding: '8px' }}
+              onClick={handleLogout}
+              title="Cerrar Sesión"
+            >
+              <LogOut size={18} />
             </button>
           </div>
         </div>
@@ -465,37 +357,92 @@ function App() {
 
       {/* Main View Router */}
       {currentView === 'dashboard' && (
-        <Dashboard 
+        <Dashboard
           searchQuery={searchQuery}
           bedsData={bedsData}
           setBedsData={setBedsData}
           waitingList={waitingList}
           setWaitingList={setWaitingList}
           onHodomSubmit={handleHodomSubmit}
-          user={getRoleUser()}
+          onMarkHodomDoneByBed={handleHodomMarkDoneByBed}
+          onEditPatient={handleEditPatient}
+          onViewPatient={handleViewPatient}
+          user={currentUser}
         />
       )}
       {currentView === 'solicitud' && (
-        <SolicitudForm 
+        <SolicitudForm
           onSubmit={handleAddNewPatient}
+          editingPatient={editingPatient}
+          viewingPatient={viewingPatient}
+          currentUser={currentUser}
+          onUpdatePatient={(updated) => {
+            setWaitingList(prev => prev.map(p => p.id === updated.id ? updated : p));
+            setEditingPatient(null);
+            setViewingPatient(null);
+            setCurrentView('dashboard');
+          }}
+          onClose={() => {
+            setEditingPatient(null);
+            setViewingPatient(null);
+            setCurrentView('dashboard');
+          }}
+          onSwitchToEdit={() => {
+            setEditingPatient(viewingPatient);
+            setViewingPatient(null);
+          }}
         />
       )}
       {currentView === 'hodom' && (
-        <HodomPanel 
+        <HodomPanel
           hodomRequests={hodomRequests}
           onMarkDone={handleHodomMarkDone}
           onDelete={handleHodomDelete}
-          userRole={userRole}
+          userRole={currentUser.role}
         />
       )}
       {currentView === 'interconsultas' && (
-        <InterconsultasPanel 
+        <InterconsultasPanel
           bedsData={bedsData}
           onMarkICDone={handleMarkICDone}
           onDeleteIC={handleDeleteIC}
-          userRole={userRole}
+          userRole={currentUser.role}
         />
       )}
+      {currentView === 'aseo' && (
+        <AseoPanel
+          bedsData={bedsData}
+          onFinishCleaning={handleFinishCleaning}
+          userRole={currentUser.role}
+        />
+      )}
+      {currentView === 'usuarios' && isSuperAdmin && (
+        <UserManagement />
+      )}
+      {currentView === 'infraestructura' && isSuperAdmin && (
+        <InfrastructureManagement bedsData={bedsData} setBedsData={setBedsData} />
+      )}
+      {currentView === 'insights' && (
+        <InsightsDashboard bedsData={bedsData} waitingList={waitingList} />
+      )}
+
+      {/* Global Footer */}
+      <footer style={{ 
+        textAlign: 'center', 
+        padding: '32px 16px 24px', 
+        color: 'var(--text-secondary)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
+        marginTop: 'auto'
+      }}>
+        <div style={{ fontWeight: 600, fontSize: '0.9rem', opacity: 0.9 }}>
+          © 2026 Departamento de Control de Gestión • Hospital Villarrica
+        </div>
+        <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1.5px', opacity: 0.6 }}>
+          BY GPS
+        </div>
+      </footer>
     </div>
   );
 }

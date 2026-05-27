@@ -219,7 +219,7 @@ function HodomModal({ bed, onConfirm, onClose }) {
                 className="glass-button primary"
                 disabled={!extraData.profesionalRequiere || !extraData.direccion}
                 onClick={handleConfirm}
-                style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)', borderColor: '#22c55e', opacity: (extraData.profesionalRequiere && extraData.direccion) ? 1 : 0.5 }}
+                style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)', borderColor: '#22c55e', color: '#fff', opacity: (extraData.profesionalRequiere && extraData.direccion) ? 1 : 0.5 }}
               >
                 <HeartPulse size={16} /> Enviar Solicitud HODOM ({checkedCount}/{total})
               </button>
@@ -275,7 +275,7 @@ export default function DischargeModal({ bed, onConfirm, onHodomSubmit, onClose 
       )}
 
       <div className="modal-overlay" style={{ zIndex: 3000 }}>
-        <div className="glass-panel modal-content" style={{ width: 'min(94vw, 580px)', maxHeight: '90vh', overflowY: 'auto', padding: 0 }}>
+        <div className="glass-panel modal-content" style={{ width: 'min(96vw, 920px)', maxHeight: '92vh', overflowY: 'auto', padding: 0 }}>
 
           {/* Header */}
           <div className="modal-header" style={{ background: 'var(--panel-bg)', borderBottom: '1px solid var(--glass-border)', position: 'sticky', top: 0, zIndex: 10 }}>
@@ -297,154 +297,161 @@ export default function DischargeModal({ bed, onConfirm, onHodomSubmit, onClose 
 
           <div className="modal-body">
             <form onSubmit={handleSubmit} autoComplete="off" className="assignment-fields">
-
-              {/* 1. Datos del Paciente */}
-              <div>
-                <h3 className="section-title" style={{ color: 'var(--accent-color)', borderColor: 'var(--glass-border)' }}>
-                  👤 1. Datos del Paciente
-                </h3>
-                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', border: '1px solid var(--glass-border)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  {[
-                    { label: 'Paciente', value: bed.patient },
-                    { label: 'Ubicación', value: `Hab ${bed.roomId} — Cama ${bed.id}` },
-                    { label: 'RUT', value: bed.rut || '—' },
-                    { label: 'Edad / Sexo', value: `${bed.age || '—'} años · ${bed.sex || bed.sexo || '—'}` },
-                  ].map(({ label, value }) => (
-                    <div key={label}>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>{label}</div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{value}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* ── Pending IC warning ─────────────────────────────────── */}
-              {(() => {
-                const pendingICs = (bed.interconsultas || []).filter(ic => ic.estado === 'pendiente');
-                if (pendingICs.length === 0) return null;
-                const isHodom = formData.destino === 'Hospitalización domiciliaria';
-                return (
-                  <div style={{
-                    padding: '14px 16px',
-                    background: isHodom ? 'rgba(34,197,94,0.06)' : 'rgba(245,158,11,0.08)',
-                    border: `1px solid ${isHodom ? 'rgba(34,197,94,0.25)' : 'rgba(245,158,11,0.3)'}`,
-                    borderRadius: '10px',
-                    display: 'flex',
-                    gap: '12px',
-                    alignItems: 'flex-start'
-                  }}>
-                    <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>{isHodom ? '🏥' : '⚠️'}</span>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.82rem', color: isHodom ? '#22c55e' : '#f59e0b', marginBottom: '4px' }}>
-                        {pendingICs.length} interconsulta{pendingICs.length > 1 ? 's' : ''} pendiente{pendingICs.length > 1 ? 's' : ''}
-                      </div>
-                      <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                        {isHodom
-                          ? 'Este paciente será derivado a HODOM. Las interconsultas pendientes quedarán canceladas en el visor de IC al confirmar el alta. El caso HODOM quedará activo en su propio panel hasta su recepción.'
-                          : 'Al confirmar el alta, las siguientes interconsultas pendientes serán canceladas automáticamente del visor de ICs:'
-                        }
-                      </div>
-                      {!isHodom && (
-                        <ul style={{ margin: '8px 0 0 0', padding: '0 0 0 16px', fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
-                          {pendingICs.map((ic, i) => (
-                            <li key={i} style={{ marginBottom: '2px' }}>
-                              <strong style={{ color: 'var(--text-primary)' }}>{ic.especialidadDestino}</strong>
-                              {ic.tipoRequerimiento ? ` — ${ic.tipoRequerimiento}` : ''}
-                              {' · '}
-                              <span style={{ opacity: 0.7 }}>
-                                {new Date(ic.solicitadaAt).toLocaleDateString('es-CL')}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              <div>
-                <h3 className="section-title" style={{ color: 'var(--accent-color)', borderColor: 'var(--glass-border)' }}>
-                  🗺️ 2. Destino Inmediato del Paciente
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  {DESTINOS.map(({ id, label, icon }) => {
-                    const isSelected = formData.destino === id;
-                    const isHodom = id === 'Hospitalización domiciliaria';
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => {
-                          setFormData(prev => ({ ...prev, destino: id }));
-                          if (isHodom) setShowHodom(true);
-                        }}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: '10px',
-                          padding: '12px 14px', border: `1px solid ${isSelected ? 'var(--accent-color)' : 'var(--glass-border)'}`,
-                          borderRadius: '10px', background: isSelected ? 'rgba(59,130,246,0.1)' : 'var(--inset-bg)',
-                          color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)', cursor: 'pointer',
-                          fontFamily: 'var(--font-family)', fontSize: '0.82rem', fontWeight: isSelected ? 700 : 400,
-                          textAlign: 'left', transition: 'all 0.2s ease',
-                          boxShadow: isSelected ? 'var(--shadow-glow)' : 'var(--shadow-drop)',
-                        }}
-                      >
-                        <span style={{ fontSize: '1rem' }}>{icon}</span>
-                        <span style={{ flex: 1 }}>{label}</span>
-                        {isHodom && formData.hodomData && (
-                          <span style={{ fontSize: '0.65rem', background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                            ✓ {formData.hodomData.cumplidos}/{formData.hodomData.total}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Condicionales */}
-              {formData.destino === 'Otro establecimiento' && (
-                <div>
-                  <h3 className="section-title" style={{ color: 'var(--accent-color)', borderColor: 'var(--glass-border)' }}>
-                    🏨 3. Establecimiento SSAS
-                  </h3>
-                  <div className="form-group">
-                    <label>Seleccione Hospital de Destino *</label>
-                    <select className="glass-input" required value={formData.establecimientoRed} onChange={e => setFormData(prev => ({ ...prev, establecimientoRed: e.target.value }))}>
-                      <option value="">-- Seleccione establecimiento --</option>
-                      {Object.entries(ESTABLECIMIENTOS_RED).map(([cat, list]) => (
-                        <optgroup key={cat} label={cat}>
-                          {list.map(h => <option key={h} value={h}>{h}</option>)}
-                        </optgroup>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }}>
+                
+                {/* Columna Izquierda */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* 1. Datos del Paciente */}
+                  <div>
+                    <h3 className="section-title" style={{ color: 'var(--accent-color)', borderColor: 'var(--glass-border)', margin: 0, paddingBottom: '8px' }}>
+                      👤 1. Datos del Paciente
+                    </h3>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '12px', border: '1px solid var(--glass-border)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
+                      {[
+                        { label: 'Paciente', value: bed.patient },
+                        { label: 'Ubicación', value: `Hab ${bed.roomId} — Cama ${bed.id}` },
+                        { label: 'RUT', value: bed.rut || '—' },
+                        { label: 'Edad / Sexo', value: `${bed.age || '—'} años · ${bed.sex || bed.sexo || '—'}` },
+                      ].map(({ label, value }) => (
+                        <div key={label}>
+                          <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>{label}</div>
+                          <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{value}</div>
+                        </div>
                       ))}
-                    </select>
+                    </div>
+                  </div>
+
+                  {/* 2. Destino Inmediato del Paciente */}
+                  <div>
+                    <h3 className="section-title" style={{ color: 'var(--accent-color)', borderColor: 'var(--glass-border)', margin: 0, paddingBottom: '8px' }}>
+                      🗺️ 2. Destino Inmediato del Paciente
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '10px' }}>
+                      {DESTINOS.map(({ id, label, icon }) => {
+                        const isSelected = formData.destino === id;
+                        const isHodom = id === 'Hospitalización domiciliaria';
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, destino: id }));
+                              if (isHodom) setShowHodom(true);
+                            }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: '8px',
+                              padding: '10px 12px', border: `1px solid ${isSelected ? 'var(--accent-color)' : 'var(--glass-border)'}`,
+                              borderRadius: '10px', background: isSelected ? 'rgba(59,130,246,0.1)' : 'var(--inset-bg)',
+                              color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)', cursor: 'pointer',
+                              fontFamily: 'var(--font-family)', fontSize: '0.78rem', fontWeight: isSelected ? 700 : 400,
+                              textAlign: 'left', transition: 'all 0.2s ease',
+                              boxShadow: isSelected ? 'var(--shadow-glow)' : 'var(--shadow-drop)',
+                            }}
+                          >
+                            <span style={{ fontSize: '0.9rem' }}>{icon}</span>
+                            <span style={{ flex: 1, lineHeight: 1.2 }}>{label}</span>
+                            {isHodom && formData.hodomData && (
+                              <span style={{ fontSize: '0.6rem', background: 'rgba(34,197,94,0.15)', color: '#22c55e', padding: '1px 4px', borderRadius: '4px', fontWeight: 700 }}>
+                                ✓ {formData.hodomData.cumplidos}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              )}
 
-              {formData.destino === 'Red Privada' && (
-                <div>
-                  <h3 className="section-title" style={{ color: 'var(--accent-color)', borderColor: 'var(--glass-border)' }}>
-                    🏢 3. Establecimiento Privado
-                  </h3>
-                  <div className="form-group">
-                    <label>Nombre del Establecimiento *</label>
-                    <input type="text" className="glass-input" placeholder="Ej: Clínica Alemana Temuco" required value={formData.redPrivadaDetalle} onChange={e => setFormData(prev => ({ ...prev, redPrivadaDetalle: e.target.value }))} />
+                {/* Columna Derecha */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* ── Pending IC warning ─────────────────────────────────── */}
+                  {(() => {
+                    const pendingICs = (bed.interconsultas || []).filter(ic => ic.estado === 'pendiente');
+                    if (pendingICs.length === 0) return null;
+                    const isHodom = formData.destino === 'Hospitalización domiciliaria';
+                    return (
+                      <div style={{
+                        padding: '12px 14px',
+                        background: isHodom ? 'rgba(34,197,94,0.04)' : 'rgba(245,158,11,0.06)',
+                        border: `1px solid ${isHodom ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.25)'}`,
+                        borderRadius: '10px',
+                        display: 'flex',
+                        gap: '10px',
+                        alignItems: 'flex-start'
+                      }}>
+                        <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{isHodom ? '🏥' : '⚠️'}</span>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '0.8rem', color: isHodom ? '#22c55e' : '#f59e0b', marginBottom: '2px' }}>
+                            {pendingICs.length} interconsulta{pendingICs.length > 1 ? 's' : ''} pendiente{pendingICs.length > 1 ? 's' : ''}
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                            {isHodom
+                              ? 'Este paciente será derivado a HODOM. Las interconsultas pendientes quedarán canceladas en el visor de IC al confirmar el alta. El caso HODOM quedará activo en su propio panel hasta su recepción.'
+                              : 'Al confirmar el alta, las siguientes interconsultas pendientes serán canceladas automáticamente del visor de ICs:'
+                            }
+                          </div>
+                          {!isHodom && (
+                            <ul style={{ margin: '6px 0 0 0', padding: '0 0 0 14px', fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                              {pendingICs.map((ic, i) => (
+                                <li key={i} style={{ marginBottom: '1px' }}>
+                                  <strong style={{ color: 'var(--text-primary)' }}>{ic.especialidadDestino}</strong>
+                                  {ic.tipoRequerimiento ? ` — ${ic.tipoRequerimiento}` : ''}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Condicionales */}
+                  {formData.destino === 'Otro establecimiento' && (
+                    <div>
+                      <h3 className="section-title" style={{ color: 'var(--accent-color)', borderColor: 'var(--glass-border)', margin: 0, paddingBottom: '8px' }}>
+                        🏨 3. Establecimiento SSAS
+                      </h3>
+                      <div className="form-group" style={{ marginTop: '10px' }}>
+                        <label>Seleccione Hospital de Destino *</label>
+                        <select className="glass-input" required value={formData.establecimientoRed} onChange={e => setFormData(prev => ({ ...prev, establecimientoRed: e.target.value }))}>
+                          <option value="">-- Seleccione establecimiento --</option>
+                          {Object.entries(ESTABLECIMIENTOS_RED).map(([cat, list]) => (
+                            <optgroup key={cat} label={cat}>
+                              {list.map(h => <option key={h} value={h}>{h}</option>)}
+                            </optgroup>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.destino === 'Red Privada' && (
+                    <div>
+                      <h3 className="section-title" style={{ color: 'var(--accent-color)', borderColor: 'var(--glass-border)', margin: 0, paddingBottom: '8px' }}>
+                        🏢 3. Establecimiento Privado
+                      </h3>
+                      <div className="form-group" style={{ marginTop: '10px' }}>
+                        <label>Nombre del Establecimiento *</label>
+                        <input type="text" className="glass-input" placeholder="Ej: Clínica Alemana Temuco" required value={formData.redPrivadaDetalle} onChange={e => setFormData(prev => ({ ...prev, redPrivadaDetalle: e.target.value }))} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Observaciones */}
+                  <div>
+                    <h3 className="section-title" style={{ color: 'var(--accent-color)', borderColor: 'var(--glass-border)', margin: 0, paddingBottom: '8px' }}>
+                      📝 3. Observaciones Adicionales (Opcional)
+                    </h3>
+                    <div className="form-group" style={{ marginTop: '10px' }}>
+                      <textarea className="glass-input" rows={2} placeholder="Detalles del alta, traslados pendientes, instrucciones de seguimiento..." value={formData.observaciones} onChange={e => setFormData(prev => ({ ...prev, observaciones: e.target.value }))} />
+                    </div>
                   </div>
                 </div>
-              )}
 
-              {/* Observaciones */}
-              <div>
-                <h3 className="section-title" style={{ color: 'var(--accent-color)', borderColor: 'var(--glass-border)' }}>
-                  📝 3. Observaciones Adicionales (Opcional)
-                </h3>
-                <div className="form-group">
-                  <textarea className="glass-input" rows={3} placeholder="Detalles del alta, traslados pendientes, instrucciones de seguimiento..." value={formData.observaciones} onChange={e => setFormData(prev => ({ ...prev, observaciones: e.target.value }))} />
-                </div>
               </div>
 
-              <div className="modal-actions">
+              <div className="modal-actions" style={{ margin: 0, marginTop: '20px' }}>
                 <button type="button" className="glass-button" onClick={onClose} style={{ background: '#4c1d95', color: '#fff', border: 'none' }}>Cancelar</button>
                 <button
                   type="submit"
@@ -453,6 +460,7 @@ export default function DischargeModal({ bed, onConfirm, onHodomSubmit, onClose 
                   style={{ 
                     background: formData.destino === 'Hospitalización domiciliaria' ? 'linear-gradient(135deg,#22c55e,#16a34a)' : 'var(--accent-color)', 
                     borderColor: formData.destino === 'Hospitalización domiciliaria' ? '#22c55e' : 'var(--accent-color)', 
+                    color: '#fff',
                     opacity: (!formData.destino || (formData.destino === 'Hospitalización domiciliaria' && !formData.hodomData)) ? 0.5 : 1
                   }}
                 >

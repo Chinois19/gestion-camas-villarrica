@@ -21,7 +21,7 @@ const Login = ({ onLogin }) => {
           id: 1,
           name: 'Super Administrador',
           username: 'admin',
-          role: 'admin',
+          role: 'superadmin',
           roleName: 'Super Administrador'
         });
       } else if (username === 'gestor' && password === 'gestor') {
@@ -29,31 +29,23 @@ const Login = ({ onLogin }) => {
           id: 10,
           name: 'Gestor de Camas',
           username: 'gestor',
-          role: 'gestor',
+          role: 'gestor_camas',
           roleName: 'Gestor de Camas'
         });
       } else if (username === 'medico' && password === 'medico') {
         onLogin({
           id: 3,
-          name: 'Médico Interconsultor',
+          name: 'Médico General',
           username: 'medico',
-          role: 'doctor',
-          roleName: 'Médico Interconsultor'
-        });
-      } else if (username === 'profesional' && password === 'profesional') {
-        onLogin({
-          id: 11,
-          name: 'Profesional no Médico',
-          username: 'profesional',
-          role: 'profesional_no_medico',
-          roleName: 'Profesional no Médico'
+          role: 'medico_general',
+          roleName: 'Médico General'
         });
       } else if (username === 'hodom' && password === 'hodom') {
         onLogin({
           id: 5,
-          name: 'Personal HODOM',
+          name: 'Médico HODOM',
           username: 'hodom',
-          role: 'hodom',
+          role: 'medico_hodom',
           roleName: 'Médico HODOM'
         });
       } else if (username === 'aseo' && password === 'aseo') {
@@ -61,7 +53,7 @@ const Login = ({ onLogin }) => {
           id: 4,
           name: 'Personal de Aseo',
           username: 'aseo',
-          role: 'aseo',
+          role: 'personal_aseo',
           roleName: 'Personal de Aseo'
         });
       } else if (username === 'visor' && password === 'visor') {
@@ -69,8 +61,8 @@ const Login = ({ onLogin }) => {
           id: 2,
           name: 'Visor Institucional',
           username: 'visor',
-          role: 'viewer',
-          roleName: 'Visor de Datos'
+          role: 'visor',
+          roleName: 'Visor Institucional'
         });
       } else {
         setError('Usuario o contraseña incorrectos');

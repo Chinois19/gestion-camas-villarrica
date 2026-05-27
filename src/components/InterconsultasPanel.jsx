@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Stethoscope, Clock, Search, CheckCircle, XCircle, Trash2, Activity, AlertTriangle, Users } from 'lucide-react';
 
 export default function InterconsultasPanel({ bedsData, onMarkICDone, onDeleteIC, userRole }) {
+  const isVisor = userRole === 'visor';
   const [allICs, setAllICs] = useState([]);
   const [filterSpecialty, setFilterSpecialty] = useState('todos');
   const [filterStatus, setFilterStatus] = useState('pendientes'); // 'pendientes', 'historial', 'todos'
@@ -45,12 +46,13 @@ export default function InterconsultasPanel({ bedsData, onMarkICDone, onDeleteIC
   };
 
   const formatWaitTime = (minutes) => {
-    const hours = Math.floor(minutes / 60);
+    const totalMins = Math.round(minutes);
+    const hours = Math.floor(totalMins / 60);
     const days = Math.floor(hours / 24);
     let parts = [];
     if (days > 0) parts.push(`${days}d`);
     if (hours % 24 > 0) parts.push(`${hours % 24}h`);
-    parts.push(`${minutes % 60}m`);
+    parts.push(`${totalMins % 60}m`);
     return parts.join(' ');
   };
 
@@ -119,12 +121,6 @@ export default function InterconsultasPanel({ bedsData, onMarkICDone, onDeleteIC
 
   return (
     <div style={{ padding: '24px', minHeight: '100%', position: 'relative' }}>
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-        background: 'linear-gradient(135deg, rgba(15, 32, 60, 0.95) 0%, rgba(20, 50, 100, 0.9) 100%)',
-        zIndex: -1,
-        borderRadius: '24px'
-      }} />
 
       {/* Tarjetas Inteligentes (Insights) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '24px' }}>
@@ -238,17 +234,17 @@ export default function InterconsultasPanel({ bedsData, onMarkICDone, onDeleteIC
         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
           {Object.entries(groupedICs).sort(([a], [b]) => a.localeCompare(b)).map(([especialidad, ics]) => (
             <div key={especialidad} style={{
-              background: 'rgba(30, 58, 138, 0.4)',
+              background: 'rgba(255, 255, 255, 0.02)',
               backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(96, 165, 250, 0.2)',
+              border: '1px solid var(--border-subtle)',
               borderRadius: '16px',
               overflow: 'hidden',
               boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
             }}>
               <div style={{ 
                 padding: '12px 20px', 
-                background: 'rgba(30, 58, 138, 0.6)', 
-                borderBottom: '1px solid rgba(96, 165, 250, 0.2)',
+                background: 'rgba(255, 255, 255, 0.03)', 
+                borderBottom: '1px solid var(--border-subtle)',
                 display: 'flex', alignItems: 'center', gap: '12px'
               }}>
                 <div style={{ width: '4px', height: '24px', background: '#3b82f6', borderRadius: '4px' }} />
@@ -301,7 +297,7 @@ export default function InterconsultasPanel({ bedsData, onMarkICDone, onDeleteIC
                           )}
                         </td>
                         <td style={{ padding: '10px 16px', textAlign: 'right' }}>
-                          {ic.estado === 'pendiente' && (
+                          {ic.estado === 'pendiente' && !isVisor && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
                               <button 
                                 style={{ padding: '6px 16px', width: '140px', background: '#22c55e', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}
@@ -315,14 +311,6 @@ export default function InterconsultasPanel({ bedsData, onMarkICDone, onDeleteIC
                               >
                                 Desestima
                               </button>
-                              {userRole === 'admin' && (
-                                <button 
-                                  style={{ padding: '6px 16px', width: '140px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}
-                                  onClick={() => openResolveModal(ic, 'eliminada')}
-                                >
-                                  Eliminar
-                                </button>
-                              )}
                             </div>
                           )}
                         </td>
@@ -341,7 +329,7 @@ export default function InterconsultasPanel({ bedsData, onMarkICDone, onDeleteIC
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ width: 'min(90vw, 550px)', background: '#1e293b', border: '1px solid rgba(148, 163, 184, 0.2)', borderRadius: '20px', padding: '32px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
             <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff', marginBottom: '8px' }}>
-              {resolvingState === 'realizada' ? 'Atención Realizada' : (resolvingState === 'no_pertinente' ? 'Desestimar IC' : 'Eliminar IC')}
+              {resolvingState === 'realizada' ? 'Atención Realizada' : 'Desestimar IC'}
             </h3>
             <p style={{ fontSize: '0.95rem', color: '#cbd5e1', marginBottom: '24px' }}>
               Paciente: <strong style={{ color: '#fff' }}>{resolvingIC.patientName}</strong> ({resolvingIC.especialidadDestino})
@@ -372,7 +360,7 @@ export default function InterconsultasPanel({ bedsData, onMarkICDone, onDeleteIC
                 <button type="button" onClick={() => setResolvingIC(null)} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#4c1d95', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
                   Cancelar
                 </button>
-                <button type="submit" disabled={observaciones.trim() === ''} style={{ padding: '10px 24px', background: resolvingState === 'realizada' ? '#22c55e' : (resolvingState === 'no_pertinente' ? '#f97316' : '#ef4444'), color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, cursor: observaciones.trim() === '' ? 'not-allowed' : 'pointer', opacity: observaciones.trim() === '' ? 0.5 : 1 }}>
+                <button type="submit" disabled={observaciones.trim() === ''} style={{ padding: '10px 24px', background: resolvingState === 'realizada' ? '#22c55e' : '#f97316', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, cursor: observaciones.trim() === '' ? 'not-allowed' : 'pointer', opacity: observaciones.trim() === '' ? 0.5 : 1 }}>
                   Confirmar y Guardar
                 </button>
               </div>

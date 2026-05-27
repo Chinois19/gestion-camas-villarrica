@@ -7,7 +7,7 @@ import EditGrdModal from './EditGrdModal';
 import PatientDetailModal from './PatientDetailModal';
 import DischargeModal from './DischargeModal';
 import InterconsultaModal from './InterconsultaModal';
-import { DndContext, useDroppable } from '@dnd-kit/core';
+import { DndContext, useDroppable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 
 const checkCompatibility = (bed, patient) => {
   if (!patient) return true;
@@ -28,7 +28,7 @@ const checkServiceMatch = (bed, patient) => {
 
 
 const getBedStayStatus = (bed) => {
-  if (bed.status !== 'occupied' || !bed.assignedAt || !bed.projectedDays) return 'none';
+  if ((bed.status !== 'occupied' && bed.status !== 'pending_hodom') || !bed.assignedAt || !bed.projectedDays) return 'none';
   const elapsed = (new Date() - new Date(bed.assignedAt)) / (1000 * 60 * 60 * 24);
   const remainingDays = Math.max(0, Math.round(bed.projectedDays - elapsed));
   
@@ -37,12 +37,14 @@ const getBedStayStatus = (bed) => {
   return 'inlier';
 };
 
-function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleaning, onEditGrd }) {
+function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleaning, onMarkHodomDoneByBed, onEditGrd, userRole }) {
+  const isVisor = userRole === 'visor';
   const isCompatible = checkCompatibility(bed, selectedPatient);
   const isSelecting = !!selectedPatient;
   const { isOver, setNodeRef } = useDroppable({
     id: `bed-${room.roomId}-${bed.id}`,
-    data: { roomId: room.roomId, bedId: bed.id }
+    data: { roomId: room.roomId, bedId: bed.id },
+    disabled: isVisor
   });
 
   const styleTarget = bed.tag || bed.type;
@@ -52,7 +54,7 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
   let remainingDays = 0;
   let exceededDays = 0;
   let isExceeded = false;
-  if (bed.status === 'occupied' && bed.assignedAt && bed.projectedDays) {
+  if ((bed.status === 'occupied' || bed.status === 'pending_hodom') && bed.assignedAt && bed.projectedDays) {
     const elapsed = (new Date() - new Date(bed.assignedAt)) / (1000 * 60 * 60 * 24);
     if (elapsed >= bed.projectedDays) {
       isExceeded = true;
@@ -70,7 +72,7 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
   return (
     <div 
       ref={setNodeRef}
-      className={`glass-panel bed-card ${getBedTypeClass(styleTarget)} 
+      className={`glass-panel bed-card ${getBedTypeClass(styleTarget)} ${bed.status} 
         ${isOver && isCompatible ? 'droppable-over' : ''} 
         ${isSelecting && isCompatible ? 'compatible-highlight' : ''} 
         ${isSelecting && !isCompatible ? 'non-compatible-dim' : ''}`}
@@ -80,11 +82,19 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
           <Bed size={16} />
           <span style={{ fontWeight: '600' }}>Cama {bed.id}</span>
         </div>
-        <div className={`bed-type-badge ${styleTarget.toLowerCase().includes('uci') ? 'b-uci' : ''}`}>{styleTarget}</div>
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {bed.status === 'pending_hodom' && (
+            <span className="status-pill" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.4)', fontSize: '0.58rem', padding: '2px 5px', borderRadius: '4px', fontWeight: 700 }}>Pend. HODOM</span>
+          )}
+          {bed.interconsultas && bed.interconsultas.filter(ic => ic.estado === 'pendiente').map((ic, i) => (
+            <span key={`ic-${i}`} className="status-pill" style={{ background: 'rgba(234,179,8,0.15)', color: '#eab308', border: '1px solid rgba(234,179,8,0.4)', fontSize: '0.58rem', padding: '2px 5px', borderRadius: '4px', fontWeight: 700 }}>IC pendiente {ic.especialidadDestino}</span>
+          ))}
+          <div className={`bed-type-badge ${styleTarget.toLowerCase().includes('uci') ? 'b-uci' : ''}`}>{styleTarget}</div>
+        </div>
       </div>
 
-      {bed.patient ? (
-        <div className="patient-info" onDoubleClick={() => onEditGrd(room.roomId, bed)}>
+      {(bed.patient || bed.status === 'pending_hodom') ? (
+        <div className="patient-info" onDoubleClick={() => !isVisor && onEditGrd(room.roomId, bed)}>
           <div className="patient-details" style={{ width: '100%' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <div className="patient-main" style={{ width: '28px', height: '28px', minWidth: '28px', borderRadius: '50%', background: 'var(--glass-highlight)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -102,10 +112,10 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
                 </div>
               </span>
             </div>
-            <div className="patient-meta" style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }} onClick={() => onEditGrd(room.roomId, bed)}>
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--status-occupied)' }}></span>
-              {bed.grdName ? `GRD: ${bed.grdName}` : 'Ocupada'}
-              <Pencil size={12} style={{ marginLeft: '4px', opacity: 0.6 }} />
+            <div className="patient-meta" style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: isVisor ? 'default' : 'pointer' }} onClick={() => !isVisor && onEditGrd(room.roomId, bed)}>
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: bed.status === 'pending_hodom' ? '#22c55e' : 'var(--status-occupied)' }}></span>
+              {bed.grdName ? `GRD: ${bed.grdName}` : (bed.status === 'pending_hodom' ? 'Pendiente HODOM' : 'Ocupada')}
+              {!isVisor && <Pencil size={12} style={{ marginLeft: '4px', opacity: 0.6 }} />}
             </div>
             {bed.projectedDays > 0 && (
               <div className="los-progress-bar">
@@ -117,9 +127,36 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
                 </span>
               </div>
             )}
-            <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); onDischarge(room.roomId, bed.id); }}>
-              <LogOut size={12} /> Dar Alta
-            </button>
+            {bed.status === 'pending_hodom' ? (
+              !isVisor && (
+                <button 
+                  className="glass-button primary" 
+                  style={{ 
+                    padding: '4px 8px', 
+                    fontSize: '0.7rem', 
+                    marginTop: '8px', 
+                    width: '100%', 
+                    display: 'flex', 
+                    justifyContent: 'center',
+                    background: 'linear-gradient(135deg,#22c55e,#16a34a)',
+                    borderColor: '#22c55e',
+                    color: '#fff'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMarkHodomDoneByBed(room.roomId, bed.id);
+                  }}
+                >
+                  <CheckCircle size={12} /> Confirmación de ingreso a HODOM
+                </button>
+              )
+            ) : (
+              !isVisor && (
+                <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); onDischarge(room.roomId, bed.id); }}>
+                  <LogOut size={12} /> Dar Alta
+                </button>
+              )
+            )}
           </div>
         </div>
       ) : (
@@ -145,7 +182,10 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
   );
 }
 
-export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, user }) {
+export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, onMarkHodomDoneByBed, user, onEditPatient, onViewPatient }) {
+  const userRole = user?.role || 'visor';
+  const isVisor = userRole === 'visor';
+
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [pendingAssignment, setPendingAssignment] = useState(null); // { patient, bedId, roomId, serviceMismatch, bedType }
   const [editingGrdBed, setEditingGrdBed] = useState(null); // { roomId, bed }
@@ -158,7 +198,18 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   const [statusFilter, setStatusFilter] = useState('todos');
   const [serviceFilter, setServiceFilter] = useState('todos');
   const [stayFilter, setStayFilter] = useState('todos');
+  const [icFilter, setIcFilter] = useState('todos');
   const [showFilters, setShowFilters] = useState(true);
+  
+  const [isDraggingActive, setIsDraggingActive] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -266,36 +317,39 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     }
   };
 
+  const handleDischargeWaiting = (patient) => {
+    const mockBed = {
+      id: patient.id,
+      roomId: 'Espera',
+      patient: patient.name,
+      rut: patient.rut || '—',
+      age: patient.age || '—',
+      sex: patient.sexo || '—',
+      prevision: patient.prevision || '—',
+      diagnosis: patient.diagnosis || '—',
+      isWaiting: true
+    };
+    setDischargingPatient({ roomId: 'Espera', bed: mockBed, isWaiting: true });
+  };
+
   const handleDischargeConfirm = (formData) => {
     if (!dischargingPatient) return;
     const { roomId, bed } = dischargingPatient;
     const bedId = bed.id;
 
+    if (dischargingPatient.isWaiting) {
+      setWaitingList(prev => prev.filter(p => p.id !== bedId));
+      setDischargingPatient(null);
+      return;
+    }
+
     if (formData.destino === 'Hospitalización domiciliaria') {
       updateBedState(roomId, bedId, { 
-        status: 'cleaning', 
-        patient: null, 
-        diagnosis: null, 
-        grdId: null, 
-        grdName: null, 
-        projectedDays: null,
-        interconsultas: []
+        status: 'pending_hodom'
       });
 
-      if (onHodomSubmit) {
-        onHodomSubmit({
-          patientName: bed.patient,
-          rut: formData.rut,
-          edad: parseInt(formData.edad) || 0,
-          sexo: formData.sexo,
-          roomId,
-          bedId,
-          diagnostico: bed.diagnosis || [bed.grdName] || [],
-          prevision: formData.prevision,
-          direccion: formData.direccion,
-          hodomChecks: formData.hodomChecks,
-          hodomObservaciones: formData.observaciones
-        });
+      if (onHodomSubmit && formData.hodomData) {
+        onHodomSubmit(formData.hodomData);
       }
     } else {
       updateBedState(roomId, bedId, { 
@@ -362,68 +416,96 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     updateBedState(roomId, bedId, { status: 'available' });
   };
 
-  const handleTransfer = (sourceRoomId, sourceBedId, targetRoomId, targetBedId, newGrdData) => {
+  const handleTransfer = (sourceRoomId, sourceBedId, targetRoomId, targetBedId, newGrdData, transferType = 'libre') => {
     let sourceBedInfo = null;
+    let targetBedInfo = null;
     let newBedsData = { ...bedsData };
     
-    // Find and copy source bed data
+    // First pass: find source and target bed infos
     for (const floor in newBedsData) {
       for (const sector in newBedsData[floor]) {
-        const roomIndex = newBedsData[floor][sector].findIndex(r => r.roomId === sourceRoomId);
-        if (roomIndex !== -1) {
-          const room = newBedsData[floor][sector][roomIndex];
-          const bedIndex = room.beds.findIndex(b => b.id === sourceBedId);
-          if (bedIndex !== -1) {
-            sourceBedInfo = { ...room.beds[bedIndex] };
-            
-            // Vacate source bed
-            const newRoomBeds = [...room.beds];
-            newRoomBeds[bedIndex] = {
-              ...newRoomBeds[bedIndex],
-              status: 'cleaning',
-              patient: null,
-              diagnosis: null,
-              grdId: null,
-              grdName: null,
-              severity: null,
-              projectedDays: null,
-              assignedAt: null
-            };
-            const newRooms = [...newBedsData[floor][sector]];
-            newRooms[roomIndex] = { ...room, beds: newRoomBeds };
-            newBedsData[floor][sector] = newRooms;
-          }
+        const sourceRoom = newBedsData[floor][sector].find(r => r.roomId === sourceRoomId);
+        if (sourceRoom) {
+          const sBed = sourceRoom.beds.find(b => b.id === sourceBedId);
+          if (sBed) sourceBedInfo = { ...sBed };
+        }
+        const targetRoom = newBedsData[floor][sector].find(r => r.roomId === targetRoomId);
+        if (targetRoom) {
+          const tBed = targetRoom.beds.find(b => b.id === targetBedId);
+          if (tBed) targetBedInfo = { ...tBed };
         }
       }
     }
 
-    if (!sourceBedInfo) return;
+    if (!sourceBedInfo || !targetBedInfo) return;
 
-    // Fill target bed
+    // Apply the updated GRD data to the source info before transferring
+    if (newGrdData) {
+      sourceBedInfo.grdId = newGrdData.grdId;
+      sourceBedInfo.grdName = newGrdData.grdName;
+      sourceBedInfo.severity = newGrdData.severity;
+      sourceBedInfo.projectedDays = newGrdData.projectedDays;
+    }
+
+    // Second pass: apply the swap or transfer
     for (const floor in newBedsData) {
       for (const sector in newBedsData[floor]) {
-        const roomIndex = newBedsData[floor][sector].findIndex(r => r.roomId === targetRoomId);
-        if (roomIndex !== -1) {
-          const room = newBedsData[floor][sector][roomIndex];
-          const bedIndex = room.beds.findIndex(b => b.id === targetBedId);
-          if (bedIndex !== -1) {
-            const newRoomBeds = [...room.beds];
-            newRoomBeds[bedIndex] = {
-              ...newRoomBeds[bedIndex],
-              status: 'occupied',
-              patient: sourceBedInfo.patient,
-              diagnosis: sourceBedInfo.diagnosis,
-              grdId: newGrdData ? newGrdData.grdId : sourceBedInfo.grdId,
-              grdName: newGrdData ? newGrdData.grdName : sourceBedInfo.grdName,
-              severity: newGrdData ? newGrdData.severity : sourceBedInfo.severity,
-              projectedDays: newGrdData ? newGrdData.projectedDays : sourceBedInfo.projectedDays,
-              assignedAt: sourceBedInfo.assignedAt,
-              transferAt: new Date().toISOString() // Traceability timestamp
-            };
-            const newRooms = [...newBedsData[floor][sector]];
-            newRooms[roomIndex] = { ...room, beds: newRoomBeds };
-            newBedsData[floor][sector] = newRooms;
+        let sectorRooms = [...newBedsData[floor][sector]];
+        let sectorModified = false;
+
+        const sRoomIndex = sectorRooms.findIndex(r => r.roomId === sourceRoomId);
+        if (sRoomIndex !== -1) {
+          const room = sectorRooms[sRoomIndex];
+          const bIndex = room.beds.findIndex(b => b.id === sourceBedId);
+          if (bIndex !== -1) {
+            const newBeds = [...room.beds];
+            if (transferType === 'enroque') {
+              // Copy all properties from targetBedInfo, except the physical bed properties
+              const { id, type, tag, ...targetPatientData } = targetBedInfo;
+              newBeds[bIndex] = {
+                id: newBeds[bIndex].id,
+                type: newBeds[bIndex].type,
+                tag: newBeds[bIndex].tag,
+                ...targetPatientData,
+                transferAt: new Date().toISOString()
+              };
+            } else {
+              // Cama Libre
+              newBeds[bIndex] = {
+                id: newBeds[bIndex].id,
+                type: newBeds[bIndex].type,
+                tag: newBeds[bIndex].tag,
+                status: 'cleaning'
+              };
+            }
+            sectorRooms[sRoomIndex] = { ...room, beds: newBeds };
+            sectorModified = true;
           }
+        }
+
+        const tRoomIndex = sectorRooms.findIndex(r => r.roomId === targetRoomId);
+        if (tRoomIndex !== -1) {
+          const room = sectorRooms[tRoomIndex];
+          const bIndex = room.beds.findIndex(b => b.id === targetBedId);
+          if (bIndex !== -1) {
+            const newBeds = [...room.beds];
+            // Copy all properties from sourceBedInfo, except physical bed properties
+            const { id, type, tag, ...sourcePatientData } = sourceBedInfo;
+            newBeds[bIndex] = {
+              id: newBeds[bIndex].id,
+              type: newBeds[bIndex].type,
+              tag: newBeds[bIndex].tag,
+              ...sourcePatientData,
+              status: 'occupied',
+              transferAt: new Date().toISOString()
+            };
+            sectorRooms[tRoomIndex] = { ...room, beds: newBeds };
+            sectorModified = true;
+          }
+        }
+
+        if (sectorModified) {
+          newBedsData[floor][sector] = sectorRooms;
         }
       }
     }
@@ -434,25 +516,28 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
 
   const confirmGrdEdit = (grdData, transferTarget) => {
     if (transferTarget) {
-      handleTransfer(editingGrdBed.roomId, editingGrdBed.bed.id, transferTarget.roomId, transferTarget.bedId, grdData);
+      handleTransfer(editingGrdBed.roomId, editingGrdBed.bed.id, transferTarget.roomId, transferTarget.bedId, grdData, transferTarget.type);
     } else {
       updateBedState(editingGrdBed.roomId, editingGrdBed.bed.id, grdData);
       setEditingGrdBed(null);
     }
   };
 
-  const availableBeds = [];
+  const allBeds = [];
   Object.keys(bedsData).forEach(floor => {
     Object.keys(bedsData[floor]).forEach(sector => {
       bedsData[floor][sector].forEach(room => {
         room.beds.forEach(bed => {
-          if (bed.status === 'available') {
-            availableBeds.push({
+          if (bed.status === 'available' || bed.status === 'occupied') {
+            allBeds.push({
               id: bed.id,
               roomId: room.roomId,
               roomType: room.roomType,
               type: bed.type,
               tag: bed.tag,
+              status: bed.status,
+              patient: bed.patient,
+              grdId: bed.grdId,
               floor: floor.replace('piso', 'Piso ')
             });
           }
@@ -463,12 +548,21 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
 
   const formatFloor = (f) => f.replace('piso', 'Piso ');
   const formatSector = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  const sectorsToRender = selectedSector === 'todos' ? ['poniente', 'oriente'] : [selectedSector];
-  const floorsToRender = selectedFloor === 'todos' ? ['piso4', 'piso3', 'piso2'] : [selectedFloor];
+  const availableFloors = Object.keys(bedsData).sort((a,b) => b.localeCompare(a));
+  const availableSectors = Array.from(new Set(Object.keys(bedsData).flatMap(floor => Object.keys(bedsData[floor]))));
+  const sectorsToRender = selectedSector === 'todos' ? availableSectors : [selectedSector];
+  const floorsToRender = selectedFloor === 'todos' ? availableFloors : [selectedFloor];
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
-      <div className={`main-layout ${!showFilters ? 'filters-hidden' : ''}`}>
+    <DndContext 
+      sensors={sensors}
+      onDragStart={() => setIsDraggingActive(true)}
+      onDragEnd={(event) => {
+        setIsDraggingActive(false);
+        handleDragEnd(event);
+      }}
+    >
+      <div className={`main-layout ${!showFilters ? 'filters-hidden' : ''} ${isDraggingActive ? 'dragging-active' : ''}`}>
         {showFilters && (
           <aside className="sidebar">
           <div className="glass-panel sidebar-section">
@@ -487,27 +581,33 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
               <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>1. SELECCIÓN DE PISO</div>
               <div className="stack-group">
                 <button className={`stack-btn ${selectedFloor === 'todos' ? 'active' : ''}`} onClick={() => setSelectedFloor('todos')}>Todo el Hospital</button>
-                <button className={`stack-btn ${selectedFloor === 'piso4' ? 'active' : ''}`} onClick={() => setSelectedFloor('piso4')}>Piso 4</button>
-                <button className={`stack-btn ${selectedFloor === 'piso3' ? 'active' : ''}`} onClick={() => setSelectedFloor('piso3')}>Piso 3</button>
-                <button className={`stack-btn ${selectedFloor === 'piso2' ? 'active' : ''}`} onClick={() => setSelectedFloor('piso2')}>Piso 2</button>
+                {availableFloors.map(floor => (
+                  <button key={floor} className={`stack-btn ${selectedFloor === floor ? 'active' : ''}`} onClick={() => setSelectedFloor(floor)} style={{ textTransform: 'capitalize' }}>
+                    {floor.replace('piso', 'Piso ')}
+                  </button>
+                ))}
               </div>
             </div>
             <div style={{ marginBottom: '20px' }}>
               <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>2. VISTA DE SECTORES</div>
               <div className="stack-group">
                 <button className={`stack-btn ${selectedSector === 'todos' ? 'active' : ''}`} onClick={() => setSelectedSector('todos')}>Mostrar Ambos</button>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button className={`stack-btn ${selectedSector === 'poniente' ? 'active' : ''}`} onClick={() => setSelectedSector('poniente')} style={{ flex: 1 }}>Poniente</button>
-                  <button className={`stack-btn ${selectedSector === 'oriente' ? 'active' : ''}`} onClick={() => setSelectedSector('oriente')} style={{ flex: 1 }}>Oriente</button>
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  {availableSectors.map(sector => (
+                    <button key={sector} className={`stack-btn ${selectedSector === sector ? 'active' : ''}`} onClick={() => setSelectedSector(sector)} style={{ flex: 1, textTransform: 'capitalize' }}>
+                      {sector}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
             <div style={{ marginBottom: '20px' }}>
               <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>3. ESTADO DE CAMA</div>
-              <div className="stack-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                <button className={`stack-btn ${statusFilter === 'todos' ? 'active' : ''}`} style={{ padding: '8px 4px', fontSize: '0.8rem' }} onClick={() => setStatusFilter('todos')}>Todas</button>
-                <button className={`stack-btn ${statusFilter === 'available' ? 'active' : ''}`} style={{ padding: '8px 4px', fontSize: '0.8rem' }} onClick={() => setStatusFilter('available')}>Disp.</button>
-                <button className={`stack-btn ${statusFilter === 'cleaning' ? 'active' : ''}`} style={{ padding: '8px 4px', fontSize: '0.8rem' }} onClick={() => setStatusFilter('cleaning')}>Aseo</button>
+              <div className="stack-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '6px' }}>
+                <button className={`stack-btn ${statusFilter === 'todos' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.72rem' }} onClick={() => setStatusFilter('todos')}>Todas</button>
+                <button className={`stack-btn ${statusFilter === 'available' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.72rem' }} onClick={() => setStatusFilter('available')}>Disp.</button>
+                <button className={`stack-btn ${statusFilter === 'cleaning' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.72rem' }} onClick={() => setStatusFilter('cleaning')}>Aseo</button>
+                <button className={`stack-btn ${statusFilter === 'pending_hodom' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.72rem' }} onClick={() => setStatusFilter('pending_hodom')}>Pend. HODOM</button>
               </div>
             </div>
             <div style={{ marginBottom: '20px' }}>
@@ -528,6 +628,26 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                 <option value="inlier">Inlier (Estándar)</option>
                 <option value="riesgo">Riesgo Outlier</option>
                 <option value="outlier">Outlier Superior (Rojo)</option>
+              </select>
+            </div>
+            <div style={{ marginTop: '20px' }}>
+              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>6. IC PENDIENTES</div>
+              <select className="glass-input" style={{ width: '100%' }} value={icFilter} onChange={(e) => setIcFilter(e.target.value)}>
+                <option value="todos">Todas las Camas</option>
+                <option value="con_ic">Todas con IC Pendientes</option>
+                {Array.from(new Set(
+                  Object.values(bedsData).flatMap(floor => 
+                    Object.values(floor).flatMap(sector => 
+                      sector.flatMap(room => 
+                        room.beds.flatMap(bed => 
+                          (bed.interconsultas || []).filter(ic => ic.estado === 'pendiente').map(ic => ic.especialidadDestino)
+                        )
+                      )
+                    )
+                  )
+                )).sort().map(esp => (
+                  <option key={esp} value={`ic_${esp}`}>IC {esp}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -583,7 +703,17 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                   if (stayFilter !== 'todos') {
                     matchStay = getBedStayStatus(bed) === stayFilter;
                   }
-                  return matchStatus && matchService && matchStay;
+                  let matchIc = true;
+                  if (icFilter !== 'todos') {
+                    const pendingICs = (bed.interconsultas || []).filter(ic => ic.estado === 'pendiente');
+                    if (icFilter === 'con_ic') {
+                      matchIc = pendingICs.length > 0;
+                    } else if (icFilter.startsWith('ic_')) {
+                      const esp = icFilter.replace('ic_', '');
+                      matchIc = pendingICs.some(ic => ic.especialidadDestino === esp);
+                    }
+                  }
+                  return matchStatus && matchService && matchStay && matchIc;
                 });
                 return { ...room, beds: filteredBeds };
               }).filter(room => room.beds.length > 0);
@@ -604,7 +734,9 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                             selectedPatient={selectedPatient} 
                             onDischarge={handleDischarge}
                             onFinishCleaning={handleFinishCleaning}
+                            onMarkHodomDoneByBed={onMarkHodomDoneByBed}
                             onEditGrd={(rId, b) => setEditingGrdBed({ roomId: rId, bed: b })}
+                            userRole={user.role}
                           />
                         ))}
                       </div>
@@ -623,8 +755,11 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             <WaitingList 
               patients={waitingList} 
               onSelectPatient={(p) => setSelectedPatient(selectedPatient?.id === p.id ? null : p)}
-              onViewPatient={(p) => setViewingPatient(p)}
+              onViewPatient={onViewPatient}
+              onEditPatient={onEditPatient}
+              onDischargeWaiting={handleDischargeWaiting}
               selectedPatientId={selectedPatient?.id}
+              userRole={userRole}
             />
           </div>
         </aside>
@@ -641,7 +776,8 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         {editingGrdBed && (
           <EditGrdModal
             bed={{ ...editingGrdBed.bed, roomId: editingGrdBed.roomId }}
-            availableBeds={availableBeds}
+            allBeds={allBeds}
+            user={user}
             onConfirm={confirmGrdEdit}
             onClose={() => setEditingGrdBed(null)}
             onDischargeRequest={(b) => {
@@ -663,6 +799,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
           <DischargeModal
             bed={dischargingPatient.bed}
             onConfirm={handleDischargeConfirm}
+            onHodomSubmit={onHodomSubmit}
             onClose={() => setDischargingPatient(null)}
           />
         )}

@@ -116,16 +116,16 @@ export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRo
                     {wait.isCritical && <span style={{ fontSize: '0.65rem', background: '#ef4444', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>DEMORADO</span>}
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    {(userRole === 'admin' || userRole === 'hodom') ? (
+                    {(userRole === 'superadmin' || userRole === 'medico_hodom' || userRole === 'gestor_camas') && userRole !== 'visor' ? (
                       <>
                         <button
                           className="glass-button primary"
                           style={{ padding: '6px 12px', fontSize: '0.75rem', background: 'var(--panel-bg)', borderColor: 'var(--status-available)', color: 'var(--status-available)' }}
                           onClick={() => onMarkDone(req.id)}
                         >
-                          ✓ Paciente Ingresado
+                          ✓ Confirmación de Ingreso a HODOM
                         </button>
-                        {userRole === 'admin' && (
+                        {userRole === 'superadmin' && (
                           <button
                             className="glass-button"
                             style={{ padding: '6px 12px', fontSize: '0.75rem', color: '#ef4444' }}
@@ -137,7 +137,7 @@ export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRo
                       </>
                     ) : (
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                        Solo lectura (HODOM)
+                        Solo lectura
                       </div>
                     )}
                   </div>

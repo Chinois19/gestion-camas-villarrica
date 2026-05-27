@@ -1,26 +1,60 @@
 import React, { useState } from 'react';
 import { UserPlus, Search, Shield, User, Mail, MoreVertical, Trash2, Edit2, Check, X } from 'lucide-react';
+import emailjs from '@emailjs/browser';
 import './UserManagement.css';
 
 const UserManagement = ({ notify }) => {
   const [users, setUsers] = useState([
-    { id: 1, name: 'Admin Villarrica', username: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'admin', status: 'active' },
-    { id: 2, name: 'Visor General', username: 'visor', email: 'visor@hospitalvillarrica.cl', role: 'viewer', status: 'active' },
-    { id: 3, name: 'Dr. Roberto Soto', username: 'rsoto', email: 'rsoto@hospitalvillarrica.cl', role: 'viewer', status: 'active' },
-    { id: 4, name: 'Enf. Maria Paz', username: 'mpaz', email: 'mpaz@hospitalvillarrica.cl', role: 'admin', status: 'active' },
+    { id: 1, name: 'Admin Villarrica', username: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', status: 'active' },
+    { id: 2, name: 'Visor General', username: 'visor', email: 'visor@hospitalvillarrica.cl', role: 'visor', status: 'active' },
+    { id: 3, name: 'Dr. Roberto Soto', username: 'rsoto', email: 'rsoto@hospitalvillarrica.cl', role: 'medico_general', status: 'active' },
+    { id: 4, name: 'Enf. Maria Paz', username: 'mpaz', email: 'mpaz@hospitalvillarrica.cl', role: 'gestor_camas', status: 'active' },
   ]);
 
   const [isAdding, setIsAdding] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', username: '', email: '', role: 'viewer' });
+  const [isSending, setIsSending] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', username: '', email: '', role: 'visor' });
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleAddUser = (e) => {
+  const handleAddUser = async (e) => {
     e.preventDefault();
-    const id = users.length + 1;
-    setUsers([...users, { ...newUser, id, status: 'active' }]);
-    if (notify) notify(`Profesional ${newUser.name} agregado correctamente.`);
-    setNewUser({ name: '', username: '', email: '', role: 'viewer' });
-    setIsAdding(false);
+    setIsSending(true);
+
+    // 1. Generar contraseña aleatoria de 8 caracteres
+    const generatedPassword = Math.random().toString(36).slice(-8);
+
+    // 2. Configuración de EmailJS
+    // INSTRUCCIONES: Crea una cuenta en https://www.emailjs.com/
+    // - Crea un servicio (Email Service)
+    // - Crea un template de correo con las variables: {{to_name}}, {{username}}, {{password}}, {{role}}
+    // - Reemplaza los valores de abajo con tus IDs reales:
+    const SERVICE_ID = 'service_tz8tauh'; 
+    const TEMPLATE_ID = 'template_2b8zk5w';
+    const PUBLIC_KEY = 'PbZKvEo7Mmyk0dD0-';
+
+    const templateParams = {
+      to_email: newUser.email,
+      to_name: newUser.name,
+      username: newUser.username,
+      password: generatedPassword,
+      role: newUser.role
+    };
+
+    try {
+      // 3. Enviar el correo usando EmailJS
+      await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
+      
+      const id = users.length + 1;
+      setUsers([...users, { ...newUser, id, status: 'active' }]);
+      if (notify) notify(`Profesional ${newUser.name} agregado. Se enviaron sus credenciales al correo.`);
+      setNewUser({ name: '', username: '', email: '', role: 'visor' });
+      setIsAdding(false);
+    } catch (error) {
+      console.error('Error enviando correo con EmailJS:', error);
+      if (notify) notify('Error al enviar el correo. Revisa la configuración en consola.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
 
@@ -56,8 +90,8 @@ const UserManagement = ({ notify }) => {
         <div className="um-filters">
           <span className="filter-label">Filtros:</span>
           <button className="filter-tag active">Todos</button>
-          <button className="filter-tag">Administradores</button>
-          <button className="filter-tag">Visores</button>
+          <button className="filter-tag">Gestores</button>
+          <button className="filter-tag">Médicos</button>
         </div>
       </div>
 
@@ -89,8 +123,13 @@ const UserManagement = ({ notify }) => {
                 <td><code className="user-code">{user.username}</code></td>
                 <td>
                   <span className={`role-badge ${user.role}`}>
-                    {user.role === 'admin' ? <Shield size={12} /> : <User size={12} />}
-                    {user.role === 'admin' ? 'Gestor (Admin)' : 'Visor'}
+                    {user.role === 'superadmin' ? <Shield size={12} /> : <User size={12} />}
+                    {user.role === 'superadmin' && 'Super Admin'}
+                    {user.role === 'gestor_camas' && 'Gestor de Camas'}
+                    {user.role === 'medico_general' && 'Médico General'}
+                    {user.role === 'personal_aseo' && 'Personal de Aseo'}
+                    {user.role === 'visor' && 'Visor'}
+                    {user.role === 'medico_hodom' && 'Médico HODOM'}
                   </span>
                 </td>
                 <td>
@@ -154,13 +193,19 @@ const UserManagement = ({ notify }) => {
                   value={newUser.role}
                   onChange={e => setNewUser({...newUser, role: e.target.value})}
                 >
-                  <option value="viewer">Visor (Solo Lectura)</option>
-                  <option value="admin">Gestor de Camas (Administrador)</option>
+                  <option value="visor">Visor (Solo Lectura)</option>
+                  <option value="superadmin">Super Administrador</option>
+                  <option value="gestor_camas">Gestor de Camas</option>
+                  <option value="medico_general">Médico General</option>
+                  <option value="personal_aseo">Personal de Aseo</option>
+                  <option value="medico_hodom">Médico HODOM</option>
                 </select>
               </div>
               <div className="modal-actions">
-                <button type="button" className="glass-button" onClick={() => setIsAdding(false)}>Cancelar</button>
-                <button type="submit" className="glass-button primary">Guardar Profesional</button>
+                <button type="button" className="glass-button" onClick={() => setIsAdding(false)} disabled={isSending}>Cancelar</button>
+                <button type="submit" className="glass-button primary" disabled={isSending}>
+                  {isSending ? 'Guardando y Enviando...' : 'Guardar y Enviar Credenciales'}
+                </button>
               </div>
             </form>
           </div>
