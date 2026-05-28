@@ -183,9 +183,8 @@ header.glass-panel {
   top: 80px;
   max-height: calc(100vh - 100px);
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-subtle) transparent;
   transition: z-index 0.1s;
+  padding-bottom: 20px; /* Ensure bottom padding for scroll */
 }
 
 .main-layout.dragging-active .waiting-list-section {
@@ -515,6 +514,8 @@ header.glass-panel {
   color: var(--accent);
 }
 .projection-meta { font-size: 0.75rem; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; }
+
+
 
 /* ── Traceability ─────────────────────────────────────────────── */
 .traceability-section {
