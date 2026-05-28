@@ -365,10 +365,12 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
         role: currentUser?.roleName || currentUser?.role || 'Profesional',
         note: '✏️ Datos de solicitud actualizados'
       }, ...evolutions];
-      onUpdatePatient({ ...patientData, ...formData, secondaryCodes, evolutions: evolWithSave,
+      onUpdatePatient({
+        ...patientData, ...formData, secondaryCodes, evolutions: evolWithSave,
         name: formData.nombre, age: parseInt(formData.edad) || 0, origin: formData.servicioSol,
         bedTypeRequired: formData.destino, updatedAt: new Date().toISOString(),
-        updatedBy: currentUser?.name || 'Usuario' });
+        updatedBy: currentUser?.name || 'Usuario'
+      });
       return;
     }
 
@@ -377,7 +379,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     if (formData.destino === 'UCI') calculatedPriority = 1;
     else if (formData.destino === 'UTI') calculatedPriority = 2;
 
-    const generatedTicket = `REQ-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(Math.random()*900)+100}`;
+    const generatedTicket = `REQ-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900) + 100}`;
     setTicketNumber(generatedTicket);
 
     const newPatient = {
@@ -517,10 +519,10 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
 
       <form onSubmit={handleSubmit}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start', marginBottom: 12 }}>
-          
+
           {/* Columna Izquierda: Datos del Paciente, Diagnóstico Clínico, Gestión de la Derivación */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            
+
             {/* 1. DATOS DEL PACIENTE */}
             <SectionCard icon={User} title="1. Datos del Paciente" color="#06b6d4">
               {isViewMode ? (
@@ -573,15 +575,15 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                 {!isViewMode && (
                   <div ref={autocompleteRef} style={{ position: 'relative' }}>
                     <FieldLabel>Buscador DIAGNÓSTICO CIE-10 (CÓDIGO O GLOSA)</FieldLabel>
-                    <div style={{position:'relative',display:'flex',alignItems:'center'}}>
-                      <Search size={14} style={{position:'absolute',left:12,color:'var(--text-muted)',pointerEvents:'none'}}/>
-                      <input value={searchTerm} onChange={handleSearchCie10} onFocus={()=>setShowSuggestions(true)}
-                        placeholder={secondaryCodes.length>=5 && formData.dxCie10 ? 'Máximo 6 diagnósticos (1 principal + 5 sec) alcanzado' : 'Ej. J18 - Neumonía o \'cólera\''}
-                        disabled={secondaryCodes.length>=5 && !!formData.dxCie10} autoComplete="off"
-                        style={{width:'100%',background:'var(--inset-bg)',border:'1px solid var(--border-subtle)',borderRadius:8,padding:'7px 11px 7px 32px',color:'var(--text-primary)',fontFamily:'var(--font)',fontSize:'0.82rem',outline:'none',boxSizing:'border-box',opacity:(secondaryCodes.length>=5 && formData.dxCie10)?0.5:1}}/>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <Search size={14} style={{ position: 'absolute', left: 12, color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                      <input value={searchTerm} onChange={handleSearchCie10} onFocus={() => setShowSuggestions(true)}
+                        placeholder={secondaryCodes.length >= 5 && formData.dxCie10 ? 'Máximo 6 diagnósticos (1 principal + 5 sec) alcanzado' : 'Ej. J18 - Neumonía o \'cólera\''}
+                        disabled={secondaryCodes.length >= 5 && !!formData.dxCie10} autoComplete="off"
+                        style={{ width: '100%', background: 'var(--inset-bg)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '7px 11px 7px 32px', color: 'var(--text-primary)', fontFamily: 'var(--font)', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box', opacity: (secondaryCodes.length >= 5 && formData.dxCie10) ? 0.5 : 1 }} />
                     </div>
                     {showSuggestions && suggestions.length > 0 && (
-                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 99999, background: 'var(--bg-color)', border: '1px solid #3b82f6', borderRadius: 8, maxHeight: 200, overflowY: 'auto', marginTop: 4, boxShadow:'0 16px 48px rgba(0,0,0,0.85)' }}>
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 99999, background: 'var(--bg-color)', border: '1px solid #3b82f6', borderRadius: 8, maxHeight: 200, overflowY: 'auto', marginTop: 4, boxShadow: '0 16px 48px rgba(0,0,0,0.85)' }}>
                         {suggestions.map((item, idx) => (
                           <div key={idx} onMouseDown={(e) => { e.preventDefault(); handleSelectCie10(item); }}
                             style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '0.82rem', borderBottom: idx < suggestions.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}
@@ -605,7 +607,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                           <span><strong>{formData.dxCie10}</strong> - {cie10Data.find(c => c.code === formData.dxCie10)?.desc || ''}</span>
                         </div>
                         {!isViewMode && (
-                          <button type="button" onClick={() => removeDiagnosis(formData.dxCie10)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display:'flex' }}><X size={14}/></button>
+                          <button type="button" onClick={() => removeDiagnosis(formData.dxCie10)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex' }}><X size={14} /></button>
                         )}
                       </div>
                     )}
@@ -616,13 +618,13 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                           <span><strong>{code}</strong> - {cie10Data.find(c => c.code === code)?.desc || ''}</span>
                         </div>
                         {!isViewMode && (
-                          <button type="button" onClick={() => removeDiagnosis(code)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display:'flex' }}><X size={12}/></button>
+                          <button type="button" onClick={() => removeDiagnosis(code)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex' }}><X size={12} /></button>
                         )}
                       </div>
                     ))}
                   </div>
                 )}
-                
+
                 {formData.dxGrupo && (
                   <div style={{ marginTop: 4 }}>
                     <ReadOnlyField label="Grupo Diagnóstico Automático (CIE-10 Agrupado)" value={formData.dxGrupo} />
@@ -669,7 +671,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
 
           {/* Columna Derecha: Signos Vitales, Requerimientos Clínicos, Evoluciones Clínicas */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            
+
             {/* 4. SIGNOS VITALES — oculto si es Urgencia */}
             {formData.servicioSol !== 'Servicio de Atención de Urgencia' && (
               <SectionCard icon={Heart} title="4. Signos Vitales al Momento de la Indicación Médica" color="#ef4444">
@@ -788,28 +790,28 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
             {patientData && (
               <SectionCard icon={Activity} title="6. Registro de Evolución Clínica" color="#a855f7">
                 {!isViewMode && (
-                  <div style={{display:'flex',gap:8,marginBottom:10}}>
-                    <textarea value={evolNote} onChange={e=>setEvolNote(e.target.value)}
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                    <textarea value={evolNote} onChange={e => setEvolNote(e.target.value)}
                       placeholder="Registrar evolución clínica, observaciones..."
-                      rows={2} style={{flex:1,background:'var(--inset-bg)',border:'1px solid var(--border-subtle)',borderRadius:8,padding:10,color:'var(--text-primary)',fontFamily:'var(--font)',fontSize:'0.82rem',outline:'none',resize:'vertical'}}/>
+                      rows={2} style={{ flex: 1, background: 'var(--inset-bg)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: 10, color: 'var(--text-primary)', fontFamily: 'var(--font)', fontSize: '0.82rem', outline: 'none', resize: 'vertical' }} />
                     <button type="button" onClick={addEvolution}
-                      style={{background:'rgba(168,85,247,0.15)',border:'1px solid rgba(168,85,247,0.4)',borderRadius:8,padding:'0 14px',color:'#a855f7',fontWeight:700,cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',flexShrink:0}}>
+                      style={{ background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.4)', borderRadius: 8, padding: '0 14px', color: '#a855f7', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
                       + Registrar
                     </button>
                   </div>
                 )}
-                <div style={{display:'flex',flexDirection:'column',gap:6, maxHeight: 180, overflowY: 'auto'}}>
-                  {evolutions.length===0 && <div style={{color:'var(--text-muted)',fontSize:'0.78rem',fontStyle:'italic',padding:'4px 0'}}>Sin registros de evolución aún.</div>}
-                  {evolutions.map(ev=>(
-                    <div key={ev.id} style={{background:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.15)',borderRadius:8,padding:'8px 12px',position:'relative'}}>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-                        <div style={{display:'flex',alignItems:'center',gap:6}}>
-                          <div style={{width:6,height:6,borderRadius:'50%',background:'#a855f7',boxShadow:'0 0 4px rgba(168,85,247,0.6)'}}/>
-                          <span style={{fontSize:'0.68rem',color:'#a855f7',fontWeight:700}}>{ev.timestamp}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
+                  {evolutions.length === 0 && <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontStyle: 'italic', padding: '4px 0' }}>Sin registros de evolución aún.</div>}
+                  {evolutions.map(ev => (
+                    <div key={ev.id} style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)', borderRadius: 8, padding: '8px 12px', position: 'relative' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#a855f7', boxShadow: '0 0 4px rgba(168,85,247,0.6)' }} />
+                          <span style={{ fontSize: '0.68rem', color: '#a855f7', fontWeight: 700 }}>{ev.timestamp}</span>
                         </div>
-                        <span style={{fontSize:'0.65rem',color:'var(--text-muted)',background:'var(--border-subtle)',padding:'1px 6px',borderRadius:20}}>{ev.user}{ev.role?' · '+ev.role:''}</span>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', background: 'var(--border-subtle)', padding: '1px 6px', borderRadius: 20 }}>{ev.user}{ev.role ? ' · ' + ev.role : ''}</span>
                       </div>
-                      <p style={{margin:0,fontSize:'0.8rem',color:'var(--text-primary)',lineHeight:1.4}}>{ev.note}</p>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-primary)', lineHeight: 1.4 }}>{ev.note}</p>
                     </div>
                   ))}
                 </div>

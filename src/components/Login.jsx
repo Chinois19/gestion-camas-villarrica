@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Activity, Lock, User, Eye, EyeOff, LogIn } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import './Login.css';
 
 const defaultUsers = [
@@ -23,22 +25,33 @@ const Login = ({ onLogin }) => {
     setIsLoading(true);
     setError('');
 
-    setTimeout(() => {
-      const savedUsers = localStorage.getItem('villarrica_users_prod');
-      const usersList = savedUsers ? JSON.parse(savedUsers) : defaultUsers;
+    setTimeout(async () => {
+      try {
+        const docRef = doc(db, 'appState', 'users');
+        const docSnap = await getDoc(docRef);
+        
+        let usersList = defaultUsers;
+        if (docSnap.exists()) {
+          usersList = docSnap.data().data;
+        }
 
-      const foundUser = usersList.find(u => u.username === username && u.password === password && u.status === 'active');
+        const foundUser = usersList.find(u => u.username === username && u.password === password && u.status === 'active');
 
-      if (foundUser) {
-        onLogin({
-          id: foundUser.id,
-          name: foundUser.name,
-          username: foundUser.username,
-          role: foundUser.role,
-          roleName: foundUser.roleName || foundUser.role // Fallback if newly created user doesn't have roleName
-        });
-      } else {
-        setError('Usuario o contraseña incorrectos');
+        if (foundUser) {
+          onLogin({
+            id: foundUser.id,
+            name: foundUser.name,
+            username: foundUser.username,
+            role: foundUser.role,
+            roleName: foundUser.roleName || foundUser.role // Fallback if newly created user doesn't have roleName
+          });
+        } else {
+          setError('Usuario o contraseña incorrectos');
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error validando usuario:", error);
+        setError('Error al conectar con la base de datos');
         setIsLoading(false);
       }
     }, 1000);

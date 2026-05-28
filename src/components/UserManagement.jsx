@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { UserPlus, Search, Shield, User, Mail, MoreVertical, Trash2, Edit2, Check, X } from 'lucide-react';
 import emailjs from '@emailjs/browser';
+import { useFirebaseSync } from '../hooks/useFirebaseSync';
 import './UserManagement.css';
 
 const defaultUsers = [
@@ -13,14 +14,7 @@ const defaultUsers = [
 ];
 
 const UserManagement = ({ notify }) => {
-  const [users, setUsers] = useState(() => {
-    const saved = localStorage.getItem('villarrica_users_prod');
-    return saved ? JSON.parse(saved) : defaultUsers;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('villarrica_users_prod', JSON.stringify(users));
-  }, [users]);
+  const [users, setUsers, loadingUsers] = useFirebaseSync('appState', 'users', defaultUsers);
 
   const [isAdding, setIsAdding] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -83,6 +77,14 @@ const UserManagement = ({ notify }) => {
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     u.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loadingUsers) {
+    return (
+      <div className="user-management-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <p>Cargando usuarios...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="user-management-page">

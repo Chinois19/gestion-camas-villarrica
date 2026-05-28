@@ -13,6 +13,7 @@ import AseoPanel from './components/AseoPanel';
 import UserManagement from './components/UserManagement';
 import InfrastructureManagement from './components/InfrastructureManagement';
 import InsightsDashboard from './components/InsightsDashboard';
+import { useFirebaseSync } from './hooks/useFirebaseSync';
 import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
 
 // Pre-fill some realistic interconsultas in the DUMMY_DATA to make the initial view visually rich
@@ -35,30 +36,16 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [theme, setTheme] = useState('dark');
 
-  // Clinical state — persisted in localStorage
-  const [bedsData, setBedsData] = useState(() => {
-    const saved = localStorage.getItem('villarrica_bedsData_prod');
-    return saved ? JSON.parse(saved) : initialBedsData;
-  });
-
-  const [waitingList, setWaitingList] = useState(() => {
-    const saved = localStorage.getItem('villarrica_waitingList_prod');
-    return saved ? JSON.parse(saved) : WAITING_LIST;
-  });
-
-  const [hodomRequests, setHodomRequests] = useState(() => {
-    const saved = localStorage.getItem('villarrica_hodomRequests_prod');
-    return saved ? JSON.parse(saved) : initialHodomRequests;
-  });
+  // Clinical state — persisted in Firebase
+  const [bedsData, setBedsData, bedsLoading] = useFirebaseSync('appState', 'bedsData', initialBedsData);
+  const [waitingList, setWaitingList, waitingLoading] = useFirebaseSync('appState', 'waitingList', WAITING_LIST);
+  const [hodomRequests, setHodomRequests, hodomLoading] = useFirebaseSync('appState', 'hodomRequests', initialHodomRequests);
 
   useEffect(() => {
     document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
   }, [theme]);
 
-  // Persist states to localStorage
-  useEffect(() => { localStorage.setItem('villarrica_bedsData_prod', JSON.stringify(bedsData)); }, [bedsData]);
-  useEffect(() => { localStorage.setItem('villarrica_waitingList_prod', JSON.stringify(waitingList)); }, [waitingList]);
-  useEffect(() => { localStorage.setItem('villarrica_hodomRequests_prod', JSON.stringify(hodomRequests)); }, [hodomRequests]);
+  const isLoading = bedsLoading || waitingLoading || hodomLoading;
 
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -252,6 +239,17 @@ function App() {
   // ── LOGIN GATE ─────────────────────────────────────────────────────────────
   if (!currentUser) {
     return <Login onLogin={handleLogin} />;
+  }
+
+  // ── LOADING GATE ───────────────────────────────────────────────────────────
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column', gap: '16px' }}>
+        <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.1)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+        <p style={{ color: 'var(--text-secondary)' }}>Sincronizando datos en tiempo real...</p>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
   }
 
   // ── ROLE PERMISSIONS ───────────────────────────────────────────────────────
