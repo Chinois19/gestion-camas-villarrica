@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Stethoscope, Clock, Search, CheckCircle, XCircle, Trash2, Activity, AlertTriangle, Users } from 'lucide-react';
 
-export default function InterconsultasPanel({ bedsData, onMarkICDone, onDeleteIC, userRole }) {
+export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDone, onDeleteIC, userRole }) {
   const isVisor = userRole === 'visor';
   const [allICs, setAllICs] = useState([]);
   const [filterSpecialty, setFilterSpecialty] = useState('todos');
@@ -35,11 +35,28 @@ export default function InterconsultasPanel({ bedsData, onMarkICDone, onDeleteIC
           });
         });
       });
-    });
+    if (waitingList) {
+      waitingList.forEach(patient => {
+        if (patient.interconsultas && patient.interconsultas.length > 0) {
+          patient.interconsultas.forEach(ic => {
+            list.push({
+              ...ic,
+              patientRut: patient.rut,
+              patientName: patient.name || patient.nombre,
+              floor: 'Urgencia / Espera',
+              sector: 'Sala de Espera',
+              roomId: 'Espera',
+              bedId: patient.id,
+            });
+          });
+        }
+      });
+    }
+
     // Ordenar por fecha de solicitud descendente (nuevas primero)
     list.sort((a, b) => new Date(b.solicitadaAt) - new Date(a.solicitadaAt));
     setAllICs(list);
-  }, [bedsData]);
+  }, [bedsData, waitingList]);
 
   const calculateWaitTimeMinutes = (solicitadaAt) => {
     return Math.floor((new Date() - new Date(solicitadaAt)) / 60000);

@@ -239,7 +239,7 @@ function ReadOnlyField({ label, value }) {
   );
 }
 
-export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient, currentUser, onUpdatePatient, onClose, onSwitchToEdit }) {
+export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient, currentUser, onUpdatePatient, onClose, onSwitchToEdit, onRequestIC }) {
   const isVisor = currentUser?.role === 'visor';
   const patientData = editingPatient || viewingPatient;
   const isViewMode = !!viewingPatient && !editingPatient;
@@ -842,6 +842,13 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
 
         {/* Footer */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingTop: 6, paddingBottom: 20 }}>
+          {onRequestIC && (isViewMode || isEditMode) && !isVisor && (
+            <button type="button" className="glass-button" 
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(234,179,8,0.15)', color: '#eab308', border: '1px solid rgba(234,179,8,0.4)', padding: '8px 16px', fontSize: '0.82rem' }}
+              onClick={onRequestIC}>
+              <Stethoscope size={14} /> Solicitar Interconsulta
+            </button>
+          )}
           {isViewMode ? (
             <>
               {onSwitchToEdit && !isVisor && (

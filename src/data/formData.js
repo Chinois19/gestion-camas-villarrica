@@ -42,6 +42,8 @@ export const ESPECIALIDADES = [
   'Hospitalización Domiciliaria',
   'Medicina Familiar',
   'Medicina de Urgencia y Emergencia',
+  'Química y Farmacia',
+  'PROA',
   // ── Especialidades Médicas CONACEM ─────────────
   'Anatomía Patológica',
   'Anestesiología',

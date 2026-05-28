@@ -33,6 +33,7 @@ function App() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [editingPatient, setEditingPatient] = useState(null);
   const [viewingPatient, setViewingPatient] = useState(null);
+  const [requestingWaitingIC, setRequestingWaitingIC] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [theme, setTheme] = useState('dark');
 
@@ -150,6 +151,15 @@ function App() {
   };
 
   const handleMarkICDone = (roomId, bedId, icId, newState = 'realizada', observaciones = '') => {
+    if (roomId === 'Espera') {
+      setWaitingList(prev => prev.map(p => {
+        if (p.id === bedId) {
+          return { ...p, interconsultas: (p.interconsultas || []).map(ic => ic.id === icId ? { ...ic, estado: newState, observaciones, resueltaAt: new Date().toISOString() } : ic) };
+        }
+        return p;
+      }));
+      return;
+    }
     setBedsData(prev => {
       const next = JSON.parse(JSON.stringify(prev));
       for (const f of ['piso4', 'piso3', 'piso2']) {
@@ -176,6 +186,15 @@ function App() {
   };
 
   const handleDeleteIC = (roomId, bedId, icId) => {
+    if (roomId === 'Espera') {
+      setWaitingList(prev => prev.map(p => {
+        if (p.id === bedId) {
+          return { ...p, interconsultas: (p.interconsultas || []).filter(ic => ic.id !== icId) };
+        }
+        return p;
+      }));
+      return;
+    }
     setBedsData(prev => {
       const next = JSON.parse(JSON.stringify(prev));
       for (const f of ['piso4', 'piso3', 'piso2']) {
@@ -221,6 +240,9 @@ function App() {
           });
         });
       });
+    });
+    waitingList.forEach(p => {
+      if (p.interconsultas) count += p.interconsultas.filter(ic => ic.estado === 'pendiente').length;
     });
     return count;
   })();
@@ -374,6 +396,7 @@ function App() {
           editingPatient={editingPatient}
           viewingPatient={viewingPatient}
           currentUser={currentUser}
+          onRequestIC={() => setRequestingWaitingIC(editingPatient || viewingPatient)}
           onUpdatePatient={(updated) => {
             setWaitingList(prev => prev.map(p => p.id === updated.id ? updated : p));
             setEditingPatient(null);
@@ -391,6 +414,29 @@ function App() {
           }}
         />
       )}
+      {requestingWaitingIC && (
+        <InterconsultaModal
+          bed={{ 
+            patient: requestingWaitingIC.name || requestingWaitingIC.nombre, 
+            rut: requestingWaitingIC.rut, 
+            age: requestingWaitingIC.age || requestingWaitingIC.edad, 
+            roomId: 'Espera', 
+            id: requestingWaitingIC.id,
+            diagnosis: requestingWaitingIC.diagnosis || requestingWaitingIC.dxPrincipal
+          }}
+          currentUser={currentUser}
+          onConfirm={(formData) => {
+             setWaitingList(prev => prev.map(p => {
+               if (p.id === requestingWaitingIC.id) {
+                 return { ...p, interconsultas: [...(p.interconsultas || []), formData] };
+               }
+               return p;
+             }));
+             setRequestingWaitingIC(null);
+          }}
+          onClose={() => setRequestingWaitingIC(null)}
+        />
+      )}
       {currentView === 'hodom' && (
         <HodomPanel
           hodomRequests={hodomRequests}
@@ -402,6 +448,7 @@ function App() {
       {currentView === 'interconsultas' && (
         <InterconsultasPanel
           bedsData={bedsData}
+          waitingList={waitingList}
           onMarkICDone={handleMarkICDone}
           onDeleteIC={handleDeleteIC}
           userRole={currentUser.role}
