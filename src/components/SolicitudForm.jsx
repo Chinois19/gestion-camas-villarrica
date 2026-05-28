@@ -4,6 +4,7 @@ import { getHospitalStats } from '../data/dummy';
 import cie10Data from '../data/cie10.json';
 import { SERVICIOS_SOLICITANTES, PREVISIONES, ESPECIALIDADES, COMUNAS_CHILE } from '../data/formData';
 import { MEDICOS } from '../data/medicos';
+import MultiSearchableSelect from './MultiSearchableSelect';
 
 const DESTINOS = ['UCI', 'UTI', 'Cuidados Medios', 'Maternidad', 'Neonatología', 'Infantil', 'Básico'];
 const SEXOS = ['—', 'Masculino', 'Femenino', 'Otro'];
@@ -261,6 +262,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     dxCie10: patientData.dxCie10 || '', dxGrupo: patientData.dxGrupo || '',
     servicioSol: patientData.origin || '', medicoSol: patientData.medicoSol || '',
     especialidadMedico: patientData.especialidadMedico || '',
+    especialidadTratante: Array.isArray(patientData.especialidadTratante) ? patientData.especialidadTratante : (patientData.especialidadTratante ? [patientData.especialidadTratante] : []),
     destino: patientData.bedTypeRequired || 'Cuidados Medios',
     requisitosUGP: patientData.requisitosUGP || '',
     reqEnfermeria: patientData.reqEnfermeria || '',
@@ -274,7 +276,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   } : {
     nombre: '', rut: '', edad: '', sexo: '', prevision: '', comuna: '',
     dxPrincipal: '', dxCie10: '', dxGrupo: '',
-    servicioSol: '', medicoSol: '', especialidadMedico: '', destino: 'Cuidados Medios',
+    servicioSol: '', medicoSol: '', especialidadMedico: '', especialidadTratante: [], destino: 'Cuidados Medios',
     requisitosUGP: '', reqEnfermeria: '', procedimientosPendientes: '',
     hodom: false, trr: false, hfc: false, ugcc: false,
     paSist: '', paDiast: '', frecCard: '', frecResp: '', temp: '', satO2: '', glicemia: '', evaDolor: '',
@@ -400,6 +402,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       comuna: formData.comuna,
       medicoSol: formData.medicoSol,
       especialidadMedico: formData.especialidadMedico,
+      especialidadTratante: formData.especialidadTratante,
       requisitosUGP: formData.requisitosUGP,
       reqEnfermeria: formData.reqEnfermeria,
       procedimientosPendientes: formData.procedimientosPendientes,
@@ -647,8 +650,11 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                     <ReadOnlyField label="Médico Solicitante / Tratante" value={formData.medicoSol} />
                     <ReadOnlyField label="Especialidad del Médico" value={formData.especialidadMedico} />
                   </div>
-                  <div>
+                  <div style={{ marginTop: 10 }}>
                     <ReadOnlyField label="Requisitos de UGP (Texto libre para gestión)" value={formData.requisitosUGP} />
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    <ReadOnlyField label="Especialidad Tratante" value={formData.especialidadTratante?.length > 0 ? formData.especialidadTratante.join(', ') : 'No especificada'} />
                   </div>
                 </>
               ) : (
@@ -661,9 +667,19 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                     <div><FieldLabel>Médico Solicitante / Tratante</FieldLabel><SearchableSelect name="medicoSol" value={formData.medicoSol} onChange={handleChange} options={MEDICOS} placeholder="Nombre Dr. / Dra." allowFreeText={true} /></div>
                     <div><FieldLabel>Especialidad del Médico</FieldLabel><SearchableSelect name="especialidadMedico" value={formData.especialidadMedico} onChange={handleChange} options={ESPECIALIDADES} placeholder="Buscar especialidad..." /></div>
                   </div>
-                  <div>
+                  <div style={{ marginTop: 10 }}>
                     <FieldLabel>Requisitos de UGP (Texto libre para gestión)</FieldLabel>
                     <GTextarea name="requisitosUGP" value={formData.requisitosUGP} onChange={handleChange} placeholder="Ingrese requerimientos específicos de la unidad de gestión de camas..." rows={2} />
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    <FieldLabel>Especialidad Tratante (Hasta 2)</FieldLabel>
+                    <MultiSearchableSelect 
+                      options={ESPECIALIDADES.map(e => ({ value: e, label: e }))} 
+                      value={formData.especialidadTratante} 
+                      onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))} 
+                      placeholder="Buscar especialidad..." 
+                      maxSelections={2} 
+                    />
                   </div>
                 </>
               )}

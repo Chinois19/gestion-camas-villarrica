@@ -76,6 +76,11 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
 
         <div className="diagnosis-box">
           <p className="diagnosis-text">{Array.isArray(patient.diagnosis) ? patient.diagnosis.join(' • ') : patient.diagnosis}</p>
+          {patient.especialidadTratante && patient.especialidadTratante.length > 0 && (
+            <p className="diagnosis-text" style={{ marginTop: '4px', color: '#00d4ff', fontSize: '0.7rem', fontWeight: 600 }}>
+              Tratante: {patient.especialidadTratante.join(' • ')}
+            </p>
+          )}
         </div>
 
         <div className="requirement-footer">
@@ -109,7 +114,7 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
   );
 }
 
-export default function WaitingList({ patients, onSelectPatient, onViewPatient, selectedPatientId, onEditPatient, onDischargeWaiting, userRole }) {
+export default function WaitingList({ patients, onSelectPatient, onViewPatient, selectedPatientId, onEditPatient, onDischargeWaiting, userRole, searchQuery }) {
   const [timers, setTimers] = useState({});
   const isVisor = userRole === 'visor';
   const [activeTier, setActiveTier] = useState('todos'); // 'critical' | 'warning' | 'standard' | 'todos'
@@ -137,6 +142,17 @@ export default function WaitingList({ patients, onSelectPatient, onViewPatient, 
   }, { critical: 0, warning: 0, standard: 0 });
 
   const filteredPatients = patients.filter(p => {
+    let matchSearch = true;
+    if (searchQuery) {
+      const sq = searchQuery.toLowerCase();
+      const pStr = [
+        p.name, p.rut, p.diagnosis, p.origin, p.bedTypeRequired,
+        ...(p.especialidadTratante || [])
+      ].filter(Boolean).join(' ').toLowerCase();
+      matchSearch = pStr.includes(sq);
+    }
+    if (!matchSearch) return false;
+
     if (activeTier === 'todos') return true;
     const wait = timers[p.id] || calculateWaitTime(p.requestedAt);
     const tier = wait.totalHours >= 12 ? 'critical' : wait.totalHours >= 4 ? 'warning' : 'standard';

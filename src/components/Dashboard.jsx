@@ -7,6 +7,8 @@ import EditGrdModal from './EditGrdModal';
 import PatientDetailModal from './PatientDetailModal';
 import DischargeModal from './DischargeModal';
 import InterconsultaModal from './InterconsultaModal';
+import MultiSearchableSelect from './MultiSearchableSelect';
+import { ESPECIALIDADES } from '../data/formData';
 import { DndContext, useDroppable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 
 const checkCompatibility = (bed, patient) => {
@@ -117,6 +119,11 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
               {bed.grdName ? `GRD: ${bed.grdName}` : (bed.status === 'pending_hodom' ? 'Pendiente HODOM' : 'Ocupada')}
               {!isVisor && <Pencil size={12} style={{ marginLeft: '4px', opacity: 0.6 }} />}
             </div>
+            {bed.especialidadTratante && bed.especialidadTratante.length > 0 && (
+              <div style={{ fontSize: '0.65rem', color: '#00d4ff', marginTop: '4px', fontWeight: 600 }}>
+                Tratante: {bed.especialidadTratante.join(' • ')}
+              </div>
+            )}
             {bed.projectedDays > 0 && (
               <div className="los-progress-bar">
                 <div className="progress-fill" style={{ width: `${progress}%`, background: isExceeded ? '#ef4444' : progress > 80 ? '#f59e0b' : 'var(--accent-color)', boxShadow: isExceeded ? '0 0 8px #ef4444' : 'none' }}></div>
@@ -199,6 +206,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   const [serviceFilter, setServiceFilter] = useState('todos');
   const [stayFilter, setStayFilter] = useState('todos');
   const [icFilter, setIcFilter] = useState('todos');
+  const [espTratanteFilter, setEspTratanteFilter] = useState([]);
   const [showFilters, setShowFilters] = useState(true);
   
   const [isDraggingActive, setIsDraggingActive] = useState(false);
@@ -257,6 +265,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                   status: 'occupied',
                   patient: assignmentData.patientName,
                   diagnosis: assignmentData.diagnosis,
+                  especialidadTratante: pendingAssignment.patient.especialidadTratante,
                   grdId: assignmentData.grdId,
                   grdName: assignmentData.grdName, // Se puede derivar
                   severity: assignmentData.severity,
@@ -650,6 +659,16 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                 ))}
               </select>
             </div>
+            <div style={{ marginTop: '20px' }}>
+              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>7. ESPECIALIDAD TRATANTE</div>
+              <MultiSearchableSelect 
+                options={ESPECIALIDADES.map(e => ({ value: e, label: e }))} 
+                value={espTratanteFilter} 
+                onChange={setEspTratanteFilter} 
+                placeholder="Filtrar especialidad..." 
+                maxSelections={5} 
+              />
+            </div>
           </div>
         </aside>
         )}
@@ -713,7 +732,25 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                       matchIc = pendingICs.some(ic => ic.especialidadDestino === esp);
                     }
                   }
-                  return matchStatus && matchService && matchStay && matchIc;
+                  let matchEspTratante = true;
+                  if (espTratanteFilter.length > 0) {
+                    if (!bed.especialidadTratante || bed.especialidadTratante.length === 0) {
+                      matchEspTratante = false;
+                    } else {
+                      matchEspTratante = espTratanteFilter.some(esp => bed.especialidadTratante.includes(esp));
+                    }
+                  }
+                  let matchSearch = true;
+                  if (searchQuery) {
+                    const sq = searchQuery.toLowerCase();
+                    const bStr = [
+                      bed.patient, bed.rut, bed.diagnosis, bed.info, bed.grdName, bed.id, room.roomId,
+                      ...(bed.especialidadTratante || []),
+                      ...(bed.interconsultas?.map(ic => ic.especialidadDestino) || [])
+                    ].filter(Boolean).join(' ').toLowerCase();
+                    matchSearch = bStr.includes(sq);
+                  }
+                  return matchStatus && matchService && matchStay && matchIc && matchEspTratante && matchSearch;
                 });
                 return { ...room, beds: filteredBeds };
               }).filter(room => room.beds.length > 0);
@@ -760,6 +797,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
               onDischargeWaiting={handleDischargeWaiting}
               selectedPatientId={selectedPatient?.id}
               userRole={userRole}
+              searchQuery={searchQuery}
             />
           </div>
         </aside>

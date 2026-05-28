@@ -7,7 +7,8 @@ export const SERVICIOS_SOLICITANTES = [
   'Centro Adosado de Especialidades',
   'Pabellón Quirúrgico y Recuperación',
   'CECOSAM',
-  'UGCC'
+  'UGCC',
+  'Hospitalización Domiciliaria (HODOM)'
 ];
 
 export const PREVISIONES = [
