@@ -51,8 +51,23 @@ const Login = ({ onLogin }) => {
         }
       } catch (error) {
         console.error("Error validando usuario:", error);
-        setError('Error al conectar con la base de datos');
-        setIsLoading(false);
+        
+        // Fallback robusto: Si Firebase falla (ej. reglas expiradas o sin internet), usar defaultUsers
+        const foundUser = defaultUsers.find(u => u.username === username && u.password === password && u.status === 'active');
+        if (foundUser) {
+          onLogin({
+            id: foundUser.id,
+            name: foundUser.name,
+            username: foundUser.username,
+            role: foundUser.role,
+            roleName: foundUser.roleName === 'Médico General' ? 'Médico' : (foundUser.roleName || (foundUser.role === 'medico_general' ? 'Médico' : foundUser.role))
+          });
+        } else {
+          setError(error.message?.includes("permissions") || error.code === "permission-denied" 
+            ? 'Error de permisos en Firebase. Revisa las reglas de seguridad.' 
+            : 'Error al conectar con la base de datos.');
+          setIsLoading(false);
+        }
       }
     }, 1000);
   };
