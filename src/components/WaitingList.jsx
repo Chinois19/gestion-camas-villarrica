@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Clock, TrendingUp, User, ArrowRight, AlertCircle, CheckCircle, Filter, LogOut } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
+import { SERVICIOS_SOLICITANTES, ESPECIALIDADES } from '../data/formData';
 
 const calculateWaitTime = (requestedAt) => {
   const diff = Date.now() - new Date(requestedAt).getTime();
@@ -118,6 +119,8 @@ export default function WaitingList({ patients, onSelectPatient, onViewPatient, 
   const [timers, setTimers] = useState({});
   const isVisor = userRole === 'visor';
   const [activeTier, setActiveTier] = useState('todos'); // 'critical' | 'warning' | 'standard' | 'todos'
+  const [filterServicio, setFilterServicio] = useState('todos');
+  const [filterEspecialidad, setFilterEspecialidad] = useState('todos');
 
   useEffect(() => {
     const updateTimers = () => {
@@ -153,6 +156,14 @@ export default function WaitingList({ patients, onSelectPatient, onViewPatient, 
     }
     if (!matchSearch) return false;
 
+    if (filterServicio !== 'todos' && p.origin !== filterServicio) return false;
+    
+    if (filterEspecialidad !== 'todos') {
+      if (!p.especialidadTratante || !p.especialidadTratante.includes(filterEspecialidad)) {
+        return false;
+      }
+    }
+
     if (activeTier === 'todos') return true;
     const wait = timers[p.id] || calculateWaitTime(p.requestedAt);
     const tier = wait.totalHours >= 12 ? 'critical' : wait.totalHours >= 4 ? 'warning' : 'standard';
@@ -181,6 +192,28 @@ export default function WaitingList({ patients, onSelectPatient, onViewPatient, 
           )}
         </div>
         <TrendingUp size={16} />
+      </div>
+
+      <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <select 
+          className="glass-input" 
+          style={{ width: '100%', fontSize: '0.75rem', padding: '6px 10px' }}
+          value={filterServicio}
+          onChange={e => setFilterServicio(e.target.value)}
+        >
+          <option value="todos">Todos los Servicios</option>
+          {SERVICIOS_SOLICITANTES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+
+        <select 
+          className="glass-input" 
+          style={{ width: '100%', fontSize: '0.75rem', padding: '6px 10px' }}
+          value={filterEspecialidad}
+          onChange={e => setFilterEspecialidad(e.target.value)}
+        >
+          <option value="todos">Todas las Especialidades</option>
+          {ESPECIALIDADES.map(e => <option key={e} value={e}>{e}</option>)}
+        </select>
       </div>
 
       {/* Resumen Estadístico Interactivo */}

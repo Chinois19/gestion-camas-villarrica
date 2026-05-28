@@ -4,6 +4,7 @@ import { GRD_DATA, calculateProjectedDays, getGrdLimit } from '../data/grd';
 import SearchableSelect from './SearchableSelect';
 import MultiSearchableSelect from './MultiSearchableSelect';
 import { CIE10_OPTIONS } from '../data/cie10Options';
+import { ESPECIALIDADES } from '../data/formData';
 
 export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onFinishCleaning }) {
   const [formData, setFormData] = useState({
@@ -17,7 +18,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
     sex: bed.sex || bed.sexo || 'Femenino',
     comuna: bed.comuna || 'Gorbea',
     prevision: bed.prevision || 'DIPRECA',
-    especialidadTratante: bed.especialidadTratante || 'Medicina Interna',
+    especialidadTratante: Array.isArray(bed.especialidadTratante) ? bed.especialidadTratante : (bed.especialidadTratante ? [bed.especialidadTratante] : []),
     aislamiento: Array.isArray(bed.aislamiento) ? bed.aislamiento : (bed.aislamiento ? [bed.aislamiento] : ['Precauciones de Contacto']),
     novedades: bed.novedades || [],
     showTransferPanel: false,
@@ -185,19 +186,13 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     <span style={{ fontSize: '1rem' }}>🩺</span>
                     <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Especialidad Tratante</h4>
                   </div>
-                  <select 
-                    className="glass-input" 
-                    style={{ width: '100%', fontSize: '0.8rem' }}
-                    value={formData.especialidadTratante}
-                    onChange={e => setFormData(prev => ({ ...prev, especialidadTratante: e.target.value }))}
-                  >
-                    <option value="Medicina Interna">Medicina Interna</option>
-                    <option value="Cirugía General">Cirugía General</option>
-                    <option value="Pediatría">Pediatría</option>
-                    <option value="Obstetricia y Ginecología">Obstetricia y Ginecología</option>
-                    <option value="Traumatología">Traumatología</option>
-                    <option value="Cardiología">Cardiología</option>
-                  </select>
+                  <MultiSearchableSelect 
+                    options={ESPECIALIDADES.map(e => ({ value: e, label: e }))} 
+                    value={formData.especialidadTratante} 
+                    onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))} 
+                    placeholder="Buscar especialidad..." 
+                    maxSelections={2} 
+                  />
                 </div>
 
                 {/* 3. AISLAMIENTO (PRECAUCIONES) */}
