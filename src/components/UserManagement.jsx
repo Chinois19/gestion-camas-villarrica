@@ -7,7 +7,7 @@ import './UserManagement.css';
 const defaultUsers = [
   { id: 1, name: 'Super Administrador', username: 'admin', password: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', roleName: 'Super Administrador', status: 'active' },
   { id: 2, name: 'Visor Institucional', username: 'visor', password: 'visor', email: 'visor@hospitalvillarrica.cl', role: 'visor', roleName: 'Visor Institucional', status: 'active' },
-  { id: 3, name: 'Médico General', username: 'medico', password: 'medico', email: 'medico@hospitalvillarrica.cl', role: 'medico_general', roleName: 'Médico General', status: 'active' },
+  { id: 3, name: 'Médico General', username: 'medico', password: 'medico', email: 'medico@hospitalvillarrica.cl', role: 'medico_general', roleName: 'Médico', status: 'active' },
   { id: 4, name: 'Gestor de Camas', username: 'gestor', password: 'gestor', email: 'gestor@hospitalvillarrica.cl', role: 'gestor_camas', roleName: 'Gestor de Camas', status: 'active' },
   { id: 5, name: 'Médico HODOM', username: 'hodom', password: 'hodom', email: 'hodom@hospitalvillarrica.cl', role: 'medico_hodom', roleName: 'Médico HODOM', status: 'active' },
   { id: 6, name: 'Personal de Aseo', username: 'aseo', password: 'aseo', email: 'aseo@hospitalvillarrica.cl', role: 'personal_aseo', roleName: 'Personal de Aseo', status: 'active' }
@@ -149,7 +149,7 @@ const UserManagement = ({ notify }) => {
                     {user.role === 'superadmin' ? <Shield size={12} /> : <User size={12} />}
                     {user.role === 'superadmin' && 'Super Admin'}
                     {user.role === 'gestor_camas' && 'Gestor de Camas'}
-                    {user.role === 'medico_general' && 'Médico General'}
+                    {user.role === 'medico_general' && 'Médico'}
                     {user.role === 'personal_aseo' && 'Personal de Aseo'}
                     {user.role === 'visor' && 'Visor'}
                     {user.role === 'medico_hodom' && 'Médico HODOM'}
@@ -221,7 +221,7 @@ const UserManagement = ({ notify }) => {
                   <option value="visor">Visor (Solo Lectura)</option>
                   <option value="superadmin">Super Administrador</option>
                   <option value="gestor_camas">Gestor de Camas</option>
-                  <option value="medico_general">Médico General</option>
+                  <option value="medico_general">Médico</option>
                   <option value="personal_aseo">Personal de Aseo</option>
                   <option value="medico_hodom">Médico HODOM</option>
                 </select>

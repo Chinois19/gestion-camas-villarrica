@@ -7,7 +7,7 @@ import './Login.css';
 const defaultUsers = [
   { id: 1, name: 'Super Administrador', username: 'admin', password: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', roleName: 'Super Administrador', status: 'active' },
   { id: 2, name: 'Visor Institucional', username: 'visor', password: 'visor', email: 'visor@hospitalvillarrica.cl', role: 'visor', roleName: 'Visor Institucional', status: 'active' },
-  { id: 3, name: 'Médico General', username: 'medico', password: 'medico', email: 'medico@hospitalvillarrica.cl', role: 'medico_general', roleName: 'Médico General', status: 'active' },
+  { id: 3, name: 'Médico General', username: 'medico', password: 'medico', email: 'medico@hospitalvillarrica.cl', role: 'medico_general', roleName: 'Médico', status: 'active' },
   { id: 4, name: 'Gestor de Camas', username: 'gestor', password: 'gestor', email: 'gestor@hospitalvillarrica.cl', role: 'gestor_camas', roleName: 'Gestor de Camas', status: 'active' },
   { id: 5, name: 'Médico HODOM', username: 'hodom', password: 'hodom', email: 'hodom@hospitalvillarrica.cl', role: 'medico_hodom', roleName: 'Médico HODOM', status: 'active' },
   { id: 6, name: 'Personal de Aseo', username: 'aseo', password: 'aseo', email: 'aseo@hospitalvillarrica.cl', role: 'personal_aseo', roleName: 'Personal de Aseo', status: 'active' }
@@ -43,7 +43,7 @@ const Login = ({ onLogin }) => {
             name: foundUser.name,
             username: foundUser.username,
             role: foundUser.role,
-            roleName: foundUser.roleName || foundUser.role // Fallback if newly created user doesn't have roleName
+            roleName: foundUser.roleName === 'Médico General' ? 'Médico' : (foundUser.roleName || (foundUser.role === 'medico_general' ? 'Médico' : foundUser.role)) // Fallback if newly created user doesn't have roleName
           });
         } else {
           setError('Usuario o contraseña incorrectos');

@@ -46,14 +46,11 @@ export default function InterconsultasPanel({ bedsData, onMarkICDone, onDeleteIC
   };
 
   const formatWaitTime = (minutes) => {
+    if (isNaN(minutes) || minutes < 0) return "00:00";
     const totalMins = Math.round(minutes);
     const hours = Math.floor(totalMins / 60);
-    const days = Math.floor(hours / 24);
-    let parts = [];
-    if (days > 0) parts.push(`${days}d`);
-    if (hours % 24 > 0) parts.push(`${hours % 24}h`);
-    parts.push(`${totalMins % 60}m`);
-    return parts.join(' ');
+    const mins = totalMins % 60;
+    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
   };
 
   const handleResolveSubmit = (e) => {
