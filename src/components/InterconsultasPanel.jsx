@@ -35,6 +35,7 @@ export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDon
           });
         });
       });
+    });
     if (waitingList) {
       waitingList.forEach(patient => {
         if (patient.interconsultas && patient.interconsultas.length > 0) {
