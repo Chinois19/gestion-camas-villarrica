@@ -137,7 +137,7 @@ export default function AssignmentModal({ patient, bed, onConfirm, onClose }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 
                 {/* 1. Validación de Solicitud */}
-                <div className="glass-panel" style={{ padding: '20px' }}>
+                <div className="glass-panel" style={{ padding: '20px', position: 'relative', zIndex: 30 }}>
                   <h3 className="section-title" style={{ fontSize: '0.9rem', color: 'var(--text-primary)', borderColor: 'var(--glass-border)', paddingBottom: '12px', marginBottom: '16px' }}>
                     1. Validación de Solicitud (Médica)
                   </h3>
@@ -179,7 +179,7 @@ export default function AssignmentModal({ patient, bed, onConfirm, onClose }) {
                 </div>
 
                 {/* 2. Requerimientos y Vitales */}
-                <div className="glass-panel" style={{ padding: '20px' }}>
+                <div className="glass-panel" style={{ padding: '20px', position: 'relative', zIndex: 20 }}>
                   <h3 className="section-title" style={{ fontSize: '0.9rem', color: 'var(--text-primary)', borderColor: 'var(--glass-border)', paddingBottom: '12px', marginBottom: '16px' }}>
                     2. Resumen Clínico
                   </h3>
@@ -206,7 +206,7 @@ export default function AssignmentModal({ patient, bed, onConfirm, onClose }) {
                 </div>
 
                 {/* 3. Clasificación GRD */}
-                <div className="glass-panel" style={{ padding: '20px' }}>
+                <div className="glass-panel" style={{ padding: '20px', position: 'relative', zIndex: 10 }}>
                   <h3 className="section-title" style={{ fontSize: '0.9rem', color: 'var(--text-primary)', borderColor: 'var(--glass-border)', paddingBottom: '12px', marginBottom: '16px' }}>
                     3. Clasificación de Gestión (Enfermería / GRD)
                   </h3>

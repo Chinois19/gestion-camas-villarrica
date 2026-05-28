@@ -102,7 +102,7 @@ function SearchableSelect({ name, value, onChange, options, placeholder, allowFr
   );
 }
 
-function SectionCard({ icon: Icon, title, children, color = 'var(--accent)' }) {
+function SectionCard({ icon: Icon, title, children, color = 'var(--accent)', zIndex }) {
   return (
     <div style={{
       background: 'var(--panel-bg)',
@@ -113,6 +113,8 @@ function SectionCard({ icon: Icon, title, children, color = 'var(--accent)' }) {
       borderRadius: 12,
       overflow: 'visible',
       marginBottom: 10,
+      position: zIndex !== undefined ? 'relative' : undefined,
+      zIndex: zIndex,
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
@@ -524,7 +526,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
             {/* 1. DATOS DEL PACIENTE */}
-            <SectionCard icon={User} title="1. Datos del Paciente" color="#06b6d4">
+            <SectionCard icon={User} title="1. Datos del Paciente" color="#06b6d4" zIndex={50}>
               {isViewMode ? (
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr', gap: 10, marginBottom: 10 }}>
@@ -559,7 +561,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
             </SectionCard>
 
             {/* 2. DIAGNÓSTICO CLÍNICO */}
-            <SectionCard icon={Stethoscope} title="2. Diagnóstico Clínico" color="#3b82f6">
+            <SectionCard icon={Stethoscope} title="2. Diagnóstico Clínico" color="#3b82f6" zIndex={40}>
               <div style={{ marginBottom: 10 }}>
                 {isViewMode ? (
                   <ReadOnlyField label="Diagnóstico Principal Descriptivo (Texto Libre Opcional)" value={formData.dxPrincipal} />
@@ -634,7 +636,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
             </SectionCard>
 
             {/* 3. GESTIÓN DE LA DERIVACIÓN */}
-            <SectionCard icon={ArrowRightLeft} title="3. Gestión de la Derivación" color="#f59e0b">
+            <SectionCard icon={ArrowRightLeft} title="3. Gestión de la Derivación" color="#f59e0b" zIndex={30}>
               {isViewMode ? (
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
@@ -674,7 +676,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
 
             {/* 4. SIGNOS VITALES — oculto si es Urgencia */}
             {formData.servicioSol !== 'Servicio de Atención de Urgencia' && (
-              <SectionCard icon={Heart} title="4. Signos Vitales al Momento de la Indicación Médica" color="#ef4444">
+              <SectionCard icon={Heart} title="4. Signos Vitales al Momento de la Indicación Médica" color="#ef4444" zIndex={45}>
                 {isViewMode ? (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
                     {[
@@ -716,7 +718,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
             )}
 
             {/* 5. REQUERIMIENTOS CLÍNICOS */}
-            <SectionCard icon={Activity} title="5. Requerimientos Clínicos" color="#10b981">
+            <SectionCard icon={Activity} title="5. Requerimientos Clínicos" color="#10b981" zIndex={35}>
               {isViewMode ? (
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
@@ -788,7 +790,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
 
             {/* 6. REGISTRO DE EVOLUCIONES CLÍNICAS */}
             {patientData && (
-              <SectionCard icon={Activity} title="6. Registro de Evolución Clínica" color="#a855f7">
+              <SectionCard icon={Activity} title="6. Registro de Evolución Clínica" color="#a855f7" zIndex={25}>
                 {!isViewMode && (
                   <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
                     <textarea value={evolNote} onChange={e => setEvolNote(e.target.value)}

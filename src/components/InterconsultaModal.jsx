@@ -102,7 +102,7 @@ export default function InterconsultaModal({ bed, currentUser, onConfirm, onClos
               </div> {/* Close glass-panel */}
 
               {/* 2. Diagnósticos */}
-              <div className="detail-panel" style={{ padding: '24px', background: 'rgba(168, 85, 247, 0.05)', border: '1px solid rgba(168, 85, 247, 0.2)', borderRadius: '16px' }}>
+              <div className="detail-panel" style={{ padding: '24px', background: 'rgba(168, 85, 247, 0.05)', border: '1px solid rgba(168, 85, 247, 0.2)', borderRadius: '16px', position: 'relative', zIndex: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                   <span style={{ fontSize: '1.2rem' }}>📋</span>
                   <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#a855f7' }}>Diagnósticos (CIE-10)</span>
