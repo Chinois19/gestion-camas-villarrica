@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bed, User, LayoutDashboard, Map, Info, Layers, Search, X, Activity, Pencil, LogOut, CheckCircle, Filter } from 'lucide-react';
+import { Bed, User, LayoutDashboard, Map, Info, Layers, Search, X, Activity, Pencil, LogOut, CheckCircle, Filter, RotateCcw } from 'lucide-react';
 import { getBedTypeClass, getIconColor } from '../data/dummy';
 import WaitingList from './WaitingList';
 import AssignmentModal from './AssignmentModal';
@@ -39,7 +39,7 @@ const getBedStayStatus = (bed) => {
   return 'inlier';
 };
 
-function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleaning, onMarkHodomDoneByBed, onEditGrd, userRole }) {
+function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleaning, onUndoDischarge, onUndoAssignment, onMarkHodomDoneByBed, onEditGrd, userRole, user }) {
   const isVisor = userRole === 'visor';
   const isCompatible = checkCompatibility(bed, selectedPatient);
   const isSelecting = !!selectedPatient;
@@ -159,10 +159,23 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
               )
             ) : (
               !isVisor && (
-                <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); onDischarge(room.roomId, bed.id); }}>
-                  <LogOut size={12} /> Dar Alta
-                </button>
+                <>
+                  <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); onDischarge(room.roomId, bed.id); }}>
+                    <LogOut size={12} /> Dar Alta
+                  </button>
+                  {user?.role === 'superadmin' && bed.originalWaitingRequest && (
+                    <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '4px', width: '100%', display: 'flex', justifyContent: 'center', borderColor: 'rgba(245,158,11,0.4)', color: '#f59e0b' }} onClick={(e) => { e.stopPropagation(); onUndoAssignment(room.roomId, bed.id); }}>
+                      <RotateCcw size={12} /> Deshacer Ingreso
+                    </button>
+                  )}
+                </>
               )
+            )}
+            
+            {bed.status === 'pending_hodom' && user?.role === 'superadmin' && bed.previousPatient && (
+              <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '4px', width: '100%', display: 'flex', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); onUndoDischarge(room.roomId, bed.id); }}>
+                <RotateCcw size={12} /> Revertir Alta (Recuperar)
+              </button>
             )}
           </div>
         </div>
@@ -178,9 +191,16 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
               {bed.status === 'available' ? 'Disponible' : 'En Aseo'}
             </span>
             {bed.status === 'cleaning' && (
-              <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center', color: 'var(--status-available)', borderColor: 'var(--status-available)' }} onClick={(e) => { e.stopPropagation(); onFinishCleaning(room.roomId, bed.id); }}>
-                <CheckCircle size={12} /> Finalizar Aseo
-              </button>
+              <>
+                <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center', color: 'var(--status-available)', borderColor: 'var(--status-available)' }} onClick={(e) => { e.stopPropagation(); onFinishCleaning(room.roomId, bed.id); }}>
+                  <CheckCircle size={12} /> Finalizar Aseo
+                </button>
+                {user?.role === 'superadmin' && bed.previousPatient && (
+                  <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '4px', width: '100%', display: 'flex', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); onUndoDischarge(room.roomId, bed.id); }}>
+                    <RotateCcw size={12} /> Revertir Alta (Recuperar)
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -273,7 +293,8 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                   assignedAt: assignmentData.assignedAt,
                   projectedReleaseDate: assignmentData.projectedReleaseDate,
                   waitMinutes: assignmentData.waitMinutes,
-                  info: `Ingreso desde ${assignmentData.origin}`
+                  info: `Ingreso desde ${assignmentData.origin}`,
+                  originalWaitingRequest: pendingAssignment.patient
                 };
               }
               return bed;
@@ -354,7 +375,8 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
 
     if (formData.destino === 'Hospitalización domiciliaria') {
       updateBedState(roomId, bedId, { 
-        status: 'pending_hodom'
+        status: 'pending_hodom',
+        previousPatient: bed
       });
 
       if (onHodomSubmit && formData.hodomData) {
@@ -368,10 +390,71 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         grdId: null, 
         grdName: null, 
         projectedDays: null,
-        interconsultas: []
+        assignedAt: null,
+        projectedReleaseDate: null,
+        waitMinutes: null,
+        info: null,
+        especialidadTratante: null,
+        severity: null,
+        interconsultas: [],
+        previousPatient: bed,
+        originalWaitingRequest: null
       });
     }
     setDischargingPatient(null);
+  };
+
+  const handleUndoDischarge = (roomId, bedId) => {
+    let targetBed = null;
+    for (const floor in bedsData) {
+      for (const sector in bedsData[floor]) {
+        const room = bedsData[floor][sector].find(r => r.roomId === roomId);
+        if (room) {
+          targetBed = room.beds.find(b => b.id === bedId);
+          break;
+        }
+      }
+      if (targetBed) break;
+    }
+    
+    if (targetBed && targetBed.previousPatient) {
+      const restoredBed = { ...targetBed.previousPatient, status: 'occupied' };
+      delete restoredBed.previousPatient;
+      updateBedState(roomId, bedId, restoredBed);
+    }
+  };
+
+  const handleUndoAssignment = (roomId, bedId) => {
+    let targetBed = null;
+    for (const floor in bedsData) {
+      for (const sector in bedsData[floor]) {
+        const room = bedsData[floor][sector].find(r => r.roomId === roomId);
+        if (room) {
+          targetBed = room.beds.find(b => b.id === bedId);
+          break;
+        }
+      }
+      if (targetBed) break;
+    }
+    
+    if (targetBed && targetBed.originalWaitingRequest) {
+      setWaitingList(prev => [...prev, targetBed.originalWaitingRequest]);
+      updateBedState(roomId, bedId, {
+        status: 'available',
+        patient: null,
+        diagnosis: null,
+        grdId: null,
+        grdName: null,
+        severity: null,
+        projectedDays: null,
+        assignedAt: null,
+        projectedReleaseDate: null,
+        waitMinutes: null,
+        info: null,
+        especialidadTratante: null,
+        originalWaitingRequest: null
+      });
+    }
   };
 
   const handleInterconsultaConfirm = (formData) => {
@@ -771,9 +854,12 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                             selectedPatient={selectedPatient} 
                             onDischarge={handleDischarge}
                             onFinishCleaning={handleFinishCleaning}
+                            onUndoDischarge={handleUndoDischarge}
+                            onUndoAssignment={handleUndoAssignment}
                             onMarkHodomDoneByBed={onMarkHodomDoneByBed}
                             onEditGrd={(rId, b) => setEditingGrdBed({ roomId: rId, bed: b })}
                             userRole={user.role}
+                            user={user}
                           />
                         ))}
                       </div>
