@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentación Gestión Camas - Hospital de Villarrica</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #030712;
+            --card-bg: rgba(15, 23, 42, 0.85);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-cyan: #00f0ff;
+            --accent-purple: #a855f7;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --glass-glow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Canvas background particles */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.35;
+        }
+
+        /* Static Presentation Space Container */
+        #presentation-space {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            z-index: 2;
+        }
+
+        /* Slide Card styling - Centered initially, positioned via relative JS transforms */
+        .slide-card {
+            position: absolute;
+            width: 960px;
+            height: 580px;
+            /* Place exactly in the viewport center */
+            left: calc(50% - 480px);
+            top: calc(50% - 290px);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            box-shadow: var(--glass-glow);
+            /* Smoothly animate transform changes for Prezi gliding, along with opacity */
+            transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease, border-color 0.8s ease;
+            opacity: 0.04;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 44px;
+            transform-origin: center center;
+            will-change: transform, opacity;
+        }
+
+        /* Active slide gets full opacity, sharp focus, and active pointers */
+        .slide-card.active {
+            opacity: 1;
+            pointer-events: auto;
+            border-color: rgba(0, 240, 255, 0.45);
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.15), var(--glass-glow);
+        }
+
+        /* Typography */
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #00f0ff 0%, #a855f7 50%, #e11d48 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-cyan {
+            background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-purple {
+            background: linear-gradient(135deg, #c084fc 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-orange {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-green {
+            background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .slide-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .slide-header h2 {
+            font-size: 2.2rem;
+            line-height: 1.2;
+        }
+
+        .slide-header p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        .slide-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .slide-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 20px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .collab-tag {
+            background: rgba(168, 85, 247, 0.15);
+            color: #d8b4fe;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            font-weight: 700;
+        }
+
+        /* Custom design units */
+        .flex-row {
+            display: flex;
+            gap: 24px;
+        }
+
+        .flex-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(0, 240, 255, 0.3);
+            transform: translateY(-4px);
+        }
+
+        .kpi-value {
+            font-size: 2.6rem;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 4px;
+        }
+
+        .kpi-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 18px 22px;
+            display: flex;
+            gap: 18px;
+            align-items: flex-start;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(168, 85, 247, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            width: 46px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            color: var(--accent-cyan);
+            flex-shrink: 0;
+        }
+
+        .feature-text h4 {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .feature-text p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.42;
+        }
+
+        /* Cover Slide Specifics */
+        .cover-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 16px;
+        }
+
+        .cover-logo {
+            font-size: 3.5rem;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            width: 90px;
+            height: 90px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-cyan);
+            animation: pulse-glow 3s infinite alternate;
+            margin-bottom: 12px;
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+                border-color: rgba(0, 240, 255, 0.3);
+            }
+            100% {
+                box-shadow: 0 0 30px rgba(0, 240, 255, 0.5);
+                border-color: rgba(0, 240, 255, 0.7);
+            }
+        }
+
+        .cover-title {
+            font-size: 3.8rem;
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+
+        .cover-subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+
+        /* Problem/Solution Columns */
+        .grid-2x2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* Presentation Mode Styles */
+        body.presentation-mode #top-bar {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-20px);
+            transition: all 0.5s ease;
+        }
+
+        body.presentation-mode #hud-controls {
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, 80px);
+            transition: all 0.5s ease;
+        }
+
+        /* Floating Exit button for Presentation Mode */
+        #exit-pres-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 18px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--glass-glow);
+            transition: all 0.3s ease;
+        }
+
+        #exit-pres-btn:hover {
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        body.presentation-mode #exit-pres-btn {
+            display: flex;
+        }
+
+        /* Global HUD / Controls overlay */
+        #hud-controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            padding: 12px 24px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: var(--glass-glow);
+            transition: all 0.5s ease;
+        }
+
+        .hud-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            cursor: pointer;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .hud-btn:hover {
+            background: var(--accent-cyan);
+            color: #030712;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        .hud-info {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--text-secondary);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* Progress Dots */
+        .hud-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .hud-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .hud-dot.active {
+            background: var(--accent-cyan);
+            transform: scale(1.3);
+            box-shadow: 0 0 8px var(--accent-cyan);
+        }
+
+        /* Top Institutional Bar */
+        #top-bar {
+            position: fixed;
+            top: 24px;
+            left: 40px;
+            right: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-cyan);
+        }
+
+        .inst-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        /* Visual Diagrams in Slides */
+        .diagram-container {
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.01);
+            border-radius: 16px;
+            padding: 16px;
+            height: 240px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Flow elements */
+        .flow-node {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-align: center;
+            position: absolute;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .flow-node.active {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+        }
+
+        /* Bed Grid Mockup in Slide 4 */
+        .bed-grid-mockup {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            width: 100%;
+        }
+
+        .bed-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.75rem;
+            position: relative;
+        }
+
+        .bed-box.occupied {
+            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.03);
+        }
+
+        .bed-box.available {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.03);
+        }
+
+        .bed-box.cleaning {
+            border-color: rgba(0, 240, 255, 0.3);
+            background: rgba(0, 240, 255, 0.03);
+            animation: pulse-border 2s infinite alternate;
+        }
+
+        @keyframes pulse-border {
+            0% { border-color: rgba(0, 240, 255, 0.2); }
+            100% { border-color: rgba(0, 240, 255, 0.6); }
+        }
+
+        .bed-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .bed-status-dot.occupied { background: var(--accent-orange); }
+        .bed-status-dot.available { background: var(--accent-green); }
+        .bed-status-dot.cleaning { background: var(--accent-cyan); }
+
+        /* Timeline in Slide 9 */
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            z-index: 1;
+        }
+
+        .timeline-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            padding: 0 10px;
+        }
+
+        .timeline-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #1f2937;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            margin: 0 auto 10px auto;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-step.active .timeline-dot {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-cyan);
+        }
+
+        .timeline-step h5 {
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .timeline-step p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Large Impact Call to Action */
+        .cta-box {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .cta-box h3 {
+            font-size: 1.8rem;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .cta-box p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .cta-button {
+            background: var(--accent-cyan);
+            color: #030712;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 240, 255, 0.5);
+            background: #22d3ee;
+        }
+
+        /* Roles table */
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .role-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .role-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(0, 240, 255, 0.2);
+        }
+
+        .role-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .role-bullet {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+        }
+
+        .role-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Canvas Background Particles -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Top Branding -->
+    <div id="top-bar">
+        <div class="logo-text">
+            <div class="logo-dot"></div>
+            <span>Gestión Camas <span class="gradient-text">Villarrica</span></span>
+        </div>
+        <div class="inst-badge">Hospital Villarrica • Departamento de Control de Gestión</div>
+    </div>
+
+    <!-- Floating Exit Button for Presentation Mode -->
+    <button id="exit-pres-btn" onclick="togglePresentationMode()">🖥️ Salir del Modo Presentación (ESC)</button>
+
+    <!-- Presentation Space (Acts as a static container now) -->
+    <div id="presentation-space">
+        <!-- SLIDE 1: PORTADA -->
+        <div class="slide-card active" id="slide-1">
+            <div class="slide-body">
+                <div class="cover-content">
+                    <div class="cover-logo">🏥</div>
+                    <h1 class="cover-title">Gestión de Camas <span class="gradient-text">Hospital Villarrica</span></h1>
+                    <p class="cover-subtitle">Plataforma de Control de Ocupación e Integración de Procesos Clínicos en Tiempo Real</p>
+                    <div class="collab-tag">Gestión en Pro de la Calidad Asistencial • 2026</div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>Presentación a Jefes de Servicio</span>
+                <span style="font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.05em; font-size: 0.75rem; text-transform: uppercase;">Dpto. Control de Gestión • Hosp. Villarrica (By GPS)</span>
+                <span>Deslice o use las flechas para continuar</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: EL APLICATIVO -->
+        <div class="slide-card" id="slide-2">
+            <div class="slide-header">
+                <h2 class="gradient-orange">¿Qué Hace el Aplicativo?</h2>
+                <p>Unificación de 5 silos operativos antes aislados en tiempo real.</p>
+            </div>
+            <div class="slide-body">
+                <div class="flex-row">
+                    <div class="flex-col">
+                        <div class="feature-card">
+                            <div class="feature-icon" style="color:var(--accent-orange)">🔗</div>
+                            <div class="feature-text">
+                                <h4>Unifica la Cadena del Paciente</h4>
+                                <p><strong>Qué hace:</strong> Vincula en un circuito cerrado digital desde el ingreso de la Solicitud, la Lista de Espera, la Asignación Física, las Interconsultas, HODOM, hasta el Aseo.</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon" style="color:var(--accent-orange)">⏱️</div>
+                            <div class="feature-text">
+                                <h4>Visibilidad en Tiempo Real</h4>
+                                <p><strong>Qué hace:</strong> Refleja mediante Firebase cualquier movimiento de pacientes, alta médica, egreso HODOM o finalización de aseo de cama en menos de 1 segundo.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-col">
+                        <div class="feature-card" style="border-color: rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.02);">
+                            <div class="feature-icon" style="color:var(--accent-cyan)">🎯</div>
+                            <div class="feature-text">
+                                <h4 style="color:var(--accent-cyan)">Qué nos PERMITE:</h4>
+                                <p style="font-size: 0.85rem; line-height: 1.45; color: var(--text-primary); margin-top: 4px;">
+                                    • <strong>Eliminar planillas Excel paralelas</strong> e informaciones fraccionadas por servicio.<br>
+                                    • <strong>Erradicar el 100% de los llamados confirmatorios</strong> entre Gestor de Camas y Jefes de Turno.<br>
+                                    • <strong>Tomar decisiones al instante</strong> basadas en la data real y visual de la red.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span class="collab-tag">Madurez Operativa</span>
+                <span style="font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.05em; font-size: 0.75rem; text-transform: uppercase;">Dpto. Control de Gestión • Hosp. Villarrica (By GPS)</span>
+                <span>Hospital Villarrica</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: SOLICITUDES Y ESPERA -->
+        <div class="slide-card" id="slide-3">
+            <div class="slide-header">
+                <h2 class="gradient-purple">Control de Solicitudes y Lista de Espera</h2>
+                <p>Nadie queda invisible: trazabilidad del tiempo de espera asistencial.</p>
+            </div>
+            <div class="slide-body">
+                <div class="flex-row">
+                    <div class="flex-col">
+                        <div class="feature-card">
+                            <div class="feature-icon" style="color:var(--accent-purple)">📝</div>
+                            <div class="feature-text">
+                                <h4>¿Qué hace el módulo?</h4>
+                                <p>Estandariza y registra solicitudes digitales desde su origen (Urgencia, Pabellón) clasificando severidad clínica (P1 a P5) y asociando RUN, diagnóstico y servicio tratante.</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon" style="color:var(--accent-purple)">⏳</div>
+                            <div class="feature-text">
+                                <h4>¿Qué permite lograr?</h4>
+                                <p>Visibilizar a cada paciente en espera con un timer dinámico que calcula las horas de demora. Prioriza de forma transparente según gravedad y antigüedad real.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-col">
+                        <div class="feature-card" style="border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.02);">
+                            <div class="feature-text">
+                                <h4 style="color:#ef4444;">Objetivos y Ventajas:</h4>
+                                <p style="margin-top: 4px; font-size: 0.85rem; line-height: 1.45;">
+                                    • <strong>Semáforo de Retrasos Críticos:</strong> Alerta inmediata (🟢 &lt;4h, 🟡 4-12h, 🔴 &gt;12h) para activar escalamientos de traslados.<br>
+                                    • <strong>Equidad Operativa:</strong> Reduce el riesgo asistencial en Urgencia asignando camas por estricta criticidad médica, no por influencia.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span class="collab-tag">Equidad e Indicadores Críticos</span>
+                <span style="font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.05em; font-size: 0.75rem; text-transform: uppercase;">Dpto. Control de Gestión • Hosp. Villarrica (By GPS)</span>
+                <span>Hospital Villarrica</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: MAPA DE CAMAS -->
+        <div class="slide-card" id="slide-4">
+            <div class="slide-header">
+                <h2 class="gradient-cyan">Mapa Físico de Camas y Drag & Drop</h2>
+                <p>La geografía del hospital en tiempo real para decisiones inmediatas.</p>
+            </div>
+            <div class="slide-body">
+                <div class="flex-row">
+                    <div class="flex-col" style="flex: 1.1;">
+                        <div class="feature-card">
+                            <div class="feature-icon">🏢</div>
+                            <div class="feature-text">
+                                <h4>¿Qué hace el módulo?</h4>
+                                <p>Mapea la infraestructura física completa del hospital (Pisos 2, 3 y 4 por Oriente y Poniente) detallando tipos de cama (UCI, UTI, Medios, Básicos, Neo, Maternidad).</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">⚡</div>
+                            <div class="feature-text">
+                                <h4>¿Qué permite lograr?</h4>
+                                <p>Permite al Gestor de Camas asignar a un paciente arrastrándolo de la Lista de Espera y soltándolo en una cama libre. Actualiza el estado al instante.</p>
+                            </div>
+                        </div>
+                        <div class="feature-card" style="border-color: var(--accent-cyan); background: rgba(0, 240, 255, 0.01);">
+                            <div class="feature-text">
+                                <h4 style="color:var(--accent-cyan);">Objetivos y Ventajas:</h4>
+                                <p style="font-size:0.8rem; line-height:1.4; color:var(--text-secondary);">
+                                    ✓ <strong>Cero Tiempo Muerto Administrativo:</strong> La cama se asigna en 2 segundos.<br>
+                                    ✓ <strong>Código de Colores de Estado:</strong> Libre (Verde), Ocupado (Naranjo), Aseo (Calipso) y HODOM (Violeta).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-col" style="flex: 0.9;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); display: block; margin-bottom: 8px;">Simulación Panel de Camas:</span>
+                        <div class="bed-grid-mockup">
+                            <div class="bed-box occupied"><span class="bed-status-dot occupied"></span>Cama 201-1<br><span style="color:var(--text-secondary); font-size:0.65rem;">UCI • Ocupada</span></div>
+                            <div class="bed-box available"><span class="bed-status-dot available"></span>Cama 201-2<br><span style="color:var(--text-secondary); font-size:0.65rem;">UCI • Libre</span></div>
+                            <div class="bed-box cleaning"><span class="bed-status-dot cleaning"></span>Cama 201-3<br><span style="color:var(--text-secondary); font-size:0.65rem;">UTI • Aseo</span></div>
+                            <div class="bed-box occupied"><span class="bed-status-dot occupied"></span>Cama 201-4<br><span style="color:var(--text-secondary); font-size:0.65rem;">UTI • Ocupada</span></div>
+                            <div class="bed-box available"><span class="bed-status-dot available"></span>Cama 301-1<br><span style="color:var(--text-secondary); font-size:0.65rem;">Mat • Libre</span></div>
+                            <div class="bed-box occupied"><span class="bed-status-dot occupied"></span>Cama 301-2<br><span style="color:var(--text-secondary); font-size:0.65rem;">Mat • Ocupada</span></div>
+                            <div class="bed-box occupied"><span class="bed-status-dot occupied"></span>Cama 401-1<br><span style="color:var(--text-secondary); font-size:0.65rem;">Bás • Ocupada</span></div>
+                            <div class="bed-box cleaning"><span class="bed-status-dot cleaning"></span>Cama 401-2<br><span style="color:var(--text-secondary); font-size:0.65rem;">Bás • Aseo</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span class="collab-tag">Precisión Geo-Espacial</span>
+                <span style="font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.05em; font-size: 0.75rem; text-transform: uppercase;">Dpto. Control de Gestión • Hosp. Villarrica (By GPS)</span>
+                <span>Hospital Villarrica</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: INTERCONSULTAS -->
+        <div class="slide-card" id="slide-5">
+            <div class="slide-header">
+                <h2 class="gradient-green">Módulo de Interconsultas en Sala</h2>
+                <p>Reduciendo los cuellos de botella que alargan la estadía promedio.</p>
+            </div>
+            <div class="slide-body">
+                <div class="flex-row">
+                    <div class="flex-col">
+                        <div class="feature-card">
+                            <div class="feature-icon" style="color:var(--accent-green)">🩺</div>
+                            <div class="feature-text">
+                                <h4>¿Qué hace el módulo?</h4>
+                                <p>Registra las derivaciones a especialidades directo sobre la cama ocupada, eliminando las interconsultas en papel y correos paralelos.</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon" style="color:var(--accent-green)">👀</div>
+                            <div class="feature-text">
+                                <h4>¿Qué permite lograr?</h4>
+                                <p>Provee un visor exclusivo en línea para los especialistas. Ellos pueden priorizar, evaluar y resolver con notas obligatorias y diagnósticos formales en segundos.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-col">
+                        <div class="feature-card" style="border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.02);">
+                            <div class="feature-text">
+                                <h4 style="color:var(--accent-green);">Objetivos y Ventajas:</h4>
+                                <p style="font-size:0.85rem; line-height:1.45; margin-top:4px;">
+                                    • <strong>Eliminación de la Espera Invisible:</strong> Mide las horas exactas de retraso de cada evaluación de especialista.<br>
+                                    • <strong>Optimización de Días/Cama:</strong> Resolver a tiempo reduce la estadía del paciente, liberando la cama antes para el hospital.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span class="collab-tag">Agilidad Clínico-Especializada</span>
+                <span style="font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.05em; font-size: 0.75rem; text-transform: uppercase;">Dpto. Control de Gestión • Hosp. Villarrica (By GPS)</span>
+                <span>Hospital Villarrica</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: HODOM EGRESOS -->
+        <div class="slide-card" id="slide-6">
+            <div class="slide-header">
+                <h2 class="gradient-text">Canalización HODOM y Egresos</h2>
+                <p>Hospitalización Domiciliaria como pilar de descompresión institucional.</p>
+            </div>
+            <div class="slide-body">
+                <div class="flex-row">
+                    <div class="flex-col" style="border-right: 1px solid rgba(255,255,255,0.05); padding-right: 12px;">
+                        <h4 style="color: var(--accent-purple); display:flex; align-items:center; gap:8px;">🏠 ¿Qué hace? Protocolo HODOM</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">Automatiza el traslado a domicilio exigiendo un estricto checklist de 12 requisitos clínico-sociales obligatorios verificados digitalmente.</p>
+                        <ul style="font-size: 0.8rem; color: var(--text-secondary); list-style-type: none; display:flex; flex-direction:column; gap:8px;">
+                            <li>• <strong>Validaciones Clínicas:</strong> Vías aéreas, estabilidad hemodinámica.</li>
+                            <li>• <strong>Validaciones Sociales:</strong> Consentimiento informado, cuidador apto.</li>
+                            <li>• <strong>Aprobación Digital:</strong> El médico HODOM revisa y aprueba online.</li>
+                        </ul>
+                    </div>
+                    <div class="flex-col" style="padding-left: 12px;">
+                        <h4 style="color: var(--accent-green); display:flex; align-items:center; gap:8px;">🚀 ¿Qué permite y qué ventajas logra?</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">Permite al hospital egresar con seguridad y control a pacientes estables a sus hogares.</p>
+                        <ul style="font-size: 0.8rem; color: var(--text-secondary); list-style-type: none; display:flex; flex-direction:column; gap:8px;">
+                            <li>• <strong>Rotación Acelerada de Camas:</strong> Desocupa la cama física días antes de un alta convencional.</li>
+                            <li>• <strong>Sincronización en Cadena:</strong> Al confirmarse el egreso, la cama pasa automáticamente al estado "En Aseo".</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span class="collab-tag">Eficiencia Continuidad</span>
+                <span style="font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.05em; font-size: 0.75rem; text-transform: uppercase;">Dpto. Control de Gestión • Hosp. Villarrica (By GPS)</span>
+                <span>Hospital Villarrica</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 7: ASEO Y SANITIZACIÓN -->
+        <div class="slide-card" id="slide-7">
+            <div class="slide-header">
+                <h2 class="gradient-cyan">Módulo de Aseo: Optimización del Turnaround</h2>
+                <p>El control del tiempo muerto de las camas vacías.</p>
+            </div>
+            <div class="slide-body">
+                <div class="flex-row">
+                    <div class="flex-col">
+                        <div class="feature-card">
+                            <div class="feature-icon" style="color:var(--accent-cyan)">🧹</div>
+                            <div class="feature-text">
+                                <h4>¿Qué hace el módulo?</h4>
+                                <p>Al egresar un paciente, la cama pasa automáticamente al estado "En Aseo" en calipso y se inyecta en la lista de trabajo del personal de limpieza, ordenada por prioridad de tiempo.</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon" style="color:var(--accent-cyan)">📱</div>
+                            <div class="feature-text">
+                                <h4>¿Qué permite lograr?</h4>
+                                <p>Permite al personal de aseo ver, tomar y finalizar las tareas de desinfección en línea, liberando la cama para el Gestor inmediatamente.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-col">
+                        <div class="feature-card" style="border-color: rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.02);">
+                            <div class="feature-text">
+                                <h4 style="color:var(--accent-cyan);">Objetivos y Ventajas:</h4>
+                                <p style="font-size:0.85rem; line-height:1.45; margin-top:4px;">
+                                    • <strong>Eliminación del Tiempo Muerto:</strong> Evita que una cama ya desocupada permanezca inhabilitada por horas por falta de comunicación.<br>
+                                    • <strong>Indicador Operativo (Turnaround Time):</strong> Mide el tiempo exacto que le toma al personal sanitizar cada cama para optimizar la logística.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span class="collab-tag">Sanitización Eficiente</span>
+                <span style="font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.05em; font-size: 0.75rem; text-transform: uppercase;">Dpto. Control de Gestión • Hosp. Villarrica (By GPS)</span>
+                <span>Hospital Villarrica</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 8: ESTADÍSTICAS -->
+        <div class="slide-card" id="slide-8">
+            <div class="slide-header">
+                <h2 class="gradient-orange">Dashboard de Insights Clínicos</h2>
+                <p>Datos en tiempo real que sustentan decisiones institucionales.</p>
+            </div>
+            <div class="slide-body">
+                <div class="kpi-container" style="margin-bottom: 20px;">
+                    <div class="kpi-card">
+                        <div class="kpi-value gradient-cyan" id="kpi-occupancy">91%</div>
+                        <div class="kpi-label">Ocupación Global</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-value gradient-purple" id="kpi-wait">3.8h</div>
+                        <div class="kpi-label">Espera Promedio IC</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-value gradient-orange" id="kpi-aseo">45m</div>
+                        <div class="kpi-label">Turnaround Aseo</div>
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div class="flex-col">
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 12px 16px;">
+                            <strong style="font-size:0.85rem; color:var(--accent-orange); display:block; margin-bottom: 6px;">¿Qué hace y qué permite lograr?</strong>
+                            <p style="font-size:0.75rem; color:var(--text-secondary); line-height:1.4;">
+                                • <strong>Monitorea Capacidades Críticas:</strong> Controla el balance de camas UPC (UCI/UTI) vs Camas Básicas para prever saturación.<br>
+                                • <strong>Alertas de Larga Estadía:</strong> Identifica de forma proactiva a pacientes que superan el promedio proyectado de días.<br>
+                                • <strong>Exportación de Auditoría:</strong> Permite descargar las bases de datos operativas en .CSV en un clic para análisis DEIS y reportabilidad directiva.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span class="collab-tag">Gobernanza de Datos</span>
+                <span style="font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.05em; font-size: 0.75rem; text-transform: uppercase;">Dpto. Control de Gestión • Hosp. Villarrica (By GPS)</span>
+                <span>Hospital Villarrica</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 9: DESAFÍOS Y COMPROMISO COLECTIVO -->
+        <div class="slide-card" id="slide-9">
+            <div class="slide-header" style="margin-bottom: 12px;">
+                <h2 class="gradient-orange">Desafíos Compartidos: Un Esfuerzo en Pro de Nuestros Pacientes</h2>
+                <p>La herramienta es solo el canal; la disciplina clínica y la adherencia colectiva garantizan la equidad y oportunidad del proceso.</p>
+            </div>
+            <div class="slide-body" style="padding-top: 5px; gap: 10px;">
+                <div class="flex-row" style="gap: 14px; align-items: stretch;">
+                    <div class="flex-col" style="flex: 1.25; gap: 8px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="feature-card" style="padding: 10px; border-color: rgba(249, 115, 22, 0.15); background: rgba(255, 255, 255, 0.01); border-radius: 10px; gap: 10px;">
+                                <strong style="color: var(--accent-orange); font-size: 0.8rem; display: block; margin-bottom: 2px;">1. Registro Clínico en Tiempo Real</strong>
+                                <p style="font-size: 0.68rem; color: var(--text-secondary); line-height: 1.3; margin: 0;">El sistema se nutre de datos en vivo. Registrar un egreso, alta o traslado en el instante exacto en que ocurre es el combustible que permite visibilizar y asignar una cama libre sin demoras críticas.</p>
+                            </div>
+                            <div class="feature-card" style="padding: 10px; border-color: rgba(6, 182, 212, 0.15); background: rgba(255, 255, 255, 0.01); border-radius: 10px; gap: 10px;">
+                                <strong style="color: var(--accent-cyan); font-size: 0.8rem; display: block; margin-bottom: 2px;">2. Adherencia y Rigor al Flujo Digital</strong>
+                                <p style="font-size: 0.68rem; color: var(--text-secondary); line-height: 1.3; margin: 0;">Para asegurar la trazabilidad, todo movimiento debe registrarse en la plataforma. La adherencia al canal digital erradica puntos ciegos y garantiza la equidad del paciente que espera en red.</p>
+                            </div>
+                            <div class="feature-card" style="padding: 10px; border-color: rgba(168, 85, 247, 0.15); background: rgba(255, 255, 255, 0.01); border-radius: 10px; gap: 10px;">
+                                <strong style="color: var(--accent-purple); font-size: 0.8rem; display: block; margin-bottom: 2px;">3. Sinergia Interdisciplinaria</strong>
+                                <p style="font-size: 0.68rem; color: var(--text-secondary); line-height: 1.3; margin: 0;">La gestión de camas es una tarea de corresponsabilidad. Depende de que el médico apruebe HODOM, el especialista resuelva la interconsulta y el personal de aseo actúe de inmediato.</p>
+                            </div>
+                            <div class="feature-card" style="padding: 10px; border-color: rgba(52, 211, 153, 0.15); background: rgba(255, 255, 255, 0.01); border-radius: 10px; gap: 10px;">
+                                <strong style="color: var(--accent-green); font-size: 0.8rem; display: block; margin-bottom: 2px;">4. Planificación del Alta Proactiva</strong>
+                                <p style="font-size: 0.68rem; color: var(--text-secondary); line-height: 1.3; margin: 0;">Anticipar las altas proyectadas desde primera hora del día permite coordinar traslados y sanitizaciones con tiempo, optimizando la capacidad instalada y la fluidez operativa.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-col" style="flex: 0.75; justify-content: center; gap: 0;">
+                        <div class="feature-card" style="border: 1px dashed var(--accent-cyan); background: rgba(0, 240, 255, 0.02); padding: 12px; text-align: center; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                            <span style="font-size: 1.8rem; display: block; margin-bottom: 4px;">❤️</span>
+                            <h4 style="color: var(--text-primary); font-size: 0.85rem; margin-bottom: 4px;">El Enfoque Humano: El Paciente</h4>
+                            <p style="font-size: 0.7rem; color: var(--text-secondary); line-height: 1.35; text-align: justify; margin: 0;">
+                                Detrás de cada RUN en la lista de espera, detrás de cada timer de interconsulta o registro de aseo, hay una persona y una familia esperando. <strong>Optimizar tiempos no es una métrica fría o meramente administrativa: es otorgar una cama digna al paciente que la necesita en el momento oportuno.</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span class="collab-tag" style="background: rgba(249, 115, 22, 0.15); color: #fed7aa; border-color: rgba(249, 115, 22, 0.3);">Compromiso Colectivo</span>
+                <span style="font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.05em; font-size: 0.75rem; text-transform: uppercase;">Dpto. Control de Gestión • Hosp. Villarrica (By GPS)</span>
+                <span>Hospital Villarrica</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 10: VENTAJAS Y OBJETIVOS -->
+        <div class="slide-card" id="slide-10">
+            <div class="slide-header">
+                <h2 class="gradient-green">Ventajas y Objetivos Estratégicos Logrados</h2>
+                <p>Los resultados concretos que obtenemos al implementar este sistema.</p>
+            </div>
+            <div class="slide-body">
+                <div class="flex-row" style="align-items: stretch;">
+                    <div class="flex-col">
+                        <h4 style="color:var(--accent-green);">Ventajas Operativas Directas:</h4>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); line-height:1.4;">
+                            <strong>✓ Trazabilidad del 100% de la cama:</strong> Desde la solicitud inicial hasta la desinfección final.<br>
+                            <strong>✓ Racionalización de Recursos:</strong> Evita el desgaste de médicos y enfermeras en llamadas telefónicas administrativas.<br>
+                            <strong>✓ Estandarización de Procesos:</strong> Reglas claras, objetivas e inmutables para derivaciones HODOM y prioridades.
+                        </p>
+                    </div>
+                    <div class="flex-col" style="gap: 8px;">
+                        <h4 style="color:var(--accent-cyan);">Tecnología y Conectividad:</h4>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); line-height:1.4; margin: 0;">
+                            <strong>✓ Base de Datos en Tiempo Real:</strong> Sincronización instantánea en la nube vía Firebase.<br>
+                            <strong>✓ Cero Instalaciones Complejas:</strong> Sistema 100% web optimizado para cualquier PC institucional.<br>
+                            <strong>✓ Seguridad y Privilegios:</strong> 6 perfiles de acceso bien delimitados para salvaguardar la información clínica.
+                        </p>
+                        <div class="feature-card" style="border-color: rgba(6, 182, 212, 0.25); background: rgba(6, 182, 212, 0.02); padding: 10px; border-radius: 10px; gap: 8px; display: flex; flex-direction: column; align-items: flex-start;">
+                            <strong style="color: var(--accent-cyan); font-size: 0.75rem; display: block; margin-bottom: 2px;">🛠️ Arquitectura de Seguridad y Despliegue:</strong>
+                            <p style="font-size: 0.65rem; color: var(--text-secondary); line-height: 1.35; margin: 0;">
+                                Diseñado bajo el motor de IA de **Google Antigravity**, versionado y alojado en **GitHub** y publicado de forma continua mediante **Vercel** serverless CDN.<br>
+                                La persistencia reside en servidores **Google Firebase**, con cifrado de datos en tránsito SSL/TLS y reglas estrictas de seguridad (Security Rules) a nivel de servidor que restringen la información del paciente únicamente a roles autorizados.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span class="collab-tag">Valor Institucional</span>
+                <span style="font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.05em; font-size: 0.75rem; text-transform: uppercase;">Dpto. Control de Gestión • Hosp. Villarrica (By GPS)</span>
+                <span>Hospital Villarrica</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 11: HOJA DE RUTA Y CTA -->
+        <div class="slide-card" id="slide-11">
+            <div class="slide-body">
+                <div class="cta-box" style="padding: 18px 22px;">
+                    <h3 class="gradient-text" style="font-size: 1.6rem; margin-bottom: 6px;">Gobernanza y Sostenibilidad Operativa</h3>
+                    <div style="background: rgba(255, 255, 255, 0.02); border-left: 3px solid var(--accent-cyan); padding: 10px 14px; border-radius: 4px 10px 10px 4px; margin-bottom: 14px; text-align: justify;">
+                        <p style="font-size: 0.73rem; line-height: 1.45; color: var(--text-secondary); margin: 0; font-style: italic;">
+                            "Construimos hoy el <strong style="color:var(--text-primary);">futuro</strong> de la <strong style="color:var(--accent-cyan);">Gestión en Pro de la Calidad Asistencial</strong> consolidando nuestra <strong style="color:var(--accent-orange);">Madurez Operativa</strong>, resguardando la <strong style="color:var(--accent-purple);">Equidad</strong> mediante <strong style="color:var(--accent-purple);">Indicadores Críticos</strong> y una <strong style="color:var(--accent-cyan);">Precisión Geo-Espacial</strong>, habilitando la <strong style="color:var(--accent-green);">Agilidad Clínico-Especializada</strong>, e impulsando la <strong style="color:var(--accent-green);">Eficiencia y Continuidad</strong> en cada eslabón —desde una <strong style="color:var(--accent-cyan);">Sanitización Eficiente</strong> hasta la más rigurosa <strong style="color:var(--accent-orange);">Gobernanza de Datos</strong>—; un <strong style="color:var(--accent-orange);">Compromiso Colectivo</strong> que hoy se traduce en el más alto <strong style="color:var(--text-primary);">Valor Institucional</strong> para nuestro hospital."
+                        </p>
+                    </div>
+                    <div class="timeline" style="margin-bottom: 20px;">
+                        <div class="timeline-step active">
+                            <div class="timeline-dot"></div>
+                            <h5 style="font-size:0.75rem; margin-bottom: 2px;">Fase 1 (Hoy)</h5>
+                            <p style="font-size:0.6rem; margin: 0;">Plataforma Firebase 100% activa en web</p>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="timeline-dot"></div>
+                            <h5 style="font-size:0.75rem; margin-bottom: 2px;">Fase 2 (3 Meses)</h5>
+                            <p style="font-size:0.6rem; margin: 0;">Alertas móviles y Reportes DEIS</p>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="timeline-dot"></div>
+                            <h5 style="font-size:0.75rem; margin-bottom: 2px;">Fase 3 (6 Meses)</h5>
+                            <p style="font-size:0.6rem; margin: 0;">Integración directa con el HIS institucional</p>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="timeline-dot" style="background: var(--accent-orange);"></div>
+                            <h5 style="font-size:0.75rem; margin-bottom: 2px; color: var(--accent-orange);">Fase 4 (12 Meses)</h5>
+                            <p style="font-size:0.6rem; margin: 0; color: var(--text-secondary);">Ingeniería y Analítica Proyectiva (Modelos predictivos e IA)</p>
+                        </div>
+                    </div>
+                    <button class="cta-button" onclick="goToSlide(0)">Volver al Inicio</button>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span class="collab-tag">El Futuro es Hoy</span>
+                <span style="font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.05em; font-size: 0.75rem; text-transform: uppercase;">Dpto. Control de Gestión • Hosp. Villarrica (By GPS)</span>
+                <span>Hospital Villarrica</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- HUD Overlay Controls -->
+    <div id="hud-controls">
+        <button class="hud-btn" onclick="prevSlide()" title="Diapositiva Anterior">◀</button>
+        <button class="hud-btn" onclick="togglePresentationMode()" title="Modo Presentación (Pantalla Completa)">🖥️</button>
+        <div class="hud-dots" id="hud-dots-container">
+            <!-- Dots generated by JS -->
+        </div>
+        <button class="hud-btn" onclick="nextSlide()" title="Diapositiva Siguiente">▶</button>
+    </div>
+
+    <!-- JS Logic for Prezi-Style Slides -->
+    <script>
+        const totalSlides = 11;
+        let currentSlide = 0;
+
+        // Clean 2D Coordinates for absolute crisp focus across all browsers
+        const slideTransforms = [
+            { x: 0,     y: 0,     rotate: 0,    scale: 1 },    // Slide 1 (Cover)
+            { x: 1800,  y: -400,  rotate: 10,   scale: 1 },    // Slide 2 (El aplicativo)
+            { x: 3400,  y: 300,   rotate: -10,  scale: 1 },    // Slide 3 (Espera)
+            { x: 2800,  y: 1800,  rotate: 15,   scale: 1 },    // Slide 4 (Mapa Camas)
+            { x: 1000,  y: 2400,  rotate: -15,  scale: 1 },    // Slide 5 (Interconsultas)
+            { x: -1000, y: 2400,  rotate: 10,   scale: 1 },    // Slide 6 (HODOM)
+            { x: -2800, y: 1800,  rotate: -20,  scale: 1 },    // Slide 7 (Aseo)
+            { x: -3400, y: 300,   rotate: 15,   scale: 1 },    // Slide 8 (KPIs)
+            { x: -1800, y: -400,  rotate: -10,  scale: 1 },    // Slide 9 (Desafíos Colectivos)
+            { x: 0,     y: -1200, rotate: 360,  scale: 1 },    // Slide 10 (Ventajas y Objetivos)
+            { x: 1800,  y: -1800, rotate: 370,  scale: 1 }     // Slide 11 (Roadmap & CTA)
+        ];
+
+        const space = document.getElementById('presentation-space');
+        const cards = document.querySelectorAll('.slide-card');
+        const counter = document.getElementById('hud-counter');
+        const dotsContainer = document.getElementById('hud-dots-container');
+
+        // Create HUD Dots
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.classList.add('hud-dot');
+            if (i === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => goToSlide(i));
+            dotsContainer.appendChild(dot);
+        }
+        const dots = document.querySelectorAll('.hud-dot');
+
+        function updateSlide() {
+            const t = slideTransforms[currentSlide];
+            
+            // Apply camera transform to each card relative to active card.
+            // When index === currentSlide, rx=0, ry=0, rRot=0, rScale=1.
+            // This places the active slide EXACTLY in the center of the viewport, completely upright.
+            cards.forEach((card, index) => {
+                const pos = slideTransforms[index];
+                
+                // Difference in coordinates
+                const dx = pos.x - t.x;
+                const dy = pos.y - t.y;
+                
+                // Rotate the coordinate system by the camera's inverse rotation to keep active card upright (0deg)
+                const angleRad = -t.rotate * Math.PI / 180;
+                const rx = dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
+                const ry = dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
+                
+                // Calculate relative rotation and scale
+                const rRot = pos.rotate - t.rotate;
+                const rScale = pos.scale / t.scale;
+                
+                // Set style transform
+                card.style.transform = `translate(${rx}px, ${ry}px) rotate(${rRot}deg) scale(${rScale})`;
+                
+                if (index === currentSlide) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+
+            // Update HUD overlays
+            if (counter) counter.innerText = `${currentSlide + 1} / ${totalSlides}`;
+            dots.forEach((dot, index) => {
+                if (index === currentSlide) dot.classList.add('active');
+                else dot.classList.remove('active');
+            });
+        }
+
+        function togglePresentationMode() {
+            document.body.classList.toggle('presentation-mode');
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            updateSlide();
+        }
+
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            updateSlide();
+        }
+
+        function goToSlide(n) {
+            currentSlide = n;
+            updateSlide();
+        }
+
+        // Keyboard Controls
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+                prevSlide();
+            } else if (e.key === 'Escape') {
+                if (document.body.classList.contains('presentation-mode')) {
+                    document.body.classList.remove('presentation-mode');
+                }
+            }
+        });
+
+        // Mouse Wheel Scroll (with throttle)
+        let lastWheel = 0;
+        window.addEventListener('wheel', (e) => {
+            const now = Date.now();
+            if (now - lastWheel < 1200) return;
+            if (e.deltaY > 15) {
+                nextSlide();
+                lastWheel = now;
+            } else if (e.deltaY < -15) {
+                prevSlide();
+                lastWheel = now;
+            }
+        });
+
+        // Background particles logic
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const particleCount = 50;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.4;
+                this.vy = (Math.random() - 0.5) * 0.4;
+                this.radius = Math.random() * 2 + 1;
+                this.color = Math.random() > 0.5 ? '#00f0ff' : '#a855f7';
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0 || this.x > canvas.width) this.vx = -this.vx;
+                if (this.y < 0 || this.y > canvas.height) this.vy = -this.vy;
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 150) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(0, 240, 255, ${0.08 * (1 - dist / 150)})`;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Initialize and center
+        updateSlide();
+        animate();
+    </script>
+</body>
+</html>

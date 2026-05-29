@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama de Proceso - Gestión de Camas Hospital de Villarrica</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b1329;
+            --panel-bg: rgba(15, 23, 42, 0.75);
+            --border-light: rgba(255, 255, 255, 0.08);
+            --accent-cyan: #00f0ff;
+            --accent-purple: #a855f7;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 10% 20%, rgba(6, 182, 212, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+        }
+
+        header {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto 30px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background: var(--accent-cyan);
+            color: #0b1329;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+        }
+
+        /* Layout Grid */
+        .layout-container {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            flex-grow: 1;
+        }
+
+        .canvas-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-light);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+        }
+
+        .details-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .info-card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .info-card h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-section {
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 14px;
+            margin-top: 14px;
+            font-size: 0.85rem;
+        }
+
+        .info-section-title {
+            font-weight: 700;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .role-badge {
+            display: inline-block;
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            color: #d8b4fe;
+            padding: 2px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        /* SVG Styles */
+        svg {
+            width: 100%;
+            max-width: 750px;
+            height: auto;
+        }
+
+        .svg-step {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .svg-step rect {
+            fill: #1e293b;
+            stroke: rgba(255,255,255,0.1);
+            stroke-width: 2;
+            rx: 16px;
+            ry: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .svg-step text {
+            fill: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            text-anchor: middle;
+            transition: all 0.3s ease;
+        }
+
+        .svg-step.active rect {
+            fill: rgba(6, 182, 212, 0.15);
+            stroke: var(--accent-cyan);
+            filter: drop-shadow(0px 0px 8px rgba(6, 182, 212, 0.5));
+        }
+
+        .svg-step:hover rect {
+            stroke: var(--accent-cyan);
+            filter: drop-shadow(0px 0px 12px rgba(6, 182, 212, 0.6));
+        }
+
+        /* Connector arrows */
+        .arrow-line {
+            fill: none;
+            stroke: rgba(255,255,255,0.15);
+            stroke-width: 2.5;
+            marker-end: url(#arrow);
+            stroke-dasharray: 4 4;
+            animation: dash 20s linear infinite;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -1000;
+            }
+        }
+
+        .arrow-line.active {
+            stroke: var(--accent-cyan);
+            stroke-width: 3;
+            filter: drop-shadow(0px 0px 4px var(--accent-cyan));
+        }
+
+        /* Legend Panel */
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>Diagrama de Proceso Cerrado</h1>
+            <div class="subtitle">Ecosistema interactivo de gestión y trazabilidad de camas. Haga clic en cada nodo para ver su desglose técnico.</div>
+        </div>
+        <a href="presentacion.html" class="back-btn">
+            Ver Presentación PPT
+        </a>
+    </header>
+
+    <div class="layout-container">
+        
+        <!-- SVG Canvas Area -->
+        <div class="canvas-panel">
+            <svg viewBox="0 0 500 650" width="500" height="650">
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,255,255,0.25)" id="arrow-path" />
+                    </marker>
+                </defs>
+
+                <!-- Arrows (paths between nodes) -->
+                <!-- Step 1 to 2 -->
+                <path d="M 250 85 L 250 125" class="arrow-line active" id="arrow-1-2" />
+                
+                <!-- Step 2 to 3 -->
+                <path d="M 250 185 L 250 225" class="arrow-line" id="arrow-2-3" />
+                
+                <!-- Step 3 to 4 -->
+                <path d="M 250 285 L 250 325" class="arrow-line" id="arrow-3-4" />
+                
+                <!-- Step 4 to 5 (HODOM Loop) -->
+                <path d="M 345 355 C 410 355, 410 455, 345 455" class="arrow-line" id="arrow-4-5" />
+                <text x="415" y="410" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">HODOM aprobado</text>
+                
+                <!-- Step 4 to 6 (Standard Discharge) -->
+                <path d="M 250 385 L 250 425" class="arrow-line" id="arrow-4-6" />
+                
+                <!-- Step 5 to 6 (HODOM release to Aseo) -->
+                <!-- Direct link handled above -->
+
+                <!-- Step 6 to 7 -->
+                <path d="M 250 485 L 250 525" class="arrow-line" id="arrow-6-7" />
+
+                <!-- Step 7 to 2 (Bed back to Available list) -->
+                <path d="M 155 555 C 50 555, 50 155, 155 155" class="arrow-line" id="arrow-7-2" />
+                <text x="45" y="350" fill="#10b981" font-size="9" font-weight="bold" text-anchor="middle" transform="rotate(-90 45 350)">Cama Disponible para Asignar</text>
+
+
+                <!-- Nodes (clickable steps) -->
+                <!-- Step 1: Solicitud -->
+                <g class="svg-step active" id="step-1" onclick="showStep(1)">
+                    <rect x="155" y="25" width="190" height="60" />
+                    <text x="250" y="52" font-size="11">1. Solicitud de Cama</text>
+                    <text x="250" y="68" font-size="8" fill="#94a3b8" font-weight="normal">Médico General / Urgencia</text>
+                </g>
+
+                <!-- Step 2: Lista de Espera -->
+                <g class="svg-step" id="step-2" onclick="showStep(2)">
+                    <rect x="155" y="125" width="190" height="60" />
+                    <text x="250" y="152" font-size="11">2. Lista de Espera</text>
+                    <text x="250" y="168" font-size="8" fill="#fbbf24" font-weight="normal">Timer Activo & Priorización P1-P5</text>
+                </g>
+
+                <!-- Step 3: Asignación -->
+                <g class="svg-step" id="step-3" onclick="showStep(3)">
+                    <rect x="155" y="225" width="190" height="60" />
+                    <text x="250" y="252" font-size="11">3. Asignación (Drag & Drop)</text>
+                    <text x="250" y="268" font-size="8" fill="#00f0ff" font-weight="normal">Gestor de Camas / Rol Administrador</text>
+                </g>
+
+                <!-- Step 4: Hospitalización e Interconsultas -->
+                <g class="svg-step" id="step-4" onclick="showStep(4)">
+                    <rect x="155" y="325" width="190" height="60" />
+                    <text x="250" y="352" font-size="11">4. Hospitalización / IC</text>
+                    <text x="250" y="368" font-size="8" fill="#a855f7" font-weight="normal">Ficha de Cama Ocupada & Referidos</text>
+                </g>
+
+                <!-- Step 5: Evaluación HODOM -->
+                <g class="svg-step" id="step-5" onclick="showStep(5)">
+                    <rect x="155" y="425" width="190" height="60" />
+                    <text x="250" y="452" font-size="11">5. Evaluación HODOM</text>
+                    <text x="250" y="468" font-size="8" fill="#10b981" font-weight="normal">Checklist de 12 Requisitos Clínicos</text>
+                </g>
+
+                <!-- Step 6: Aseo y Sanitización -->
+                <g class="svg-step" id="step-6" onclick="showStep(6)">
+                    <rect x="155" y="525" width="190" height="60" />
+                    <text x="250" y="552" font-size="11">6. Aseo y Sanitización</text>
+                    <text x="250" y="568" font-size="8" fill="#f59e0b" font-weight="normal">Personal de Aseo / Camas Sucias</text>
+                </g>
+
+            </svg>
+        </div>
+
+        <!-- Details Panel -->
+        <div class="details-panel">
+            
+            <!-- Step Details Card -->
+            <div class="info-card" id="details-card">
+                <h3 id="step-title" style="color: var(--accent-cyan);">1. Solicitud de Cama</h3>
+                <span class="role-badge" id="step-role">Rol: Médico General / Derivador</span>
+                
+                <p style="margin-top: 14px; font-size: 0.9rem; line-height: 1.5; color: var(--text-secondary);" id="step-description">
+                    El médico tratante del servicio derivador (Urgencia, Pabellón, etc.) identifica que el paciente requiere hospitalización. Ingresa un formulario estandarizado en la plataforma.
+                </p>
+
+                <div class="info-section">
+                    <div class="info-section-title">Datos Obligatorios de Entrada</div>
+                    <div id="step-inputs" style="line-height: 1.4; color: var(--text-primary);">
+                        • RUN, Nombre completo, Edad y Sexo del paciente.<br>
+                        • Servicio de Origen (ej. Urgencia, Cirugía, etc.).<br>
+                        • Diagnóstico de Ingreso.<br>
+                        • Tipo de cama requerido (UCI, UTI, Medio, Básico, Maternidad, Neo).<br>
+                        • Nivel de Prioridad Médica (P1 - P5).
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-section-title">Acción Firebase en Tiempo Real</div>
+                    <code id="step-firebase" style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px; display: block; font-family: monospace; color: #a855f7;">
+                        PUSH /appState/waitingList
+                    </code>
+                </div>
+            </div>
+
+            <!-- Legend Info Card -->
+            <div class="info-card">
+                <h3>Leyenda & Roles</h3>
+                <div class="legend-grid" style="margin-top: 10px;">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--accent-cyan);"></div>
+                        <span>Cama Libre</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--accent-orange);"></div>
+                        <span>Cama Ocupada</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--accent-purple);"></div>
+                        <span>Cama en Aseo</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--accent-green);"></div>
+                        <span>HODOM Activo</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        const stepData = {
+            1: {
+                title: "1. Solicitud de Cama",
+                role: "Rol: Médico General / Urgenciólogo / Cirujano",
+                desc: "El médico clínico ingresa una nueva solicitud de hospitalización. Evita coordinaciones telefónicas y planillas paralelas, unificando la entrada desde el origen.",
+                inputs: "• RUN y Nombre del paciente<br>• Servicio de Origen (Urgencia, Pabellón, Externo)<br>• Diagnóstico detallado<br>• Tipo de Cama Requerido (UCI, UTI, Cuidados Medios, Básicos, etc.)<br>• Gravedad / Prioridad (P1 a P5)",
+                firebase: "PUSH -> /appState/waitingList",
+                activeArrow: "arrow-1-2"
+            },
+            2: {
+                title: "2. Lista de Espera Sincronizada",
+                role: "Rol: Gestor de Camas / Visor Institucional",
+                desc: "Los pacientes se ordenan por su hora de solicitud. Un timer en tiempo real mide las horas de espera. Si supera las 4 o 12 horas, se activa una alerta visual amarilla o roja de criticidad.",
+                inputs: "• Cálculo dinámico de horas de espera<br>• Filtro rápido por especialidad y servicio<br>• Resumen estadístico interactivo en la cabecera (verde < 4h, amarillo 4-12h, rojo > 12h)",
+                firebase: "READ -> /appState/waitingList",
+                activeArrow: "arrow-2-3"
+            },
+            3: {
+                title: "3. Asignación (Drag & Drop)",
+                role: "Rol: Gestor de Camas",
+                desc: "El gestor de camas evalúa la disponibilidad visual en los distintos pisos. Asigna arrastrando al paciente desde el panel lateral de espera y soltándolo en la cama correspondiente.",
+                inputs: "• Cama física disponible en la infraestructura<br>• Asociación automática de datos del paciente a la cama<br>• Cambio de estado de la cama de 'disponible' a 'ocupada'<br>• Registro del tiempo de estada proyectado (días de egreso estimado)",
+                firebase: "UPDATE -> /appState/bedsData/[piso]/[sector]/[hab]/beds",
+                activeArrow: "arrow-3-4"
+            },
+            4: {
+                title: "4. Hospitalización e Interconsultas",
+                role: "Rol: Médicos Tratantes / Interconsultores",
+                desc: "Durante la estadía, el equipo tratante puede requerir evaluaciones de especialistas. Se ingresan solicitudes directas a través del panel que el especialista visualiza y resuelve en línea.",
+                inputs: "• Especialidad destino solicitada<br>• Motivo clínico y resumen de historia clínica<br>• Registro formal obligatorio de resolución / desestimación por el interconsultor<br>• Seguimiento de pacientes con larga estadía (retrasados en su egreso)",
+                firebase: "UPDATE -> beds/[id]/interconsultas",
+                activeArrow: "arrow-4-6"
+            },
+            5: {
+                title: "5. Evaluación e Ingreso HODOM",
+                role: "Rol: Médico HODOM / Gestor de Camas",
+                desc: "Para acelerar el egreso y descongestionar las salas físicas, el médico puede solicitar Hospitalización Domiciliaria. Se exige un estricto checklist de 12 puntos clínicos, familiares y del entorno.",
+                inputs: "• Checklist obligatorio de 12 puntos aprobados<br>• Observaciones de viabilidad social y logística domiciliaria<br>• Confirmación de traslado del equipo HODOM<br>• Al confirmar, la cama física del hospital se libera automáticamente para Aseo",
+                firebase: "PUSH -> /appState/hodomRequests",
+                activeArrow: "arrow-4-5"
+            },
+            6: {
+                title: "6. Aseo, Sanitización y Habilitación",
+                role: "Rol: Personal de Aseo y Desinfección",
+                desc: "Al egresar un paciente (por Alta o HODOM), la cama queda en estado 'cleaning' (aseo). El personal de aseo ve esta alerta en su visor ordenado por prioridad de espera. Al desinfectar la cama, pulsa 'Finalizar Aseo'.",
+                inputs: "• Indicación visual de cama sucia con su piso/habitación/cama exacto<br>• Timer del tiempo transcurrido desde el egreso del paciente<br>• Botón 'Finalizar Aseo' que restaura el estado a 'disponible'",
+                firebase: "UPDATE -> beds/[id]/status = 'available'",
+                activeArrow: "arrow-7-2"
+            }
+        };
+
+        function showStep(stepNum) {
+            // Remove active classes
+            document.querySelectorAll('.svg-step').forEach(step => {
+                step.classList.remove('active');
+            });
+            document.querySelectorAll('.arrow-line').forEach(arrow => {
+                arrow.classList.remove('active');
+            });
+
+            // Set current active
+            document.getElementById(`step-${stepNum}`).classList.add('active');
+            
+            const stepInfo = stepData[stepNum];
+            
+            // Activate corresponding arrow
+            if (stepInfo.activeArrow) {
+                document.getElementById(stepInfo.activeArrow).classList.add('active');
+            }
+
+            // Update UI card details
+            document.getElementById('step-title').innerText = stepInfo.title;
+            
+            const roleBadge = document.getElementById('step-role');
+            roleBadge.innerText = stepInfo.role;
+            
+            // Adjust role badge color based on step
+            if (stepNum === 1 || stepNum === 4) {
+                roleBadge.style.borderColor = 'rgba(168, 85, 247, 0.3)';
+                roleBadge.style.color = '#d8b4fe';
+                roleBadge.style.background = 'rgba(168, 85, 247, 0.15)';
+            } else if (stepNum === 2 || stepNum === 3) {
+                roleBadge.style.borderColor = 'rgba(0, 240, 255, 0.3)';
+                roleBadge.style.color = '#a5f3fc';
+                roleBadge.style.background = 'rgba(6, 182, 212, 0.15)';
+            } else if (stepNum === 5) {
+                roleBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                roleBadge.style.color = '#a7f3d0';
+                roleBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+            } else {
+                roleBadge.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+                roleBadge.style.color = '#fde68a';
+                roleBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+            }
+
+            document.getElementById('step-description').innerText = stepInfo.desc;
+            document.getElementById('step-inputs').innerHTML = stepInfo.inputs;
+            document.getElementById('step-firebase').innerText = stepInfo.firebase;
+        }
+    </script>
+</body>
+</html>

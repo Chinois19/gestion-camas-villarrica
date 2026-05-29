@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Sistema de Gestión de Camas - Hospital Villarrica</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0f172a;
+            --secondary-color: #3b82f6;
+            --accent-cyan: #0ea5e9;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --bg-light: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-dark);
+            background-color: #f1f5f9;
+            line-height: 1.6;
+        }
+
+        /* A4 Page Formatting for Viewport & Print */
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 20px auto;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Print Specifics */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+            .page {
+                margin: 0;
+                box-shadow: none;
+                width: 100%;
+                height: 100%;
+                page-break-after: always;
+                padding: 15mm;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* Cover Page styling */
+        .cover {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .cover-header {
+            margin-bottom: 60px;
+        }
+
+        .cover-logo {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+
+        .cover-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+
+        .cover-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 80px;
+        }
+
+        .cover-metadata {
+            border-top: 2px solid var(--border-color);
+            padding-top: 30px;
+            width: 80%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .metadata-item strong {
+            color: var(--primary-color);
+            display: block;
+        }
+
+        /* Page Headers & Footers */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .page-footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border-color);
+            padding-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Document Headings */
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 16px;
+            border-left: 5px solid var(--secondary-color);
+            padding-left: 12px;
+        }
+
+        h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 20px 0 10px 0;
+        }
+
+        p {
+            margin-bottom: 14px;
+            font-size: 0.95rem;
+            color: #334155;
+            text-align: justify;
+        }
+
+        /* Bullet lists */
+        ul {
+            margin-bottom: 16px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: #334155;
+        }
+
+        /* Simulated high-fidelity UI elements (Screenshots) */
+        .screenshot-container {
+            background: #0f172a;
+            color: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+            border: 1px solid #1e293b;
+            font-size: 0.8rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .screenshot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        .screenshot-title {
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent-cyan);
+        }
+
+        .screenshot-body {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* UI Beds Grid Simulator */
+        .ui-beds-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .ui-bed {
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.02);
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 0.7rem;
+        }
+
+        .ui-bed.occupied {
+            border-color: rgba(245, 158, 11, 0.4);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .ui-bed.available {
+            border-color: rgba(16, 185, 129, 0.4);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .ui-bed.cleaning {
+            border-color: rgba(6, 182, 212, 0.4);
+            background: rgba(6, 182, 212, 0.05);
+        }
+
+        .ui-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        .ui-dot.occupied { background: var(--accent-orange); }
+        .ui-dot.available { background: var(--accent-green); }
+        .ui-dot.cleaning { background: var(--accent-cyan); }
+
+        /* UI Waiting List Simulator */
+        .ui-waiting-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .ui-waiting-patient {
+            background: rgba(255,255,255,0.03);
+            border-left: 3px solid #ef4444;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ui-waiting-patient.tier-warning {
+            border-left-color: #f59e0b;
+        }
+
+        .ui-waiting-patient.tier-standard {
+            border-left-color: #10b981;
+        }
+
+        /* Flow Diagrams in Manual */
+        .flowchart-block {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin: 16px 0;
+        }
+
+        .flow-step {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+
+        .flow-arrow {
+            color: var(--text-muted);
+            font-weight: 800;
+        }
+
+        /* Print control button */
+        .print-btn-container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 20px auto 0 auto;
+            display: flex;
+            justify-content: flex-end;
+            padding: 0 40px;
+        }
+
+        .print-btn {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .print-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Index Table */
+        .index-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .index-table td {
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        .index-page-num {
+            text-align: right;
+            font-weight: 700;
+            color: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Print Control (no-print) -->
+    <div class="print-btn-container no-print">
+        <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+    </div>
+
+    <!-- ================= PAGE 1: PORTADA ================= -->
+    <div class="page cover">
+        <div class="cover-header">
+            <div class="cover-logo">🏥</div>
+            <h1 class="cover-title">Manual de Usuario e Implementación Operativa</h1>
+            <p class="cover-subtitle">Sistema de Control Operativo y Gestión Inteligente de Camas en Tiempo Real</p>
+        </div>
+
+        <div class="cover-metadata">
+            <div class="metadata-item">
+                <strong>Institución:</strong>
+                Hospital de Villarrica
+            </div>
+            <div class="metadata-item">
+                <strong>Departamento:</strong>
+                Control de Gestión / Dirección Médica
+            </div>
+            <div class="metadata-item">
+                <strong>Versión:</strong>
+                1.0.0 (Producción 2026)
+            </div>
+            <div class="metadata-item">
+                <strong>Desarrollado por:</strong>
+                GPS
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Hospital Villarrica</span>
+            <span>Confidencial - Uso Clínico Interno</span>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 2: ÍNDICE Y OBJETIVOS ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span>Manual de Usuario — Gestión Camas Villarrica</span>
+            <span>Índice & Objetivos</span>
+        </div>
+
+        <h2>Índice General</h2>
+        <table class="index-table">
+            <tr>
+                <td>1. Introducción y Fundamentos del Ecosistema Clínico</td>
+                <td class="index-page-num">Pág. 3</td>
+            </tr>
+            <tr>
+                <td>2. Estructura de Roles de Usuario y Matriz de Privilegios</td>
+                <td class="index-page-num">Pág. 3</td>
+            </tr>
+            <tr>
+                <td>3. Proceso 1: Ingreso de Solicitud de Cama y Flujo de Espera</td>
+                <td class="index-page-num">Pág. 4</td>
+            </tr>
+            <tr>
+                <td>4. Proceso 2: Mapa de Camas y Asignación Dinámica</td>
+                <td class="index-page-num">Pág. 5</td>
+            </tr>
+            <tr>
+                <td>5. Proceso 3: Gestión de Interconsultas en Sala e Historial</td>
+                <td class="index-page-num">Pág. 6</td>
+            </tr>
+            <tr>
+                <td>6. Proceso 4: Protocolo de Hospitalización Domiciliaria (HODOM)</td>
+                <td class="index-page-num">Pág. 7</td>
+            </tr>
+            <tr>
+                <td>7. Proceso 5: Ciclo de Aseo, Sanitización y Turnaround Time</td>
+                <td class="index-page-num">Pág. 8</td>
+            </tr>
+            <tr>
+                <td>8. Módulo Estadístico: Insights, Diagnósticos y Auditoría Operativa</td>
+                <td class="index-page-num">Pág. 9</td>
+            </tr>
+        </table>
+
+        <h2 style="margin-top: 30px;">Objetivos del Sistema</h2>
+        <p>
+            El sistema de Gestión de Camas del Hospital de Villarrica tiene como propósito resolver la asimetría de información y los silos operativos que retrasan la hospitalización de los pacientes en salas críticas, medias y básicas.
+        </p>
+        <p>
+            Los objetivos estratégicos son:
+        </p>
+        <ul>
+            <li><strong>Trazabilidad Absoluta:</strong> Registrar y auditar cada etapa del paciente desde el ingreso de la solicitud en Urgencia/Pabellón hasta su egreso físico o derivación domiciliaria.</li>
+            <li><strong>Optimización de Tiempos Muertos:</strong> Minimizar las horas que una cama permanece desocupada pero inhabilitada para el ingreso por demoras en sanitización (Aseo).</li>
+            <li><strong>Equidad y Priorización:</strong> Racionalizar la asignación de camas mediante semáforos de criticidad de tiempo y clasificación clínica (P1 a P5).</li>
+            <li><strong>Sincronización Multidisciplinaria:</strong> Proveer un canal de comunicación único en tiempo real integrado mediante bases de datos Firebase.</li>
+        </ul>
+
+        <div class="page-footer">
+            <span>Hospital Villarrica</span>
+            <span>Página 2</span>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 3: INTRODUCCIÓN & ROLES ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span>Manual de Usuario — Gestión Camas Villarrica</span>
+            <span>Introducción & Roles</span>
+        </div>
+
+        <h2>1. Introducción y Fundamentos</h2>
+        <p>
+            Este aplicativo web representa un cambio paradigmático en la gobernanza de camas del Hospital Villarrica. Reemplaza el uso de pizarrones físicos y planillas Excel locales por una base de datos sincronizada en tiempo real. 
+        </p>
+        <p>
+            Al unificar las solicitudes y liberar la información de forma transversal a médicos tratantes, interconsultores, personal de enfermería y personal de aseo, la institución gana visibilidad y capacidad de anticipar cuellos de botella operativos antes de que provoquen el colapso del servicio de urgencias.
+        </p>
+
+        <h2>2. Estructura de Roles de Usuario</h2>
+        <p>
+            Para resguardar la validez de los datos y evitar asignaciones erróneas, el sistema cuenta con 6 perfiles definidos, asignados por el Super Administrador del sistema:
+        </p>
+        <ul>
+            <li><strong>Super Administrador:</strong> Acceso a la totalidad del sistema. Administra usuarios, regenera contraseñas y edita la estructura física de camas.</li>
+            <li><strong>Gestor de Camas:</strong> Encargado principal del control del Dashboard. Autorizado para asignar pacientes a camas por Drag & Drop, realizar traslados internos de salas y autorizar altas.</li>
+            <li><strong>Médico General / Tratante:</strong> Registra solicitudes de camas para pacientes de Urgencia o Pabellón. Puede solicitar y dar seguimiento a Interconsultas (IC).</li>
+            <li><strong>Médico HODOM:</strong> Responsable del control de hospitalizaciones domiciliarias. Recibe, evalúa el checklist de requisitos y aprueba los ingresos a este régimen.</li>
+            <li><strong>Personal de Aseo:</strong> Rol acotado al visor de limpieza. Permite cambiar el estado de camas de "Limpieza" a "Disponible" al concluir las labores físicas de sanitización.</li>
+            <li><strong>Visor Institucional:</strong> Rol pasivo de solo lectura para Jefes de Servicio y Directivos, enfocado en auditar en tiempo real y visualizar el módulo de Insights.</li>
+        </ul>
+
+        <div class="screenshot-container">
+            <div class="screenshot-header">
+                <div class="screenshot-title">👥 Visor del Módulo: Gestión de Profesionales y Cuentas</div>
+                <span style="color:var(--accent-cyan); font-weight:bold;">Super Administrador</span>
+            </div>
+            <div class="screenshot-body">
+                <table style="width:100%; border-collapse:collapse; color:#f8fafc; font-size:0.7rem; text-align:left;">
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:var(--accent-cyan);">
+                        <th style="padding:4px;">Profesional</th>
+                        <th style="padding:4px;">Usuario</th>
+                        <th style="padding:4px;">Rol / Permisos</th>
+                        <th style="padding:4px;">Estado</th>
+                    </tr>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <td style="padding:4px;">Dr. Juan Pérez (Internista)</td>
+                        <td style="padding:4px;"><code>jperez</code></td>
+                        <td style="padding:4px;"><span style="color:#a855f7;">Médico</span></td>
+                        <td style="padding:4px; color:#10b981;">Activo</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <td style="padding:4px;">Enf. Clara Fuentes</td>
+                        <td style="padding:4px;"><code>cfuentes</code></td>
+                        <td style="padding:4px;"><span style="color:#0ea5e9;">Gestor de Camas</span></td>
+                        <td style="padding:4px; color:#10b981;">Activo</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Hospital Villarrica</span>
+            <span>Página 3</span>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 4: PROCESO 1: SOLICITUD ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span>Manual de Usuario — Gestión Camas Villarrica</span>
+            <span>Proceso 1: Solicitud y Espera</span>
+        </div>
+
+        <h2>3. Proceso 1: Solicitud de Cama y Lista de Espera</h2>
+        <p>
+            El flujo se inicia cuando un médico tratante de <strong>Urgencia</strong> o <strong>Pabellón</strong> determina que un paciente requiere internación. El médico accede a la pestaña de "Solicitar Cama" e ingresa la Ficha de Solicitud.
+        </p>
+
+        <h3>Etapa 1.1: Estandarización de la Solicitud</h3>
+        <p>
+            Para mitigar errores de digitación, se exige rellenar de forma estricta el RUN del paciente, nombre, edad, el servicio clínico de origen y el tipo de cama solicitado (UPC/UCI, UPC/UTI, Cuidados Medios, Básicos, Maternidad, Neonatología). Además, se define una prioridad inicial (P1 a P5). Al guardar, el paciente ingresa de forma automática a la <strong>Lista de Espera</strong> del sistema.
+        </p>
+
+        <h3>Etapa 1.2: El Semáforo Crítico de Tiempos de Espera</h3>
+        <p>
+            El panel lateral del Dashboard principal muestra a todos los pacientes en espera ordenados estrictamente por la hora del requerimiento. Un temporizador en vivo calcula la latencia acumulada:
+        </p>
+        <ul>
+            <li>🟢 <strong>Espera Estándar (Menor a 4 Horas):</strong> Indicador verde. Rango operativo aceptable para asignación de cama.</li>
+            <li>🟡 <strong>Espera Prolongada (4 a 12 Horas):</strong> Indicador amarillo de advertencia. Llama a la priorización activa por parte del Gestor.</li>
+            <li>🔴 <strong>Espera Crítica (Mayor a 12 Horas):</strong> Indicador rojo de peligro. Indica un atasco severo en el flujo que requiere intervención inmediata de jefatura.</li>
+        </ul>
+
+        <div class="screenshot-container">
+            <div class="screenshot-header">
+                <div class="screenshot-title">⏳ Lista de Espera de Pacientes (Visión Gestor)</div>
+                <span style="color:#ef4444; font-weight:bold;">Alerta de Demora Crítica</span>
+            </div>
+            <div class="screenshot-body">
+                <div class="ui-waiting-list">
+                    <div class="ui-waiting-patient" style="border-left-color:#ef4444;">
+                        <div>
+                            <strong>Leonardo Antinao Pincheira</strong> (48 años • Urgencia)<br>
+                            <span style="color:var(--text-muted); font-size:0.65rem;">Diagnóstico: Politraumatismo Grave • Reclama: UCI</span>
+                        </div>
+                        <div style="text-align:right; font-weight:700; color:#ef4444;">14h 25m<br><span style="font-size:0.6rem; background:#ef4444; color:white; padding:1px 4px; border-radius:2px;">P1 - CRÍTICO</span></div>
+                    </div>
+                    <div class="ui-waiting-patient" style="border-left-color:#f59e0b;">
+                        <div>
+                            <strong>Ana Pillaman Cariman</strong> (62 años • Pabellón)<br>
+                            <span style="color:var(--text-muted); font-size:0.65rem;">Diagnóstico: Post-Op Colecistectomía Compleja • Reclama: UTI</span>
+                        </div>
+                        <div style="text-align:right; font-weight:700; color:#f59e0b;">06h 40m<br><span style="font-size:0.6rem; background:#f59e0b; color:black; padding:1px 4px; border-radius:2px;">P2 - ALERTA</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Hospital Villarrica</span>
+            <span>Página 4</span>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 5: PROCESO 2: ASIGNACIÓN ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span>Manual de Usuario — Gestión Camas Villarrica</span>
+            <span>Proceso 2: Mapa e Asignación</span>
+        </div>
+
+        <h2>4. Proceso 2: Mapa de Camas y Asignación Dinámica</h2>
+        <p>
+            El <strong>Dashboard Principal</strong> representa visualmente la infraestructura del Hospital Villarrica distribuida por niveles geográficos: <strong>Piso 2</strong> (Camas críticas UPC / UCI / UTI), <strong>Piso 3</strong> (Maternidad, Neonatología, Pediatría y Medios Oriente) y <strong>Piso 4</strong> (Camas de Cuidados Medios y Básicos).
+        </p>
+
+        <h3>Etapa 2.1: Gestión Visual de la Disponibilidad</h3>
+        <p>
+            Las camas se representan en tarjetas organizadas por sala (ej. Habitación 201, Habitación 302, etc.). Cada una de ellas muestra en tiempo real su categorización y estado:
+        </p>
+        <ul>
+            <li><strong>Disponible (Verde):</strong> Cama limpia, sanitizada y lista para recibir pacientes.</li>
+            <li><strong>Ocupada (Naranja):</strong> Contiene el nombre del paciente, su RUN, fecha de ingreso, diagnóstico principal, nivel de severidad y días estimados de estadía.</li>
+            <li><strong>Aseo (Calipso):</strong> El paciente egresó pero la cama requiere labores de desinfección antes de ser asignada.</li>
+        </ul>
+
+        <h3>Etapa 2.2: Flujo de Asignación por Arrastre (Drag & Drop)</h3>
+        <p>
+            El Gestor de Camas puede seleccionar un paciente desde la Lista de Espera lateral y arrastrarlo directamente sobre cualquier cama disponible del mapa que cumpla con los requisitos del paciente. Este movimiento interactivo actualiza la base de datos de Firebase instantáneamente para todos los usuarios en red, eliminando las llamadas confirmatorias.
+        </p>
+
+        <div class="screenshot-container">
+            <div class="screenshot-header">
+                <div class="screenshot-title">🏢 Visor del Piso 2 (UPC Poniente)</div>
+                <span style="color:#10b981; font-weight:bold;">Sincronizado en Tiempo Real</span>
+            </div>
+            <div class="screenshot-body">
+                <span style="font-size:0.65rem; color:var(--text-muted); display:block; margin-bottom:4px;">Habitación 201 (Camas de Cuidados Críticos)</span>
+                <div class="ui-beds-grid">
+                    <div class="ui-bed occupied">
+                        <span class="ui-dot occupied"></span><strong>Cama 201-1</strong><br>
+                        <span style="font-size:0.6rem; color:#cbd5e1;">P. Velozo (UCI)<br>VM Convencional</span>
+                    </div>
+                    <div class="ui-bed available">
+                        <span class="ui-dot available"></span><strong>Cama 201-2</strong><br>
+                        <span style="font-size:0.6rem; color:#10b981; font-weight:bold;">DISPONIBLE<br>Listo para ingreso</span>
+                    </div>
+                    <div class="ui-bed cleaning">
+                        <span class="ui-dot cleaning"></span><strong>Cama 201-3</strong><br>
+                        <span style="font-size:0.6rem; color:#0ea5e9;">Aseo Activo<br>Espera: 35 min</span>
+                    </div>
+                    <div class="ui-bed occupied">
+                        <span class="ui-dot occupied"></span><strong>Cama 201-4</strong><br>
+                        <span style="font-size:0.6rem; color:#cbd5e1;">R. Singer (UCI)<br>Sepsis Foco Pulm.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Hospital Villarrica</span>
+            <span>Página 5</span>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 6: PROCESO 3: INTERCONSULTAS ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span>Manual de Usuario — Gestión Camas Villarrica</span>
+            <span>Proceso 3: Interconsultas</span>
+        </div>
+
+        <h2>5. Proceso 3: Gestión de Interconsultas en Sala e Historial</h2>
+        <p>
+            Una vez hospitalizado el paciente, surge con frecuencia la necesidad de evaluaciones por otras especialidades médicas (ej. Cardiología, Neurología, Traumatología). Históricamente, estas solicitudes se realizaban en papel, provocando demoras y pérdidas de interconsultas.
+        </p>
+
+        <h3>Etapa 3.1: Solicitud Médica Centralizada</h3>
+        <p>
+            El médico tratante puede hacer clic en la cama ocupada de su paciente y abrir el modal de <strong>Interconsulta</strong>. Ingresa la especialidad de destino, el nivel de urgencia y una breve reseña de la historia clínica. La solicitud aparece de inmediato en el panel general de Interconsultas.
+        </p>
+
+        <h3>Etapa 3.2: Visor del Especialista e Historial de Resoluciones</h3>
+        <p>
+            Los especialistas médicos cuentan con un Visor de Interconsultas que agrupa y ordena las derivaciones pendientes por tiempo acumulado de espera. Para completar la atención, el especialista hace clic y registra su informe con <strong>observaciones obligatorias</strong> en el sistema, modificando el estado a:
+        </p>
+        <ul>
+            <li><strong>Atención Realizada:</strong> El paciente fue evaluado y se deja registro clínico formal en el sistema.</li>
+            <li><strong>Desestimada / No Pertinente:</strong> La solicitud no corresponde a la cartera de servicios o fue mal direccionada. Requiere justificación explícita.</li>
+        </ul>
+
+        <div class="screenshot-container">
+            <div class="screenshot-header">
+                <div class="screenshot-title">🩺 Registro de Interconsultas Pendientes (Especialidades)</div>
+                <span style="color:#fbbf24; font-weight:bold;">Panel Especialistas</span>
+            </div>
+            <div class="screenshot-body">
+                <table style="width:100%; border-collapse:collapse; color:#f8fafc; font-size:0.7rem; text-align:left;">
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:var(--accent-cyan);">
+                        <th style="padding:4px;">Paciente / Hab / Cama</th>
+                        <th style="padding:4px;">Especialidad</th>
+                        <th style="padding:4px;">Espera</th>
+                        <th style="padding:4px;">Motivo Solicitud</th>
+                    </tr>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <td style="padding:4px;"><strong>Alicia Cid Ortiz</strong> (Hab 401 - Cama 1)</td>
+                        <td style="padding:4px;">Cardiología</td>
+                        <td style="padding:4px; color:#ef4444; font-weight:700;">08:45 hrs</td>
+                        <td style="padding:4px;">Evaluación Soplo Sistólico • Control marcapasos</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Hospital Villarrica</span>
+            <span>Página 6</span>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 7: PROCESO 4: HODOM ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span>Manual de Usuario — Gestión Camas Villarrica</span>
+            <span>Proceso 4: HODOM</span>
+        </div>
+
+        <h2>6. Proceso 4: Protocolo de Hospitalización Domiciliaria (HODOM)</h2>
+        <p>
+            La Hospitalización Domiciliaria es un pilar operativo crítico en el Hospital Villarrica. Su fin es trasladar los cuidados de complejidad media y baja al domicilio del paciente, disminuyendo la estadía hospitalaria media y liberando camas físicas para urgencias de alta complejidad.
+        </p>
+
+        <h3>Etapa 4.1: Solicitud y Validación Clínico-Social (12 Puntos)</h3>
+        <p>
+            Para postular a un paciente a HODOM, el médico tratante debe validar de forma exhaustiva una lista de <strong>12 requisitos obligatorios</strong> que aseguran la viabilidad del régimen domiciliario:
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.8rem; background: var(--bg-light); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;">
+            <div>
+                1. Paciente hemodinámicamente estable.<br>
+                2. Diagnóstico clínico claro y acotado.<br>
+                3. Consentimiento informado del tutor/familia.<br>
+                4. Presencia de un cuidador responsable 24/7.<br>
+                5. Condiciones de habitabilidad mínimas (agua, luz).<br>
+                6. Domicilio dentro del radio urbano de Villarrica.
+            </div>
+            <div>
+                7. Vías de acceso transitables para ambulancia.<br>
+                8. Tratamiento endovenoso o curaciones complejas.<br>
+                9. Indicaciones médicas claras y protocolizadas.<br>
+                10. Ausencia de criterios de exclusión médica.<br>
+                11. Ficha clínica y exámenes completos.<br>
+                12. Red de apoyo familiar activada.
+            </div>
+        </div>
+
+        <h3>Etapa 4.2: Evaluación HODOM y Liberación de Cama Física</h3>
+        <p>
+            Las solicitudes ingresan al Panel HODOM. El médico de la unidad HODOM evalúa la solicitud y, al confirmar la pertinencia, hace clic en "✓ Confirmación de Ingreso a HODOM". 
+            <strong>Efecto Sistémico Crítico:</strong> Esta aprobación descarga automáticamente al paciente de la cama física del hospital y la transfiere al estado de "Limpieza (Aseo)", habilitándola para ser reasignada en tiempo récord.
+        </p>
+
+        <div class="screenshot-container">
+            <div class="screenshot-header">
+                <div class="screenshot-title">🏠 Panel de Solicitudes HODOM Pendientes</div>
+                <span style="color:#10b981; font-weight:bold;">Aprobación Rápida</span>
+            </div>
+            <div class="screenshot-body">
+                <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); padding:10px; border-radius:6px; font-size:0.7rem;">
+                    <strong>Paciente: Segundo Hernandez Vilches</strong> (Hab 405 — Cama 4) • Diagnóstico: Neumonía en vías de resolución<br>
+                    <span style="color:var(--accent-green); font-weight:bold; display:block; margin:4px 0;">Requisitos Cumplidos: 11/12</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                        <span style="color:var(--text-muted);">Espera Evaluación: 03h 12m</span>
+                        <button style="background:#10b981; color:black; border:none; padding:3px 8px; border-radius:3px; font-size:0.6rem; font-weight:700;">Aprobar HODOM & Liberar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Hospital Villarrica</span>
+            <span>Página 7</span>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 8: PROCESO 5: ASEO ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span>Manual de Usuario — Gestión Camas Villarrica</span>
+            <span>Proceso 5: Aseo y Sanitización</span>
+        </div>
+
+        <h2>7. Proceso 5: Ciclo de Aseo, Sanitización y Turnaround Time</h2>
+        <p>
+            El egreso físico de un paciente (por Alta Médica, Traslado o Derivación HODOM) marca el fin de la hospitalización, pero la cama no puede ser ocupada de inmediato. Debe someterse a un proceso estricto de aseo y desinfección terminal para mitigar el riesgo de infecciones asociadas a la atención en salud (IAAS).
+        </p>
+
+        <h3>Etapa 5.1: Notificación Automatizada al Equipo de Limpieza</h3>
+        <p>
+            Al confirmarse el egreso en el Dashboard, la cama física cambia automáticamente su estado a <strong>Aseo (Limpieza)</strong> y genera una alerta en tiempo real en el <strong>Panel de Aseo</strong>. Este visor es consultado de forma permanente por el equipo de servicios generales y auxiliares del hospital.
+        </p>
+
+        <h3>Etapa 5.2: Priorización por Demora y Optimización Operativa</h3>
+        <p>
+            Las tareas del Panel de Aseo se ordenan de forma estricta: **las camas con mayor tiempo de espera desde la salida del paciente se sitúan al inicio de la lista**. 
+            Una vez que el auxiliar de aseo completa la limpieza física y desinfección de la habitación, hace clic en "Finalizar Aseo" en el sistema. La cama vuelve instantáneamente al estado de **Disponible (Verde)** en el Dashboard del Gestor de Camas, lista para recibir un nuevo ingreso.
+        </p>
+
+        <div class="screenshot-container">
+            <div class="screenshot-header">
+                <div class="screenshot-title">✨ Visor Especial del Personal de Aseo</div>
+                <span style="color:#0ea5e9; font-weight:bold;">Auxiliares de Servicio</span>
+            </div>
+            <div class="screenshot-body">
+                <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); padding:10px; border-radius:6px; font-size:0.7rem; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong>Habitación 407 — Cama 4</strong> (Piso 4 Oriente • Cuidados Medios)<br>
+                        <span style="color:var(--accent-orange); font-size:0.65rem;">Paciente Anterior: Andrés Gordillo Rios • Destino: Alta Médica</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="color:#ef4444; font-weight:700; display:block;">Espera: 58 min</span>
+                        <button style="background:#0ea5e9; color:black; border:none; padding:4px 8px; border-radius:3px; font-size:0.6rem; font-weight:700; margin-top:4px;">✓ Finalizar Aseo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Hospital Villarrica</span>
+            <span>Página 8</span>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 9: ESTADÍSTICAS ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span>Manual de Usuario — Gestión Camas Villarrica</span>
+            <span>Módulo de Insights y Estadísticas</span>
+        </div>
+
+        <h2>8. Módulo Estadístico: Insights y Auditoría Operativa</h2>
+        <p>
+            El módulo de <strong>Insights Clínicos</strong> proporciona a la Dirección Médica y al Departamento de Control de Gestión un análisis detallado en tiempo real sobre la capacidad y los cuellos de botella del establecimiento, sustentando decisiones de dotación y contingencias.
+        </p>
+
+        <h3>Etapa 8.1: Indicadores Clave de Rendimiento (KPIs)</h3>
+        <p>
+            La plataforma procesa continuamente la base de datos para calcular y desplegar las siguientes métricas de rendimiento clínico:
+        </p>
+        <ul>
+            <li><strong>Tasa de Ocupación Global:</strong> Porcentaje de camas ocupadas sobre la dotación activa total (UCI, UTI, Medios, Básicos).</li>
+            <li><strong>Balance de Camas Críticas (UPC):</strong> Relación dinámica entre el número de solicitudes pendientes de UCI/UTI contra la disponibilidad actual en salas físicas.</li>
+            <li><strong>Turnaround Time (TAT) de Aseo:</strong> Tiempo promedio en minutos que transcurre desde la salida física del paciente hasta la finalización del aseo.</li>
+            <li><strong>Tasa de Larga Estadía:</strong> Alerta automática para pacientes que superan el umbral de días proyectados definidos al ingresar a la cama.</li>
+        </ul>
+
+        <h3>Etapa 8.2: Reportes y Auditoría Operativa (Exportación a CSV)</h3>
+        <p>
+            Al pulsar el botón "Exportar Data Operativa", el sistema compila una auditoría en tiempo real en formato CSV conteniendo la trazabilidad completa del paciente: RUT, Nombre, Estado, Fecha de Solicitud, Fecha de Asignación, Días de Estada y Servicio. Este archivo es compatible con herramientas de Business Intelligence (Power BI) y planillas Excel para análisis de fin de mes.
+        </p>
+
+        <div class="screenshot-container">
+            <div class="screenshot-header">
+                <div class="screenshot-title">📊 Panel de Estadísticas y Cuellos de Botella</div>
+                <span style="color:var(--accent-cyan); font-weight:bold;">Insights Dashboard</span>
+            </div>
+            <div class="screenshot-body">
+                <div class="ui-beds-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div style="background:rgba(255,255,255,0.02); padding:10px; border-radius:6px; text-align:center;">
+                        <span style="color:var(--accent-cyan); font-size:1.2rem; font-weight:800; display:block;">92.5%</span>
+                        <span style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Ocupación Total</span>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.02); padding:10px; border-radius:6px; text-align:center;">
+                        <span style="color:#ef4444; font-size:1.2rem; font-weight:800; display:block;">18 Camas</span>
+                        <span style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Requeridas UPC</span>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.02); padding:10px; border-radius:6px; text-align:center;">
+                        <span style="color:var(--accent-green); font-size:1.2rem; font-weight:800; display:block;">42 min</span>
+                        <span style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Promedio Aseo TAT</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Hospital Villarrica</span>
+            <span>Página 9</span>
+        </div>
+    </div>
+
+</body>
+</html>
