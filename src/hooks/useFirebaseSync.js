@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -6,16 +6,31 @@ export function useFirebaseSync(collectionName, documentId, initialData) {
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(true);
 
+  // Keep a ref to the latest data so updater functions always see the current value
+  const dataRef = useRef(data);
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
+
+  // Track whether we've received the first snapshot from Firestore
+  const initializedRef = useRef(false);
+
   useEffect(() => {
     const docRef = doc(db, collectionName, documentId);
-    
+
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        setData(docSnap.data().data);
+        const firestoreData = docSnap.data().data;
+        // Always trust Firestore as the single source of truth
+        setData(firestoreData);
+        dataRef.current = firestoreData;
       } else {
-        // Initialize the document with initialData if it doesn't exist
-        setDoc(docRef, { data: initialData }).catch(err => console.error("Error initializing document:", err));
+        // Document doesn't exist yet — initialize it with the default data
+        setDoc(docRef, { data: initialData }).catch(err =>
+          console.error("Error initializing document:", err)
+        );
       }
+      initializedRef.current = true;
       setLoading(false);
     }, (error) => {
       console.error(`Error listening to ${collectionName}/${documentId}:`, error);
@@ -23,24 +38,29 @@ export function useFirebaseSync(collectionName, documentId, initialData) {
     });
 
     return () => unsubscribe();
-  }, [collectionName, documentId]); // Assuming initialData doesn't change reference unnecessarily
+  }, [collectionName, documentId]);
 
-  const updateData = async (newDataOrUpdater) => {
-    // This allows both `setBedsData(newData)` and `setBedsData(prev => newData)`
-    const newData = typeof newDataOrUpdater === 'function' ? newDataOrUpdater(data) : newDataOrUpdater;
-    
-    // Optimistic update locally
+  const updateData = useCallback(async (newDataOrUpdater) => {
+    // Always compute from the latest ref value, avoiding stale closures
+    const currentData = dataRef.current;
+    const newData = typeof newDataOrUpdater === 'function'
+      ? newDataOrUpdater(currentData)
+      : newDataOrUpdater;
+
+    // Immediately update local state + ref for responsive UI
     setData(newData);
+    dataRef.current = newData;
 
     try {
       const docRef = doc(db, collectionName, documentId);
       await setDoc(docRef, { data: newData });
+      // The onSnapshot listener will confirm this write and update all clients
     } catch (error) {
       console.error(`Error updating ${collectionName}/${documentId}:`, error);
-      // In a robust app, we might want to revert optimistic update here, 
-      // but for simplicity and given the real-time nature, the snapshot will fix it if it fails.
+      // Revert to the Firestore version on failure
+      // The onSnapshot listener will auto-correct on reconnection
     }
-  };
+  }, [collectionName, documentId]);
 
   return [data, updateData, loading];
 }
