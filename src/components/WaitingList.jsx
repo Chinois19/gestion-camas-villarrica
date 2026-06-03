@@ -257,6 +257,7 @@ export default function WaitingList({ patients, onSelectPatient, onViewPatient, 
             onSelect={onSelectPatient}
             onViewDetails={onViewPatient}
             onEditPatient={onEditPatient}
+            onDischargeWaiting={onDischargeWaiting}
             userRole={userRole}
           />
         ))}
