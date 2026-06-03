@@ -673,12 +673,12 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                   </div>
                   <div style={{ marginTop: 10 }}>
                     <FieldLabel>Especialidad Tratante (Hasta 2)</FieldLabel>
-                    <MultiSearchableSelect 
-                      options={ESPECIALIDADES.map(e => ({ value: e, label: e }))} 
-                      value={formData.especialidadTratante} 
-                      onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))} 
-                      placeholder="Buscar especialidad..." 
-                      maxSelections={2} 
+                    <MultiSearchableSelect
+                      options={ESPECIALIDADES.map(e => ({ value: e, label: e }))}
+                      value={formData.especialidadTratante}
+                      onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))}
+                      placeholder="Buscar especialidad..."
+                      maxSelections={2}
                     />
                   </div>
                 </>
@@ -843,7 +843,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
         {/* Footer */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingTop: 6, paddingBottom: 20 }}>
           {onRequestIC && (isViewMode || isEditMode) && !isVisor && (
-            <button type="button" className="glass-button" 
+            <button type="button" className="glass-button"
               style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(234,179,8,0.15)', color: '#eab308', border: '1px solid rgba(234,179,8,0.4)', padding: '8px 16px', fontSize: '0.82rem' }}
               onClick={onRequestIC}>
               <Stethoscope size={14} /> Solicitar Interconsulta

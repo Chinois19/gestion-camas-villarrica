@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Clock, TrendingUp, User, ArrowRight, AlertCircle, CheckCircle, Filter, LogOut } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { SERVICIOS_SOLICITANTES, ESPECIALIDADES } from '../data/formData';
+import cie10Data from '../data/cie10.json';
 
 const calculateWaitTime = (requestedAt) => {
   const diff = Date.now() - new Date(requestedAt).getTime();
@@ -83,6 +84,15 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
             </p>
           )}
         </div>
+
+        {(patient.dxCie10 || (patient.secondaryCodes && patient.secondaryCodes.length > 0)) && (
+          <div style={{ fontSize: '0.65rem', color: '#f59e0b', fontWeight: 600, lineHeight: 1.3, marginBottom: '4px' }}>
+            {[patient.dxCie10, ...(patient.secondaryCodes || [])].filter(Boolean).map(code => {
+              const item = cie10Data.find(c => c.code === code);
+              return item ? `${code} - ${item.desc}` : code;
+            }).join(' • ')}
+          </div>
+        )}
 
         <div className="requirement-footer">
           <div className="bed-req">

@@ -114,6 +114,11 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
                 </div>
               </span>
             </div>
+            {bed.diagnosis && (
+              <div style={{ fontSize: '0.65rem', color: '#f59e0b', marginTop: '2px', marginBottom: '2px', fontWeight: 600, lineHeight: 1.3 }}>
+                Dx: {Array.isArray(bed.diagnosis) ? bed.diagnosis.join(' • ') : bed.diagnosis}
+              </div>
+            )}
             <div className="patient-meta" style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: isVisor ? 'default' : 'pointer' }} onClick={() => !isVisor && onEditGrd(room.roomId, bed)}>
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: bed.status === 'pending_hodom' ? '#22c55e' : 'var(--status-occupied)' }}></span>
               {bed.grdName ? `GRD: ${bed.grdName}` : (bed.status === 'pending_hodom' ? 'Pendiente HODOM' : 'Ocupada')}
