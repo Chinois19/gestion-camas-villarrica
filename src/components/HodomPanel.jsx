@@ -4,6 +4,7 @@ import { HeartPulse, Clock, Search, CheckSquare, Square, User, ChevronDown, Chev
 export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRole }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [now, setNow] = useState(new Date());
+  const [timeFilter, setTimeFilter] = useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
@@ -24,13 +25,36 @@ export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRo
     return { text: parts.join(' '), totalMinutes: minutes };
   };
 
-  const pending = hodomRequests
+  const pendingAll = hodomRequests
     .filter(r => r.estado === 'pendiente')
-    .filter(r =>
-      (r.patientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (r.rut || '').toLowerCase().includes(searchTerm.toLowerCase())
-    )
     .sort((a, b) => new Date(a.solicitadaAt) - new Date(b.solicitadaAt));
+
+  const pending = pendingAll.filter(r => {
+    const matchesSearch = (r.patientName || '').toLowerCase().includes(searchTerm.toLowerCase()) || (r.rut || '').toLowerCase().includes(searchTerm.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (timeFilter) {
+      const mins = calculateWait(r.solicitadaAt).totalMinutes;
+      if (timeFilter === '≤ 1 hora') return mins <= 60;
+      if (timeFilter === '1 - 2 horas') return mins > 60 && mins <= 120;
+      if (timeFilter === '2 - 3 horas') return mins > 120 && mins <= 180;
+      if (timeFilter === '3 - 4 horas') return mins > 180 && mins <= 240;
+      if (timeFilter === '4 - 5 horas') return mins > 240 && mins <= 300;
+      if (timeFilter === '5 - 6 horas') return mins > 300 && mins <= 360;
+      if (timeFilter === '6+ horas') return mins > 360;
+    }
+    return true;
+  });
+
+  const breakdownData = [
+    { label: '≤ 1 hora', count: pendingAll.filter(r => calculateWait(r.solicitadaAt).totalMinutes <= 60).length },
+    { label: '1 - 2 horas', count: pendingAll.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 60 && m <= 120; }).length },
+    { label: '2 - 3 horas', count: pendingAll.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 120 && m <= 180; }).length },
+    { label: '3 - 4 horas', count: pendingAll.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 180 && m <= 240; }).length },
+    { label: '4 - 5 horas', count: pendingAll.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 240 && m <= 300; }).length },
+    { label: '5 - 6 horas', count: pendingAll.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 300 && m <= 360; }).length },
+    { label: '6+ horas', count: pendingAll.filter(r => calculateWait(r.solicitadaAt).totalMinutes > 360).length }
+  ];
 
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -64,27 +88,36 @@ export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRo
 
         {/* Stats row */}
         <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-          <div style={{ flexShrink: 0, background: 'var(--inset-bg)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: 'var(--shadow-inset)', minWidth: '150px' }}>
-            <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#f59e0b' }}>{pending.length}</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pendientes</div>
+          <div 
+            onClick={() => setTimeFilter(null)}
+            style={{ flexShrink: 0, background: !timeFilter ? 'var(--panel-bg)' : 'var(--inset-bg)', border: !timeFilter ? '2px solid #f59e0b' : '1px solid var(--border-light)', borderRadius: '12px', padding: '16px', textAlign: 'center', minWidth: '150px', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ fontSize: '2.4rem', fontWeight: 800, color: '#f59e0b', lineHeight: 1 }}>{pendingAll.length}</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '4px' }}>PENDIENTES</div>
           </div>
-          <div style={{ flex: 1, background: 'var(--inset-bg)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '16px', boxShadow: 'var(--shadow-inset)' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', textAlign: 'center' }}>Desglose por Tiempo de Espera</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))', gap: '8px' }}>
-               {[
-                 { label: '≤ 1 hora', count: pending.filter(r => calculateWait(r.solicitadaAt).totalMinutes <= 60).length },
-                 { label: '1 - 2 horas', count: pending.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 60 && m <= 120; }).length },
-                 { label: '2 - 3 horas', count: pending.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 120 && m <= 180; }).length },
-                 { label: '3 - 4 horas', count: pending.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 180 && m <= 240; }).length },
-                 { label: '4 - 5 horas', count: pending.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 240 && m <= 300; }).length },
-                 { label: '5 - 6 horas', count: pending.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 300 && m <= 360; }).length },
-                 { label: '6+ horas', count: pending.filter(r => calculateWait(r.solicitadaAt).totalMinutes > 360).length }
-               ].map(({ label, count }) => (
-                 <div key={label} style={{ background: 'var(--panel-bg)', borderRadius: '8px', padding: '8px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
-                   <div style={{ fontSize: '1.2rem', fontWeight: 700, color: count > 0 ? '#0ea5e9' : 'var(--text-secondary)' }}>{count}</div>
-                   <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{label}</div>
-                 </div>
-               ))}
+          <div style={{ flex: 1, background: 'var(--inset-bg)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '16px' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', textAlign: 'center', fontWeight: 600 }}>Desglose por Tiempo de Espera</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))', gap: '10px' }}>
+               {breakdownData.map(({ label, count }) => {
+                 const isSelected = timeFilter === label;
+                 return (
+                   <button 
+                     key={label} 
+                     onClick={() => setTimeFilter(isSelected ? null : label)}
+                     style={{ 
+                       background: isSelected ? 'rgba(14, 165, 233, 0.1)' : 'var(--panel-bg)', 
+                       borderRadius: '8px', 
+                       padding: '12px 8px', 
+                       textAlign: 'center', 
+                       border: isSelected ? '2px solid #0ea5e9' : '1px solid var(--border-light)',
+                       cursor: 'pointer',
+                       transition: 'all 0.2s ease',
+                       outline: 'none'
+                     }}>
+                     <div style={{ fontSize: '1.4rem', fontWeight: 700, color: count > 0 ? (isSelected ? '#0ea5e9' : 'var(--text-primary)') : 'var(--text-secondary)', lineHeight: 1 }}>{count}</div>
+                     <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '6px' }}>{label}</div>
+                   </button>
+                 );
+               })}
             </div>
           </div>
         </div>
