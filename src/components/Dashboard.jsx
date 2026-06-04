@@ -1018,10 +1018,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                 });
                 return { 
                   ...room, 
-                  beds: filteredBeds.sort((a,b) => String(b.id).localeCompare(String(a.id), undefined, { numeric: true })) 
+                  beds: filteredBeds.sort((a,b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true })) 
                 };
               }).filter(room => room.beds.length > 0)
-                .sort((a,b) => String(b.roomId).localeCompare(String(a.roomId), undefined, { numeric: true }));
+                .sort((a,b) => String(a.roomId).localeCompare(String(b.roomId), undefined, { numeric: true }));
               if (roomsWithFilteredBeds.length === 0) return null;
               hasRoomsInFloor = true;
               return (
