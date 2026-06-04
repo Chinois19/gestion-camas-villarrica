@@ -37,44 +37,101 @@ const parseEntryDate = (entry) => {
   return new Date(0);
 };
 
+const ESTABLECIMIENTOS_RED = {
+  'Alta Complejidad': ['Hospital Dr. Hernán Henríquez Aravena (Temuco)'],
+  'Hospitales Nodos (Mediana Complejidad)': [
+    'Hospital de Villarrica', 'Hospital de Pitrufquén',
+    'Hospital de Nueva Imperial', 'Hospital de Lautaro'
+  ],
+  'Hospitales de Familia y Comunidad': [
+    'Hospital de Loncoche', 'Hospital de Cunco', 'Hospital de Galvarino',
+    'Hospital de Carahue', 'Hospital de Saavedra', 'Hospital de Toltén',
+    'Hospital de Gorbea', 'Hospital de Vilcún'
+  ]
+};
+
+const DESTINOS = [
+  { id: 'Domicilio',                      label: 'Domicilio',                      icon: '🏠' },
+  { id: 'Hospitalización domiciliaria',   label: 'Hospitalización domiciliaria',   icon: '🏥' },
+  { id: 'Otro establecimiento',           label: 'Otro establecimiento',           icon: '🏨' },
+  { id: 'Red Privada',                    label: 'Red Privada',                    icon: '🏢' },
+  { id: 'Alta administrativa',            label: 'Alta administrativa',            icon: '📋' },
+  { id: 'Fuga',                           label: 'Fuga',                           icon: '🚶' },
+  { id: 'Fallecido',                      label: 'Fallecido',                      icon: '✝️' },
+];
+
 const EditAltaModal = ({ row, onClose, onSave }) => {
+  const p = row.rawBedData || {};
   const [formData, setFormData] = useState({
-    nombre: row.nombre,
-    run: row.run,
-    diagnosticos: row.diagnosticos,
-    servicio: row.servicio
+    nombre: p.patient || p.patientName || p.nombre || row.nombre || '',
+    run: p.rut || row.run || '',
+    diagnosticos: Array.isArray(p.diagnosis) ? p.diagnosis.join(' | ') : (p.diagnosis || row.diagnosticos || ''),
+    destino: p.destino || '',
+    establecimientoRed: p.establecimientoRed || '',
+    redPrivadaDetalle: p.redPrivadaDetalle || '',
+    observaciones: p.observaciones || ''
   });
 
   const handleChange = (e) => setFormData({...formData, [e.target.name]: e.target.value});
 
   return (
     <div className="modal-overlay" style={{ zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-      <div className="modal-content glass-panel" style={{ width: 400, padding: 24, background: 'var(--panel-bg)', border: '1px solid var(--glass-border)', borderRadius: 16 }}>
+      <div className="modal-content glass-panel" style={{ width: 'min(96vw, 600px)', maxHeight: '90vh', overflowY: 'auto', padding: 24, background: 'var(--panel-bg)', border: '1px solid var(--glass-border)', borderRadius: 16 }}>
         <h3 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)' }}>Editar Registro de Alta</h3>
         <p style={{ fontSize: '0.85rem', color: '#10b981', margin: '0 0 16px 0', fontWeight: 600 }}>Hab {row.sala} - Cama {row.cama}</p>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div>
             <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Nombre</label>
-            <input className="form-input" name="nombre" value={formData.nombre} onChange={handleChange} style={{ width: '100%', marginTop: 4 }} />
+            <input className="glass-input" name="nombre" value={formData.nombre} onChange={handleChange} style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }} />
           </div>
           <div>
             <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>RUN</label>
-            <input className="form-input" name="run" value={formData.run} onChange={handleChange} style={{ width: '100%', marginTop: 4 }} />
+            <input className="glass-input" name="run" value={formData.run} onChange={handleChange} style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }} />
           </div>
-          <div>
+          <div style={{ gridColumn: '1 / -1' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Diagnósticos</label>
-            <input className="form-input" name="diagnosticos" value={formData.diagnosticos} onChange={handleChange} style={{ width: '100%', marginTop: 4 }} />
+            <input className="glass-input" name="diagnosticos" value={formData.diagnosticos} onChange={handleChange} style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }} />
           </div>
-          <div>
-            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Servicio de Destino</label>
-            <input className="form-input" name="servicio" value={formData.servicio} onChange={handleChange} style={{ width: '100%', marginTop: 4 }} />
+          
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Destino (Servicio de Destino)</label>
+            <select className="glass-input" name="destino" value={formData.destino} onChange={handleChange} style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }}>
+              <option value="">-- Seleccione destino --</option>
+              {DESTINOS.map(d => <option key={d.id} value={d.id}>{d.icon} {d.label}</option>)}
+            </select>
+          </div>
+
+          {formData.destino === 'Otro establecimiento' && (
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Establecimiento en Red</label>
+              <select className="glass-input" name="establecimientoRed" value={formData.establecimientoRed} onChange={handleChange} style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }}>
+                <option value="">-- Seleccione establecimiento --</option>
+                {Object.entries(ESTABLECIMIENTOS_RED).map(([cat, list]) => (
+                  <optgroup key={cat} label={cat}>
+                    {list.map(h => <option key={h} value={h}>{h}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {formData.destino === 'Red Privada' && (
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Establecimiento Privado</label>
+              <input className="glass-input" name="redPrivadaDetalle" value={formData.redPrivadaDetalle} onChange={handleChange} placeholder="Ej: Clínica Alemana" style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }} />
+            </div>
+          )}
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Observaciones Adicionales</label>
+            <textarea className="glass-input" name="observaciones" value={formData.observaciones} onChange={handleChange} rows={2} style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }} />
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '24px' }}>
           <button className="glass-button" onClick={onClose} style={{ padding: '8px 16px' }}>Cancelar</button>
-          <button className="glass-button primary" onClick={() => onSave(formData)} style={{ padding: '8px 16px', background: 'linear-gradient(135deg, #10b981, #059669)' }}>Guardar</button>
+          <button className="glass-button primary" onClick={() => onSave(formData)} style={{ padding: '8px 16px', background: 'linear-gradient(135deg, #10b981, #059669)' }}>Guardar Cambios</button>
         </div>
       </div>
     </div>
@@ -228,6 +285,7 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, userRol
               const servicioAcueste = p.destino || bed.destino || bed.tag || bed.type || 'No definido';
 
               data.push({
+                rawBedData: p,
                 rawDischargeDate: dischargeDateObj,
                 servicio: servicioAcueste,
                 estada: estada,
@@ -404,7 +462,10 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, userRol
                        target.patient = updatedData.nombre;
                        target.rut = updatedData.run;
                        target.diagnosis = updatedData.diagnosticos;
-                       target.destino = updatedData.servicio;
+                       target.destino = updatedData.destino;
+                       target.establecimientoRed = updatedData.establecimientoRed;
+                       target.redPrivadaDetalle = updatedData.redPrivadaDetalle;
+                       target.observaciones = updatedData.observaciones;
                        if (b.previousPatient) b.previousPatient = target;
                        if (b.lastDischarge) b.lastDischarge = target;
                     }
