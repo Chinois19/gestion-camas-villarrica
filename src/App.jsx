@@ -13,6 +13,7 @@ import UserManagement from './components/UserManagement';
 import InfrastructureManagement from './components/InfrastructureManagement';
 import InsightsDashboard from './components/InsightsDashboard';
 import DatabasePanel from './components/DatabasePanel';
+import DischargesDatabasePanel from './components/DischargesDatabasePanel';
 import Navbar from './components/Navbar';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
 import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
@@ -458,6 +459,9 @@ function App() {
       )}
       {currentView === 'database' && (
         <DatabasePanel bedsData={bedsData} />
+      )}
+      {currentView === 'altas_database' && (
+        <DischargesDatabasePanel bedsData={bedsData} setBedsData={setBedsData} userRole={currentUser.role} />
       )}
 
       {/* Global Footer */}
