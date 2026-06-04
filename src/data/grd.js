@@ -258,8 +258,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 10.3,
-        "limit": 39
+        "days": 5.9,
+        "limit": 14
       }
     }
   },
@@ -280,8 +280,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 6.9,
-        "limit": 23
+        "days": 10.3,
+        "limit": 39
       }
     }
   },
@@ -302,8 +302,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 4,
-        "limit": 12
+        "days": 6.9,
+        "limit": 23
       }
     }
   },
@@ -324,8 +324,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 11.1,
-        "limit": 39
+        "days": 4,
+        "limit": 12
       }
     }
   },
@@ -346,8 +346,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 11.8,
-        "limit": 40
+        "days": 11.1,
+        "limit": 39
       }
     }
   },
@@ -368,8 +368,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 10.7,
-        "limit": 31
+        "days": 3.9,
+        "limit": 15
       }
     }
   },
@@ -390,8 +390,30 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 8.3,
-        "limit": 22
+        "days": 11.8,
+        "limit": 40
+      }
+    }
+  },
+  {
+    "id": "2120",
+    "name": "PH PROCEDIMIENTOS SOBRE ÓRBITA Y EXTRAOCULARES",
+    "category": "General",
+    "severities": {
+      "1": {
+        "name": "Menor",
+        "days": 2.9,
+        "limit": 11
+      },
+      "2": {
+        "name": "Moderada",
+        "days": 2.9,
+        "limit": 11
+      },
+      "3": {
+        "name": "Mayor",
+        "days": 2.9,
+        "limit": 11
       }
     }
   },
@@ -407,13 +429,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 2.9,
-        "limit": 11
+        "days": 1.9,
+        "limit": 6
       },
       "3": {
         "name": "Mayor",
-        "days": 8,
-        "limit": 28
+        "days": 1.9,
+        "limit": 6
       }
     }
   },
@@ -429,13 +451,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 1.9,
-        "limit": 6
+        "days": 7.6,
+        "limit": 20
       },
       "3": {
         "name": "Mayor",
-        "days": 2.4,
-        "limit": 11
+        "days": 10.7,
+        "limit": 31
       }
     }
   },
@@ -451,13 +473,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.6,
-        "limit": 20
+        "days": 5.5,
+        "limit": 17
       },
       "3": {
         "name": "Mayor",
-        "days": 29.3,
-        "limit": 115
+        "days": 8.3,
+        "limit": 22
       }
     }
   },
@@ -473,13 +495,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.5,
-        "limit": 17
+        "days": 4,
+        "limit": 16
       },
       "3": {
         "name": "Mayor",
-        "days": 9.7,
-        "limit": 40
+        "days": 8,
+        "limit": 28
       }
     }
   },
@@ -495,13 +517,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4,
-        "limit": 16
+        "days": 2.3,
+        "limit": 6
       },
       "3": {
         "name": "Mayor",
-        "days": 8.5,
-        "limit": 34
+        "days": 2.3,
+        "limit": 6
       }
     }
   },
@@ -522,8 +544,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 6,
-        "limit": 18
+        "days": 2.4,
+        "limit": 11
       }
     }
   },
@@ -544,8 +566,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 2.3,
-        "limit": 8
+        "days": 29.3,
+        "limit": 115
       }
     }
   },
@@ -566,8 +588,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 4.2,
-        "limit": 14
+        "days": 9.7,
+        "limit": 40
       }
     }
   },
@@ -588,8 +610,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 4.1,
-        "limit": 16
+        "days": 8.5,
+        "limit": 34
       }
     }
   },
@@ -610,8 +632,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 5.6,
-        "limit": 28
+        "days": 6,
+        "limit": 18
       }
     }
   },
@@ -632,8 +654,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 57.3,
-        "limit": 159
+        "days": 2.3,
+        "limit": 8
       }
     }
   },
@@ -654,8 +676,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 24.5,
-        "limit": 75
+        "days": 4.2,
+        "limit": 14
       }
     }
   },
@@ -676,8 +698,8 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 20.1,
-        "limit": 62
+        "days": 4.1,
+        "limit": 16
       }
     }
   },
@@ -698,8 +720,74 @@ export const GRD_DATA = [
       },
       "3": {
         "name": "Mayor",
-        "days": 8.2,
-        "limit": 34
+        "days": 5.6,
+        "limit": 28
+      }
+    }
+  },
+  {
+    "id": "4101",
+    "name": "PH ECMO VENTILACIÓN MECÁNICA PROLONGADA CON TRAQUEOSTOMÍA",
+    "category": "General",
+    "severities": {
+      "1": {
+        "name": "Menor",
+        "days": 57.3,
+        "limit": 159
+      },
+      "2": {
+        "name": "Moderada",
+        "days": 57.3,
+        "limit": 159
+      },
+      "3": {
+        "name": "Mayor",
+        "days": 57.3,
+        "limit": 159
+      }
+    }
+  },
+  {
+    "id": "4102",
+    "name": "PH VENTILACIÓN MECÁNICA PROLONGADA SIN TRAQUEOSTOMÍA",
+    "category": "General",
+    "severities": {
+      "1": {
+        "name": "Menor",
+        "days": 24.5,
+        "limit": 75
+      },
+      "2": {
+        "name": "Moderada",
+        "days": 24.5,
+        "limit": 75
+      },
+      "3": {
+        "name": "Mayor",
+        "days": 24.5,
+        "limit": 75
+      }
+    }
+  },
+  {
+    "id": "4110",
+    "name": "PH PROCEDIMIENTOS COMPLEJOS SOBRE APARATO RESPIRATORIO",
+    "category": "General",
+    "severities": {
+      "1": {
+        "name": "Menor",
+        "days": 9.4,
+        "limit": 27
+      },
+      "2": {
+        "name": "Moderada",
+        "days": 9.4,
+        "limit": 27
+      },
+      "3": {
+        "name": "Mayor",
+        "days": 20.1,
+        "limit": 62
       }
     }
   },
@@ -715,13 +803,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 9.4,
+        "days": 7,
         "limit": 27
       },
       "3": {
         "name": "Mayor",
-        "days": 17.6,
-        "limit": 55
+        "days": 8.2,
+        "limit": 34
       }
     }
   },
@@ -737,8 +825,30 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7,
-        "limit": 27
+        "days": 8.1,
+        "limit": 26
+      },
+      "3": {
+        "name": "Mayor",
+        "days": 17.6,
+        "limit": 55
+      }
+    }
+  },
+  {
+    "id": "4410",
+    "name": "MH FIBROSIS QUÍSTICA",
+    "category": "General",
+    "severities": {
+      "1": {
+        "name": "Menor",
+        "days": 11.8,
+        "limit": 29
+      },
+      "2": {
+        "name": "Moderada",
+        "days": 11.8,
+        "limit": 29
       },
       "3": {
         "name": "Mayor",
@@ -759,8 +869,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8.1,
-        "limit": 26
+        "days": 6.1,
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
@@ -781,8 +891,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 11.8,
-        "limit": 29
+        "days": 8,
+        "limit": 22
       },
       "3": {
         "name": "Mayor",
@@ -803,8 +913,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.1,
-        "limit": 18
+        "days": 4.5,
+        "limit": 13
       },
       "3": {
         "name": "Mayor",
@@ -825,8 +935,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8,
-        "limit": 22
+        "days": 8.6,
+        "limit": 30
       },
       "3": {
         "name": "Mayor",
@@ -847,8 +957,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.5,
-        "limit": 13
+        "days": 9.2,
+        "limit": 29
       },
       "3": {
         "name": "Mayor",
@@ -869,8 +979,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8.6,
-        "limit": 30
+        "days": 5.9,
+        "limit": 16
       },
       "3": {
         "name": "Mayor",
@@ -891,8 +1001,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 9.2,
-        "limit": 29
+        "days": 6.2,
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
@@ -913,8 +1023,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.9,
-        "limit": 16
+        "days": 4.3,
+        "limit": 12
       },
       "3": {
         "name": "Mayor",
@@ -935,8 +1045,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.2,
-        "limit": 18
+        "days": 7.9,
+        "limit": 24
       },
       "3": {
         "name": "Mayor",
@@ -957,8 +1067,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.3,
-        "limit": 12
+        "days": 7.2,
+        "limit": 23
       },
       "3": {
         "name": "Mayor",
@@ -979,13 +1089,35 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.9,
-        "limit": 24
+        "days": 4.6,
+        "limit": 14
       },
       "3": {
         "name": "Mayor",
         "days": 4.5,
         "limit": 13
+      }
+    }
+  },
+  {
+    "id": "5106",
+    "name": "PH OTROS PROCEDIMIENTOS CARDIOTORÁCICOS",
+    "category": "General",
+    "severities": {
+      "1": {
+        "name": "Menor",
+        "days": 12.5,
+        "limit": 45
+      },
+      "2": {
+        "name": "Moderada",
+        "days": 12.5,
+        "limit": 45
+      },
+      "3": {
+        "name": "Mayor",
+        "days": 12.5,
+        "limit": 45
       }
     }
   },
@@ -1001,13 +1133,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.2,
-        "limit": 23
+        "days": 3.8,
+        "limit": 16
       },
       "3": {
         "name": "Mayor",
-        "days": 12.5,
-        "limit": 45
+        "days": 13.5,
+        "limit": 47
       }
     }
   },
@@ -1023,13 +1155,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.6,
-        "limit": 14
+        "days": null,
+        "limit": 3
       },
       "3": {
         "name": "Mayor",
-        "days": 13.5,
-        "limit": 47
+        "days": null,
+        "limit": 3
       }
     }
   },
@@ -1045,13 +1177,35 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 0,
-        "limit": 3
+        "days": 11.3,
+        "limit": 45
       },
       "3": {
         "name": "Mayor",
         "days": 19.1,
         "limit": 73
+      }
+    }
+  },
+  {
+    "id": "5130",
+    "name": "PH SUSTITUCIÓN DE GENERADOR DE DESFIBRILADOR Y MARCAPASOS CARDIACO",
+    "category": "General",
+    "severities": {
+      "1": {
+        "name": "Menor",
+        "days": 4.3,
+        "limit": 18
+      },
+      "2": {
+        "name": "Moderada",
+        "days": 4.3,
+        "limit": 18
+      },
+      "3": {
+        "name": "Mayor",
+        "days": 4.3,
+        "limit": 18
       }
     }
   },
@@ -1067,8 +1221,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 11.3,
-        "limit": 45
+        "days": 7.9,
+        "limit": 22
       },
       "3": {
         "name": "Mayor",
@@ -1089,8 +1243,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.3,
-        "limit": 18
+        "days": 19.2,
+        "limit": 56
       },
       "3": {
         "name": "Mayor",
@@ -1111,8 +1265,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.9,
-        "limit": 22
+        "days": 6.5,
+        "limit": 19
       },
       "3": {
         "name": "Mayor",
@@ -1133,13 +1287,35 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 19.2,
-        "limit": 56
+        "days": 6.1,
+        "limit": 16
       },
       "3": {
         "name": "Mayor",
         "days": 8.9,
         "limit": 27
+      }
+    }
+  },
+  {
+    "id": "5414",
+    "name": "MH PARO CARDIACO SIN EXPLICACIÓN",
+    "category": "General",
+    "severities": {
+      "1": {
+        "name": "Menor",
+        "days": 3.2,
+        "limit": 13
+      },
+      "2": {
+        "name": "Moderada",
+        "days": 3.2,
+        "limit": 13
+      },
+      "3": {
+        "name": "Mayor",
+        "days": 6.6,
+        "limit": 28
       }
     }
   },
@@ -1155,13 +1331,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.5,
-        "limit": 19
+        "days": 8.2,
+        "limit": 28
       },
       "3": {
         "name": "Mayor",
-        "days": 6.6,
-        "limit": 28
+        "days": 11.1,
+        "limit": 37
       }
     }
   },
@@ -1177,13 +1353,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.1,
-        "limit": 16
+        "days": 6,
+        "limit": 22
       },
       "3": {
         "name": "Mayor",
-        "days": 11.1,
-        "limit": 37
+        "days": 12.7,
+        "limit": 45
       }
     }
   },
@@ -1199,13 +1375,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.2,
-        "limit": 13
+        "days": 5.2,
+        "limit": 17
       },
       "3": {
         "name": "Mayor",
-        "days": 12.7,
-        "limit": 45
+        "days": 7.6,
+        "limit": 24
       }
     }
   },
@@ -1221,13 +1397,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8.2,
-        "limit": 28
+        "days": 8,
+        "limit": 32
       },
       "3": {
         "name": "Mayor",
-        "days": 7.6,
-        "limit": 24
+        "days": 11.5,
+        "limit": 45
       }
     }
   },
@@ -1244,12 +1420,12 @@ export const GRD_DATA = [
       "2": {
         "name": "Moderada",
         "days": 6,
-        "limit": 22
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
-        "days": 11.5,
-        "limit": 45
+        "days": 8.1,
+        "limit": 24
       }
     }
   },
@@ -1265,13 +1441,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.2,
-        "limit": 17
+        "days": 6.1,
+        "limit": 19
       },
       "3": {
         "name": "Mayor",
-        "days": 8.1,
-        "limit": 24
+        "days": 8.4,
+        "limit": 26
       }
     }
   },
@@ -1287,13 +1463,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8,
-        "limit": 32
+        "days": 5.4,
+        "limit": 15
       },
       "3": {
         "name": "Mayor",
-        "days": 8.4,
-        "limit": 26
+        "days": 7.9,
+        "limit": 28
       }
     }
   },
@@ -1309,13 +1485,35 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6,
-        "limit": 18
+        "days": 7.5,
+        "limit": 23
       },
       "3": {
         "name": "Mayor",
-        "days": 7.9,
-        "limit": 28
+        "days": 10.5,
+        "limit": 33
+      }
+    }
+  },
+  {
+    "id": "5423",
+    "name": "MH COMPLICACIÓN, DISFUNCIÓN O REACCIÓN DE DISPOSITIVO O TRAS PROCEDIMIENTO CARDIOVASCULAR",
+    "category": "General",
+    "severities": {
+      "1": {
+        "name": "Menor",
+        "days": 6.7,
+        "limit": 24
+      },
+      "2": {
+        "name": "Moderada",
+        "days": 6.7,
+        "limit": 24
+      },
+      "3": {
+        "name": "Mayor",
+        "days": 13.5,
+        "limit": 43
       }
     }
   },
@@ -1331,13 +1529,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.1,
-        "limit": 19
+        "days": 7.4,
+        "limit": 25
       },
       "3": {
         "name": "Mayor",
-        "days": 10.5,
-        "limit": 33
+        "days": 9.5,
+        "limit": 30
       }
     }
   },
@@ -1353,13 +1551,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.4,
-        "limit": 15
+        "days": 6.7,
+        "limit": 19
       },
       "3": {
         "name": "Mayor",
-        "days": 13.5,
-        "limit": 43
+        "days": 13.2,
+        "limit": 46
       }
     }
   },
@@ -1375,13 +1573,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.5,
-        "limit": 23
+        "days": 4.7,
+        "limit": 13
       },
       "3": {
         "name": "Mayor",
-        "days": 9.5,
-        "limit": 30
+        "days": 9.3,
+        "limit": 27
       }
     }
   },
@@ -1397,13 +1595,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.7,
-        "limit": 24
+        "days": 2.6,
+        "limit": 8
       },
       "3": {
         "name": "Mayor",
-        "days": 13.2,
-        "limit": 46
+        "days": 7.7,
+        "limit": 28
       }
     }
   },
@@ -1419,13 +1617,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.4,
-        "limit": 25
+        "days": 3.3,
+        "limit": 11
       },
       "3": {
         "name": "Mayor",
-        "days": 9.3,
-        "limit": 27
+        "days": 6.4,
+        "limit": 20
       }
     }
   },
@@ -1441,13 +1639,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.7,
-        "limit": 19
+        "days": 1.9,
+        "limit": 6
       },
       "3": {
         "name": "Mayor",
-        "days": 7.7,
-        "limit": 28
+        "days": 5.6,
+        "limit": 22
       }
     }
   },
@@ -1463,13 +1661,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.7,
-        "limit": 13
+        "days": 9.2,
+        "limit": 27
       },
       "3": {
         "name": "Mayor",
-        "days": 6.4,
-        "limit": 20
+        "days": 16.3,
+        "limit": 57
       }
     }
   },
@@ -1485,13 +1683,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 2.6,
-        "limit": 8
+        "days": 11.1,
+        "limit": 40
       },
       "3": {
         "name": "Mayor",
-        "days": 5.6,
-        "limit": 22
+        "days": 20.8,
+        "limit": 75
       }
     }
   },
@@ -1507,13 +1705,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.3,
-        "limit": 11
+        "days": 6.7,
+        "limit": 23
       },
       "3": {
         "name": "Mayor",
-        "days": 16.3,
-        "limit": 57
+        "days": 13.2,
+        "limit": 49
       }
     }
   },
@@ -1529,13 +1727,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 1.9,
-        "limit": 6
+        "days": 3.2,
+        "limit": 13
       },
       "3": {
         "name": "Mayor",
-        "days": 20.8,
-        "limit": 75
+        "days": 14.2,
+        "limit": 53
       }
     }
   },
@@ -1551,13 +1749,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 9.2,
-        "limit": 27
+        "days": 6.6,
+        "limit": 24
       },
       "3": {
         "name": "Mayor",
-        "days": 13.2,
-        "limit": 49
+        "days": 11.4,
+        "limit": 37
       }
     }
   },
@@ -1573,13 +1771,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 11.1,
-        "limit": 40
+        "days": 6.1,
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
-        "days": 14.2,
-        "limit": 53
+        "days": 9,
+        "limit": 27
       }
     }
   },
@@ -1595,13 +1793,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.7,
-        "limit": 23
+        "days": 5.6,
+        "limit": 19
       },
       "3": {
         "name": "Mayor",
-        "days": 11.4,
-        "limit": 37
+        "days": 8.7,
+        "limit": 29
       }
     }
   },
@@ -1617,13 +1815,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.2,
-        "limit": 13
+        "days": 6,
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
-        "days": 9,
-        "limit": 27
+        "days": 11.4,
+        "limit": 33
       }
     }
   },
@@ -1639,13 +1837,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.6,
-        "limit": 24
+        "days": 5.9,
+        "limit": 22
       },
       "3": {
         "name": "Mayor",
-        "days": 8.7,
-        "limit": 29
+        "days": 10.4,
+        "limit": 33
       }
     }
   },
@@ -1661,13 +1859,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.1,
-        "limit": 18
+        "days": 4.5,
+        "limit": 14
       },
       "3": {
         "name": "Mayor",
-        "days": 11.4,
-        "limit": 33
+        "days": 6.6,
+        "limit": 23
       }
     }
   },
@@ -1683,13 +1881,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.6,
-        "limit": 19
+        "days": 8.7,
+        "limit": 23
       },
       "3": {
         "name": "Mayor",
-        "days": 10.4,
-        "limit": 33
+        "days": 10.6,
+        "limit": 31
       }
     }
   },
@@ -1705,13 +1903,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6,
-        "limit": 18
+        "days": 3,
+        "limit": 7
       },
       "3": {
         "name": "Mayor",
-        "days": 6.6,
-        "limit": 23
+        "days": 5,
+        "limit": 15
       }
     }
   },
@@ -1727,13 +1925,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.5,
-        "limit": 14
+        "days": 5.6,
+        "limit": 19
       },
       "3": {
         "name": "Mayor",
-        "days": 10.6,
-        "limit": 31
+        "days": 7.6,
+        "limit": 28
       }
     }
   },
@@ -1749,13 +1947,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8.7,
-        "limit": 23
+        "days": 10.7,
+        "limit": 35
       },
       "3": {
         "name": "Mayor",
-        "days": 5,
-        "limit": 15
+        "days": 24.6,
+        "limit": 85
       }
     }
   },
@@ -1771,13 +1969,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3,
-        "limit": 7
+        "days": 11,
+        "limit": 35
       },
       "3": {
         "name": "Mayor",
-        "days": 7.6,
-        "limit": 28
+        "days": 19.7,
+        "limit": 60
       }
     }
   },
@@ -1793,13 +1991,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.6,
-        "limit": 19
+        "days": 9.6,
+        "limit": 31
       },
       "3": {
         "name": "Mayor",
-        "days": 24.6,
-        "limit": 85
+        "days": 15,
+        "limit": 49
       }
     }
   },
@@ -1815,13 +2013,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 10.7,
-        "limit": 35
+        "days": 6.9,
+        "limit": 23
       },
       "3": {
         "name": "Mayor",
-        "days": 19.7,
-        "limit": 60
+        "days": 10,
+        "limit": 30
       }
     }
   },
@@ -1837,13 +2035,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 11,
-        "limit": 35
+        "days": 4.4,
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
-        "days": 15,
-        "limit": 49
+        "days": 10.2,
+        "limit": 30
       }
     }
   },
@@ -1859,8 +2057,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 9.6,
-        "limit": 31
+        "days": 7.7,
+        "limit": 24
       },
       "3": {
         "name": "Mayor",
@@ -1881,13 +2079,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.9,
-        "limit": 23
+        "days": 8.2,
+        "limit": 28
       },
       "3": {
         "name": "Mayor",
-        "days": 10.2,
-        "limit": 30
+        "days": 10.8,
+        "limit": 35
       }
     }
   },
@@ -1903,13 +2101,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.4,
-        "limit": 18
+        "days": 8.1,
+        "limit": 24
       },
       "3": {
         "name": "Mayor",
-        "days": 10,
-        "limit": 30
+        "days": 12.1,
+        "limit": 38
       }
     }
   },
@@ -1925,13 +2123,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.7,
-        "limit": 24
+        "days": 7.3,
+        "limit": 23
       },
       "3": {
         "name": "Mayor",
-        "days": 10.8,
-        "limit": 35
+        "days": 9.7,
+        "limit": 30
       }
     }
   },
@@ -1947,13 +2145,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8.2,
-        "limit": 28
+        "days": 7.1,
+        "limit": 23
       },
       "3": {
         "name": "Mayor",
-        "days": 12.1,
-        "limit": 38
+        "days": 10.5,
+        "limit": 32
       }
     }
   },
@@ -1969,13 +2167,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8.1,
-        "limit": 24
+        "days": 16,
+        "limit": 52
       },
       "3": {
         "name": "Mayor",
-        "days": 9.7,
-        "limit": 30
+        "days": 23.5,
+        "limit": 77
       }
     }
   },
@@ -1991,13 +2189,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.3,
+        "days": 6.5,
         "limit": 23
       },
       "3": {
         "name": "Mayor",
-        "days": 10.5,
-        "limit": 32
+        "days": 19.2,
+        "limit": 65
       }
     }
   },
@@ -2013,13 +2211,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.1,
-        "limit": 23
+        "days": 6.8,
+        "limit": 29
       },
       "3": {
         "name": "Mayor",
-        "days": 23.5,
-        "limit": 77
+        "days": 6.8,
+        "limit": 29
       }
     }
   },
@@ -2035,13 +2233,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 16,
-        "limit": 52
+        "days": 12.6,
+        "limit": 37
       },
       "3": {
         "name": "Mayor",
-        "days": 19.2,
-        "limit": 65
+        "days": 19.6,
+        "limit": 60
       }
     }
   },
@@ -2057,13 +2255,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.5,
-        "limit": 23
+        "days": 7.6,
+        "limit": 29
       },
       "3": {
         "name": "Mayor",
-        "days": 19.6,
-        "limit": 60
+        "days": 12.3,
+        "limit": 42
       }
     }
   },
@@ -2079,13 +2277,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.8,
-        "limit": 29
+        "days": 7.6,
+        "limit": 36
       },
       "3": {
         "name": "Mayor",
-        "days": 12.3,
-        "limit": 42
+        "days": 23.6,
+        "limit": 85
       }
     }
   },
@@ -2101,13 +2299,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 12.6,
-        "limit": 37
+        "days": 5.9,
+        "limit": 26
       },
       "3": {
         "name": "Mayor",
-        "days": 23.6,
-        "limit": 85
+        "days": 20,
+        "limit": 71
       }
     }
   },
@@ -2123,13 +2321,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.6,
-        "limit": 29
+        "days": 6.1,
+        "limit": 26
       },
       "3": {
         "name": "Mayor",
-        "days": 20,
-        "limit": 71
+        "days": 18.9,
+        "limit": 65
       }
     }
   },
@@ -2145,13 +2343,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.6,
-        "limit": 36
+        "days": 7.9,
+        "limit": 29
       },
       "3": {
         "name": "Mayor",
-        "days": 18.9,
-        "limit": 65
+        "days": 14.9,
+        "limit": 48
       }
     }
   },
@@ -2167,13 +2365,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.9,
-        "limit": 26
+        "days": 5.2,
+        "limit": 21
       },
       "3": {
         "name": "Mayor",
-        "days": 14.9,
-        "limit": 48
+        "days": 12.3,
+        "limit": 45
       }
     }
   },
@@ -2189,13 +2387,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.1,
-        "limit": 26
+        "days": 9.7,
+        "limit": 38
       },
       "3": {
         "name": "Mayor",
-        "days": 12.3,
-        "limit": 45
+        "days": 13.9,
+        "limit": 50
       }
     }
   },
@@ -2211,13 +2409,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.9,
-        "limit": 29
+        "days": 4.2,
+        "limit": 14
       },
       "3": {
         "name": "Mayor",
-        "days": 13.9,
-        "limit": 50
+        "days": 7.6,
+        "limit": 27
       }
     }
   },
@@ -2233,13 +2431,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.2,
-        "limit": 21
+        "days": 3.3,
+        "limit": 13
       },
       "3": {
         "name": "Mayor",
-        "days": 7.6,
-        "limit": 27
+        "days": 8.4,
+        "limit": 30
       }
     }
   },
@@ -2255,13 +2453,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 9.7,
-        "limit": 38
+        "days": 9.5,
+        "limit": 35
       },
       "3": {
         "name": "Mayor",
-        "days": 8.4,
-        "limit": 30
+        "days": 13.2,
+        "limit": 47
       }
     }
   },
@@ -2277,13 +2475,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.2,
-        "limit": 14
+        "days": 11.9,
+        "limit": 44
       },
       "3": {
         "name": "Mayor",
-        "days": 13.2,
-        "limit": 47
+        "days": 21.4,
+        "limit": 68
       }
     }
   },
@@ -2299,13 +2497,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.3,
-        "limit": 13
+        "days": 13.9,
+        "limit": 42
       },
       "3": {
         "name": "Mayor",
-        "days": 21.4,
-        "limit": 68
+        "days": 22.7,
+        "limit": 84
       }
     }
   },
@@ -2321,13 +2519,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 9.5,
-        "limit": 35
+        "days": 8.8,
+        "limit": 30
       },
       "3": {
         "name": "Mayor",
-        "days": 22.7,
-        "limit": 84
+        "days": 13.9,
+        "limit": 51
       }
     }
   },
@@ -2343,13 +2541,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 11.9,
-        "limit": 44
+        "days": 4.4,
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
-        "days": 13.9,
-        "limit": 51
+        "days": 17.2,
+        "limit": 69
       }
     }
   },
@@ -2365,13 +2563,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 13.9,
-        "limit": 42
+        "days": 2.9,
+        "limit": 11
       },
       "3": {
         "name": "Mayor",
-        "days": 17.2,
-        "limit": 69
+        "days": 8.6,
+        "limit": 32
       }
     }
   },
@@ -2387,13 +2585,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8.8,
+        "days": 8.3,
         "limit": 30
       },
       "3": {
         "name": "Mayor",
-        "days": 8.6,
-        "limit": 32
+        "days": 18.2,
+        "limit": 64
       }
     }
   },
@@ -2409,13 +2607,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.4,
-        "limit": 18
+        "days": 4.1,
+        "limit": 14
       },
       "3": {
         "name": "Mayor",
-        "days": 18.2,
-        "limit": 64
+        "days": 5.8,
+        "limit": 18
       }
     }
   },
@@ -2431,13 +2629,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 2.9,
-        "limit": 11
+        "days": 4.3,
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
-        "days": 5.8,
-        "limit": 18
+        "days": 9,
+        "limit": 35
       }
     }
   },
@@ -2453,13 +2651,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8.3,
-        "limit": 30
+        "days": 16,
+        "limit": 42
       },
       "3": {
         "name": "Mayor",
-        "days": 9,
-        "limit": 35
+        "days": 26.8,
+        "limit": 65
       }
     }
   },
@@ -2475,13 +2673,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.1,
-        "limit": 14
+        "days": 24,
+        "limit": 92
       },
       "3": {
         "name": "Mayor",
-        "days": 26.8,
-        "limit": 65
+        "days": 45.6,
+        "limit": 143
       }
     }
   },
@@ -2497,13 +2695,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.3,
-        "limit": 18
+        "days": 5.4,
+        "limit": 23
       },
       "3": {
         "name": "Mayor",
-        "days": 45.6,
-        "limit": 143
+        "days": 20.5,
+        "limit": 70
       }
     }
   },
@@ -2519,13 +2717,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 16,
-        "limit": 42
+        "days": 2.2,
+        "limit": 6
       },
       "3": {
         "name": "Mayor",
-        "days": 20.5,
-        "limit": 70
+        "days": 5.3,
+        "limit": 19
       }
     }
   },
@@ -2541,13 +2739,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 24,
-        "limit": 92
+        "days": 11,
+        "limit": 37
       },
       "3": {
         "name": "Mayor",
-        "days": 5.3,
-        "limit": 19
+        "days": 15,
+        "limit": 56
       }
     }
   },
@@ -2564,12 +2762,12 @@ export const GRD_DATA = [
       "2": {
         "name": "Moderada",
         "days": 5.4,
-        "limit": 23
+        "limit": 22
       },
       "3": {
         "name": "Mayor",
-        "days": 15,
-        "limit": 56
+        "days": 8.5,
+        "limit": 30
       }
     }
   },
@@ -2585,13 +2783,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 2.2,
-        "limit": 6
+        "days": 6.6,
+        "limit": 19
       },
       "3": {
         "name": "Mayor",
-        "days": 8.5,
-        "limit": 30
+        "days": 10,
+        "limit": 28
       }
     }
   },
@@ -2607,13 +2805,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 11,
-        "limit": 37
+        "days": 4.1,
+        "limit": 16
       },
       "3": {
         "name": "Mayor",
-        "days": 10,
-        "limit": 28
+        "days": 5.6,
+        "limit": 22
       }
     }
   },
@@ -2629,13 +2827,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.4,
-        "limit": 22
+        "days": 4.9,
+        "limit": 17
       },
       "3": {
         "name": "Mayor",
-        "days": 5.6,
-        "limit": 22
+        "days": 8.5,
+        "limit": 31
       }
     }
   },
@@ -2651,13 +2849,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.6,
-        "limit": 19
+        "days": 3.7,
+        "limit": 9
       },
       "3": {
         "name": "Mayor",
-        "days": 8.5,
-        "limit": 31
+        "days": 3.7,
+        "limit": 9
       }
     }
   },
@@ -2673,8 +2871,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.1,
-        "limit": 16
+        "days": 4.3,
+        "limit": 14
       },
       "3": {
         "name": "Mayor",
@@ -2695,8 +2893,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.9,
-        "limit": 17
+        "days": 6.3,
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
@@ -2717,7 +2915,7 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.3,
+        "days": 4.6,
         "limit": 14
       },
       "3": {
@@ -2739,8 +2937,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.3,
-        "limit": 18
+        "days": 2.2,
+        "limit": 12
       },
       "3": {
         "name": "Mayor",
@@ -2761,8 +2959,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.6,
-        "limit": 14
+        "days": 5.4,
+        "limit": 19
       },
       "3": {
         "name": "Mayor",
@@ -2783,8 +2981,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 2.2,
-        "limit": 12
+        "days": 10.1,
+        "limit": 36
       },
       "3": {
         "name": "Mayor",
@@ -2805,8 +3003,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.4,
-        "limit": 19
+        "days": 6.1,
+        "limit": 20
       },
       "3": {
         "name": "Mayor",
@@ -2827,8 +3025,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 10.1,
-        "limit": 36
+        "days": 5.6,
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
@@ -2849,8 +3047,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.1,
-        "limit": 20
+        "days": 5.1,
+        "limit": 17
       },
       "3": {
         "name": "Mayor",
@@ -2871,8 +3069,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.6,
-        "limit": 18
+        "days": 7.7,
+        "limit": 24
       },
       "3": {
         "name": "Mayor",
@@ -2893,8 +3091,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.1,
-        "limit": 17
+        "days": 9,
+        "limit": 29
       },
       "3": {
         "name": "Mayor",
@@ -2915,8 +3113,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.7,
-        "limit": 24
+        "days": 6.7,
+        "limit": 19
       },
       "3": {
         "name": "Mayor",
@@ -2937,8 +3135,8 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 9,
-        "limit": 29
+        "days": 3.8,
+        "limit": 12
       },
       "3": {
         "name": "Mayor",
@@ -2959,12 +3157,12 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.7,
-        "limit": 19
+        "days": 5,
+        "limit": 17
       },
       "3": {
         "name": "Mayor",
-        "days": 5.1,
+        "days": 5,
         "limit": 17
       }
     }
@@ -2981,13 +3179,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.8,
-        "limit": 12
+        "days": 2.9,
+        "limit": 11
       },
       "3": {
         "name": "Mayor",
-        "days": 10,
-        "limit": 32
+        "days": 5.1,
+        "limit": 17
       }
     }
   },
@@ -3003,13 +3201,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5,
-        "limit": 17
+        "days": 4.8,
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
-        "days": 12.7,
-        "limit": 37
+        "days": 10,
+        "limit": 32
       }
     }
   },
@@ -3025,13 +3223,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 2.9,
-        "limit": 11
+        "days": 6.6,
+        "limit": 16
       },
       "3": {
         "name": "Mayor",
-        "days": 16.2,
-        "limit": 58
+        "days": 12.7,
+        "limit": 37
       }
     }
   },
@@ -3047,13 +3245,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.8,
-        "limit": 18
+        "days": 5.1,
+        "limit": 21
       },
       "3": {
         "name": "Mayor",
-        "days": 12,
-        "limit": 44
+        "days": 5.1,
+        "limit": 21
       }
     }
   },
@@ -3069,13 +3267,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.6,
-        "limit": 16
+        "days": null,
+        "limit": 3
       },
       "3": {
         "name": "Mayor",
-        "days": 9.2,
-        "limit": 29
+        "days": null,
+        "limit": 3
       }
     }
   },
@@ -3091,13 +3289,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.1,
-        "limit": 21
+        "days": 5.7,
+        "limit": 19
       },
       "3": {
         "name": "Mayor",
-        "days": 8,
-        "limit": 26
+        "days": 16.2,
+        "limit": 58
       }
     }
   },
@@ -3113,13 +3311,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 0,
-        "limit": 3
+        "days": 4.2,
+        "limit": 10
       },
       "3": {
         "name": "Mayor",
-        "days": 3.5,
-        "limit": 12
+        "days": 12,
+        "limit": 44
       }
     }
   },
@@ -3135,13 +3333,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.7,
-        "limit": 19
+        "days": 1.1,
+        "limit": 5
       },
       "3": {
         "name": "Mayor",
-        "days": 1.9,
-        "limit": 3
+        "days": 1.1,
+        "limit": 5
       }
     }
   },
@@ -3157,13 +3355,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.2,
-        "limit": 10
+        "days": 6.6,
+        "limit": 22
       },
       "3": {
         "name": "Mayor",
-        "days": 3,
-        "limit": 9
+        "days": 9.2,
+        "limit": 29
       }
     }
   },
@@ -3179,13 +3377,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 1.1,
-        "limit": 5
+        "days": 4.5,
+        "limit": 14
       },
       "3": {
         "name": "Mayor",
-        "days": 7.9,
-        "limit": 30
+        "days": 8,
+        "limit": 26
       }
     }
   },
@@ -3201,13 +3399,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.6,
-        "limit": 22
+        "days": null,
+        "limit": 3
       },
       "3": {
         "name": "Mayor",
-        "days": 8.1,
-        "limit": 28
+        "days": null,
+        "limit": 3
       }
     }
   },
@@ -3223,13 +3421,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.5,
-        "limit": 14
+        "days": 1.4,
+        "limit": 3
       },
       "3": {
         "name": "Mayor",
-        "days": 10.7,
-        "limit": 33
+        "days": 3.5,
+        "limit": 12
       }
     }
   },
@@ -3245,13 +3443,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 0,
+        "days": 1.6,
         "limit": 3
       },
       "3": {
         "name": "Mayor",
-        "days": 6,
-        "limit": 22
+        "days": 1.9,
+        "limit": 3
       }
     }
   },
@@ -3267,13 +3465,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 1.4,
+        "days": 1.3,
         "limit": 3
       },
       "3": {
         "name": "Mayor",
-        "days": 2.9,
-        "limit": 9
+        "days": 1.3,
+        "limit": 3
       }
     }
   },
@@ -3289,13 +3487,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 1.6,
-        "limit": 3
+        "days": 2.8,
+        "limit": 7
       },
       "3": {
         "name": "Mayor",
-        "days": 4.1,
-        "limit": 14
+        "days": 3,
+        "limit": 9
       }
     }
   },
@@ -3311,13 +3509,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 2.8,
-        "limit": 7
+        "days": 2.2,
+        "limit": 6
       },
       "3": {
         "name": "Mayor",
-        "days": 3.2,
-        "limit": 9
+        "days": 7.9,
+        "limit": 30
       }
     }
   },
@@ -3333,13 +3531,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 2.2,
-        "limit": 6
+        "days": 3.9,
+        "limit": 16
       },
       "3": {
         "name": "Mayor",
-        "days": 4.5,
-        "limit": 14
+        "days": 8.1,
+        "limit": 28
       }
     }
   },
@@ -3355,13 +3553,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.9,
-        "limit": 16
+        "days": 5,
+        "limit": 13
       },
       "3": {
         "name": "Mayor",
-        "days": 5.1,
-        "limit": 15
+        "days": 10.7,
+        "limit": 33
       }
     }
   },
@@ -3377,13 +3575,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5,
-        "limit": 13
+        "days": 1.9,
+        "limit": 6
       },
       "3": {
         "name": "Mayor",
-        "days": 5.1,
-        "limit": 15
+        "days": 6,
+        "limit": 22
       }
     }
   },
@@ -3399,12 +3597,12 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 1.9,
-        "limit": 6
+        "days": 1.2,
+        "limit": 3
       },
       "3": {
         "name": "Mayor",
-        "days": 3.5,
+        "days": 2.9,
         "limit": 9
       }
     }
@@ -3421,13 +3619,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 1.2,
-        "limit": 3
+        "days": 3.2,
+        "limit": 9
       },
       "3": {
         "name": "Mayor",
-        "days": 3.5,
-        "limit": 9
+        "days": 4.1,
+        "limit": 14
       }
     }
   },
@@ -3443,12 +3641,12 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.2,
-        "limit": 9
+        "days": 2.2,
+        "limit": 6
       },
       "3": {
         "name": "Mayor",
-        "days": 3.4,
+        "days": 3.2,
         "limit": 9
       }
     }
@@ -3465,13 +3663,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 2.2,
-        "limit": 6
+        "days": 3.2,
+        "limit": 9
       },
       "3": {
         "name": "Mayor",
-        "days": 9.1,
-        "limit": 27
+        "days": 4.5,
+        "limit": 14
       }
     }
   },
@@ -3487,13 +3685,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.2,
-        "limit": 9
+        "days": 3.7,
+        "limit": 11
       },
       "3": {
         "name": "Mayor",
-        "days": 1.4,
-        "limit": 5
+        "days": 5.1,
+        "limit": 15
       }
     }
   },
@@ -3509,13 +3707,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.7,
-        "limit": 11
+        "days": 3.6,
+        "limit": 8
       },
       "3": {
         "name": "Mayor",
-        "days": 31,
-        "limit": 76
+        "days": 5.1,
+        "limit": 15
       }
     }
   },
@@ -3531,13 +3729,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.6,
-        "limit": 8
+        "days": 3.2,
+        "limit": 7
       },
       "3": {
         "name": "Mayor",
-        "days": 15.9,
-        "limit": 48
+        "days": 3.5,
+        "limit": 9
       }
     }
   },
@@ -3553,13 +3751,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.2,
+        "days": 3.1,
         "limit": 7
       },
       "3": {
         "name": "Mayor",
-        "days": 14.6,
-        "limit": 51
+        "days": 3.5,
+        "limit": 9
       }
     }
   },
@@ -3575,13 +3773,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.1,
+        "days": 3,
         "limit": 7
       },
       "3": {
         "name": "Mayor",
-        "days": 7.5,
-        "limit": 24
+        "days": 3.4,
+        "limit": 9
       }
     }
   },
@@ -3597,13 +3795,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3,
-        "limit": 7
+        "days": 7.9,
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
-        "days": 10.4,
-        "limit": 39
+        "days": 9.1,
+        "limit": 27
       }
     }
   },
@@ -3619,13 +3817,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.9,
-        "limit": 18
+        "days": 1.2,
+        "limit": 5
       },
       "3": {
         "name": "Mayor",
-        "days": 19.3,
-        "limit": 64
+        "days": 1.4,
+        "limit": 5
       }
     }
   },
@@ -3641,13 +3839,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 1.2,
-        "limit": 5
+        "days": 23.7,
+        "limit": 52
       },
       "3": {
         "name": "Mayor",
-        "days": 8.4,
-        "limit": 26
+        "days": 31,
+        "limit": 76
       }
     }
   },
@@ -3663,13 +3861,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 23.7,
-        "limit": 52
+        "days": 13.1,
+        "limit": 37
       },
       "3": {
         "name": "Mayor",
-        "days": 8.6,
-        "limit": 30
+        "days": 15.9,
+        "limit": 48
       }
     }
   },
@@ -3685,13 +3883,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 13.1,
-        "limit": 37
+        "days": 10,
+        "limit": 36
       },
       "3": {
         "name": "Mayor",
-        "days": 9.4,
-        "limit": 31
+        "days": 14.6,
+        "limit": 51
       }
     }
   },
@@ -3707,13 +3905,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 10,
-        "limit": 36
+        "days": 7.5,
+        "limit": 21
       },
       "3": {
         "name": "Mayor",
-        "days": 9.1,
-        "limit": 34
+        "days": 7.5,
+        "limit": 21
       }
     }
   },
@@ -3729,13 +3927,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.5,
-        "limit": 21
+        "days": 7,
+        "limit": 17
       },
       "3": {
         "name": "Mayor",
-        "days": 18.4,
-        "limit": 62
+        "days": 7,
+        "limit": 17
       }
     }
   },
@@ -3751,13 +3949,35 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7,
-        "limit": 17
+        "days": 6.2,
+        "limit": 20
       },
       "3": {
         "name": "Mayor",
-        "days": 15.6,
-        "limit": 49
+        "days": 7.5,
+        "limit": 24
+      }
+    }
+  },
+  {
+    "id": "16112",
+    "name": "PH PROCEDIMIENTOS SOBRE EL BAZO",
+    "category": "General",
+    "severities": {
+      "1": {
+        "name": "Menor",
+        "days": 10.4,
+        "limit": 39
+      },
+      "2": {
+        "name": "Moderada",
+        "days": 10.4,
+        "limit": 39
+      },
+      "3": {
+        "name": "Mayor",
+        "days": 10.4,
+        "limit": 39
       }
     }
   },
@@ -3773,13 +3993,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.2,
-        "limit": 20
+        "days": 3.6,
+        "limit": 12
       },
       "3": {
         "name": "Mayor",
-        "days": 12.2,
-        "limit": 40
+        "days": 19.3,
+        "limit": 64
       }
     }
   },
@@ -3795,13 +4015,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.6,
-        "limit": 12
+        "days": 6,
+        "limit": 16
       },
       "3": {
         "name": "Mayor",
-        "days": 9.6,
-        "limit": 34
+        "days": 8.4,
+        "limit": 26
       }
     }
   },
@@ -3817,13 +4037,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6,
-        "limit": 16
+        "days": 5.7,
+        "limit": 18
       },
       "3": {
         "name": "Mayor",
-        "days": 13.5,
-        "limit": 42
+        "days": 8.6,
+        "limit": 30
       }
     }
   },
@@ -3839,13 +4059,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.7,
-        "limit": 18
+        "days": 6.6,
+        "limit": 24
       },
       "3": {
         "name": "Mayor",
-        "days": 4.3,
-        "limit": 12
+        "days": 9.4,
+        "limit": 31
       }
     }
   },
@@ -3861,13 +4081,35 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.6,
+        "days": 5.3,
+        "limit": 21
+      },
+      "3": {
+        "name": "Mayor",
+        "days": 9.1,
+        "limit": 34
+      }
+    }
+  },
+  {
+    "id": "17410",
+    "name": "MH LEUCEMIA AGUDA",
+    "category": "General",
+    "severities": {
+      "1": {
+        "name": "Menor",
+        "days": 6.4,
+        "limit": 24
+      },
+      "2": {
+        "name": "Moderada",
+        "days": 6.4,
         "limit": 24
       },
       "3": {
         "name": "Mayor",
-        "days": 6,
-        "limit": 20
+        "days": 18.4,
+        "limit": 62
       }
     }
   },
@@ -3883,13 +4125,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.3,
-        "limit": 21
+        "days": 8.9,
+        "limit": 31
       },
       "3": {
         "name": "Mayor",
-        "days": 14.8,
-        "limit": 47
+        "days": 15.6,
+        "limit": 49
       }
     }
   },
@@ -3905,13 +4147,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.4,
-        "limit": 24
+        "days": 7.3,
+        "limit": 27
       },
       "3": {
         "name": "Mayor",
-        "days": 16.2,
-        "limit": 54
+        "days": 12.2,
+        "limit": 40
       }
     }
   },
@@ -3927,13 +4169,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8.9,
-        "limit": 31
+        "days": 7.1,
+        "limit": 24
       },
       "3": {
         "name": "Mayor",
-        "days": 30.4,
-        "limit": 97
+        "days": 9.6,
+        "limit": 34
       }
     }
   },
@@ -3949,13 +4191,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.3,
-        "limit": 27
+        "days": 9,
+        "limit": 29
       },
       "3": {
         "name": "Mayor",
-        "days": 22.7,
-        "limit": 78
+        "days": 13.5,
+        "limit": 42
       }
     }
   },
@@ -3971,13 +4213,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 7.1,
-        "limit": 24
+        "days": 4.3,
+        "limit": 12
       },
       "3": {
         "name": "Mayor",
-        "days": 18.3,
-        "limit": 68
+        "days": 4.3,
+        "limit": 12
       }
     }
   },
@@ -3993,13 +4235,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 9,
-        "limit": 29
+        "days": 4.2,
+        "limit": 12
       },
       "3": {
         "name": "Mayor",
-        "days": 24.5,
-        "limit": 72
+        "days": 6,
+        "limit": 20
       }
     }
   },
@@ -4015,13 +4257,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.3,
-        "limit": 12
+        "days": 8.6,
+        "limit": 27
       },
       "3": {
         "name": "Mayor",
-        "days": 18.5,
-        "limit": 62
+        "days": 14.8,
+        "limit": 47
       }
     }
   },
@@ -4037,13 +4279,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 4.2,
-        "limit": 12
+        "days": 11.8,
+        "limit": 36
       },
       "3": {
         "name": "Mayor",
-        "days": 14.3,
-        "limit": 49
+        "days": 16.2,
+        "limit": 54
       }
     }
   },
@@ -4059,13 +4301,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8.6,
-        "limit": 27
+        "days": 24.3,
+        "limit": 85
       },
       "3": {
         "name": "Mayor",
-        "days": 12.3,
-        "limit": 47
+        "days": 30.4,
+        "limit": 97
       }
     }
   },
@@ -4081,13 +4323,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 11.8,
-        "limit": 36
+        "days": 16.9,
+        "limit": 66
       },
       "3": {
         "name": "Mayor",
-        "days": 20.9,
-        "limit": 81
+        "days": 22.7,
+        "limit": 78
       }
     }
   },
@@ -4103,13 +4345,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 24.3,
-        "limit": 85
+        "days": 10.5,
+        "limit": 37
       },
       "3": {
         "name": "Mayor",
-        "days": 27.8,
-        "limit": 101
+        "days": 18.3,
+        "limit": 68
       }
     }
   },
@@ -4125,13 +4367,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 16.9,
-        "limit": 66
+        "days": 23.3,
+        "limit": 72
       },
       "3": {
         "name": "Mayor",
-        "days": 19.3,
-        "limit": 75
+        "days": 24.5,
+        "limit": 72
       }
     }
   },
@@ -4147,13 +4389,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 10.5,
-        "limit": 37
+        "days": 12.3,
+        "limit": 42
       },
       "3": {
         "name": "Mayor",
-        "days": 0,
-        "limit": 0
+        "days": 18.5,
+        "limit": 62
       }
     }
   },
@@ -4169,13 +4411,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 23.3,
-        "limit": 72
+        "days": 5.7,
+        "limit": 20
       },
       "3": {
         "name": "Mayor",
-        "days": 14.7,
-        "limit": 54
+        "days": 14.3,
+        "limit": 49
       }
     }
   },
@@ -4191,13 +4433,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 12.3,
-        "limit": 42
+        "days": 8.8,
+        "limit": 36
       },
       "3": {
         "name": "Mayor",
-        "days": 13.8,
-        "limit": 46
+        "days": 12.3,
+        "limit": 47
       }
     }
   },
@@ -4213,13 +4455,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.7,
-        "limit": 20
+        "days": 14.9,
+        "limit": 66
       },
       "3": {
         "name": "Mayor",
-        "days": 7.6,
-        "limit": 26
+        "days": 20.9,
+        "limit": 81
       }
     }
   },
@@ -4235,13 +4477,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 8.8,
-        "limit": 36
+        "days": 18.4,
+        "limit": 63
       },
       "3": {
         "name": "Mayor",
-        "days": 6.9,
-        "limit": 23
+        "days": 27.8,
+        "limit": 101
       }
     }
   },
@@ -4257,13 +4499,35 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 14.9,
-        "limit": 66
+        "days": 20.1,
+        "limit": 76
       },
       "3": {
         "name": "Mayor",
-        "days": 10.4,
-        "limit": 36
+        "days": 19.3,
+        "limit": 75
+      }
+    }
+  },
+  {
+    "id": "20110",
+    "name": "PH REHABILITACIÓN Y/O TERAPIA DE DESINTOXICACIÓN POR ALCOHOL Y DROGAS,",
+    "category": "General",
+    "severities": {
+      "1": {
+        "name": "Menor",
+        "days": 22.3,
+        "limit": 61
+      },
+      "2": {
+        "name": "Moderada",
+        "days": 22.3,
+        "limit": 61
+      },
+      "3": {
+        "name": "Mayor",
+        "days": 22.3,
+        "limit": 61
       }
     }
   },
@@ -4274,18 +4538,18 @@ export const GRD_DATA = [
     "severities": {
       "1": {
         "name": "Menor",
-        "days": 0,
-        "limit": 0
+        "days": null,
+        "limit": null
       },
       "2": {
         "name": "Moderada",
-        "days": 18.4,
-        "limit": 63
+        "days": null,
+        "limit": null
       },
       "3": {
         "name": "Mayor",
-        "days": 20.6,
-        "limit": 72
+        "days": null,
+        "limit": null
       }
     }
   },
@@ -4301,13 +4565,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 20.1,
-        "limit": 76
+        "days": 10.9,
+        "limit": 39
       },
       "3": {
         "name": "Mayor",
-        "days": 3.1,
-        "limit": 13
+        "days": 14.7,
+        "limit": 54
       }
     }
   },
@@ -4323,13 +4587,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 22.3,
-        "limit": 61
+        "days": 15.8,
+        "limit": 55
       },
       "3": {
         "name": "Mayor",
-        "days": 9.5,
-        "limit": 27
+        "days": 13.8,
+        "limit": 46
       }
     }
   },
@@ -4345,13 +4609,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 0,
-        "limit": 0
+        "days": 5,
+        "limit": 17
       },
       "3": {
         "name": "Mayor",
-        "days": 4.7,
-        "limit": 17
+        "days": 7.6,
+        "limit": 26
       }
     }
   },
@@ -4367,13 +4631,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 10.9,
-        "limit": 39
+        "days": 3.2,
+        "limit": 11
       },
       "3": {
         "name": "Mayor",
-        "days": 8.9,
-        "limit": 41
+        "days": 3.2,
+        "limit": 11
       }
     }
   },
@@ -4389,13 +4653,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 15.8,
-        "limit": 55
+        "days": 5,
+        "limit": 17
       },
       "3": {
         "name": "Mayor",
-        "days": 8.2,
-        "limit": 24
+        "days": 6.9,
+        "limit": 23
       }
     }
   },
@@ -4411,13 +4675,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5,
-        "limit": 17
+        "days": 6.1,
+        "limit": 22
       },
       "3": {
         "name": "Mayor",
-        "days": 2.2,
-        "limit": 11
+        "days": 10.4,
+        "limit": 36
       }
     }
   },
@@ -4433,13 +4697,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 3.2,
-        "limit": 11
+        "days": 11.7,
+        "limit": 48
       },
       "3": {
         "name": "Mayor",
-        "days": 0,
-        "limit": 0
+        "days": 20.6,
+        "limit": 72
       }
     }
   },
@@ -4455,13 +4719,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5,
-        "limit": 17
+        "days": 2.9,
+        "limit": 11
       },
       "3": {
         "name": "Mayor",
-        "days": 0,
-        "limit": 0
+        "days": 3.1,
+        "limit": 13
       }
     }
   },
@@ -4477,13 +4741,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 6.1,
-        "limit": 22
+        "days": 5.8,
+        "limit": 19
       },
       "3": {
         "name": "Mayor",
-        "days": 0,
-        "limit": 0
+        "days": 9.5,
+        "limit": 27
       }
     }
   },
@@ -4499,13 +4763,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 11.7,
-        "limit": 48
+        "days": 5.6,
+        "limit": 23
       },
       "3": {
         "name": "Mayor",
-        "days": 0,
-        "limit": 0
+        "days": 4.7,
+        "limit": 17
       }
     }
   },
@@ -4521,13 +4785,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 2.9,
-        "limit": 11
+        "days": null,
+        "limit": null
       },
       "3": {
         "name": "Mayor",
-        "days": 0,
-        "limit": 0
+        "days": 8.9,
+        "limit": 41
       }
     }
   },
@@ -4543,13 +4807,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.8,
-        "limit": 19
+        "days": 5.4,
+        "limit": 17
       },
       "3": {
         "name": "Mayor",
-        "days": 0,
-        "limit": 0
+        "days": 8.2,
+        "limit": 24
       }
     }
   },
@@ -4565,13 +4829,13 @@ export const GRD_DATA = [
       },
       "2": {
         "name": "Moderada",
-        "days": 5.6,
-        "limit": 23
+        "days": 1.4,
+        "limit": 7
       },
       "3": {
         "name": "Mayor",
-        "days": 0,
-        "limit": 0
+        "days": 2.2,
+        "limit": 11
       }
     }
   }
