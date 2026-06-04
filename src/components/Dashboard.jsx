@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bed, User, LayoutDashboard, Map, Info, Layers, Search, X, Activity, Pencil, LogOut, CheckCircle, Filter, RotateCcw } from 'lucide-react';
+import { Bed, User, LayoutDashboard, Map, Info, Layers, Search, X, Activity, Pencil, LogOut, CheckCircle, Filter, RotateCcw, Lock, Unlock } from 'lucide-react';
 import { getBedTypeClass, getIconColor } from '../data/dummy';
 import WaitingList from './WaitingList';
 import AssignmentModal from './AssignmentModal';
@@ -8,6 +8,8 @@ import PatientDetailModal from './PatientDetailModal';
 import DischargeModal from './DischargeModal';
 import InterconsultaModal from './InterconsultaModal';
 import MultiSearchableSelect from './MultiSearchableSelect';
+import BlockBedModal from './BlockBedModal';
+import UnblockBedModal from './UnblockBedModal';
 import { ESPECIALIDADES } from '../data/formData';
 import { DndContext, useDroppable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 
@@ -39,8 +41,9 @@ const getBedStayStatus = (bed) => {
   return 'inlier';
 };
 
-function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleaning, onUndoDischarge, onUndoAssignment, onMarkHodomDoneByBed, onEditGrd, userRole, user }) {
+function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleaning, onUndoDischarge, onUndoAssignment, onMarkHodomDoneByBed, onEditGrd, onBlockBed, onUnblockBed, userRole, user }) {
   const isVisor = userRole === 'visor';
+  const canManageBlocks = userRole === 'superadmin' || userRole === 'administrador' || userRole === 'gestor_camas';
   const isCompatible = checkCompatibility(bed, selectedPatient);
   const isSelecting = !!selectedPatient;
   const { isOver, setNodeRef } = useDroppable({
@@ -101,7 +104,30 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
         </div>
       </div>
 
-      {(bed.patient || bed.status === 'pending_hodom') ? (
+      {bed.status === 'blocked' ? (
+        <div className="patient-info" style={{ opacity: 0.9 }}>
+          <div className="avatar" style={{ width: '36px', height: '36px', minWidth: '36px', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
+            <Lock size={18} />
+          </div>
+          <div className="patient-details" style={{ width: '100%' }}>
+            <span className="patient-name" style={{ color: '#ef4444' }}>Cama Bloqueada</span>
+            <span className="patient-meta" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }}></span>
+              Motivo: {bed.blockedReason || 'Inhabilitada'}
+            </span>
+            {bed.blockedAt && (
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                Desde: {bed.blockedAt} por {bed.blockedBy}
+              </div>
+            )}
+            {canManageBlocks && (
+              <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center', color: '#22c55e', borderColor: '#22c55e' }} onClick={(e) => { e.stopPropagation(); onUnblockBed(room.roomId, bed.id); }}>
+                <Unlock size={12} /> Desbloquear cama
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (bed.patient || bed.status === 'pending_hodom') ? (
         <div className="patient-info" onDoubleClick={() => !isVisor && onEditGrd(room.roomId, bed)}>
           <div className="patient-details" style={{ width: '100%' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -216,6 +242,11 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
                 )}
               </>
             )}
+            {bed.status === 'available' && canManageBlocks && (
+              <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.4)' }} onClick={(e) => { e.stopPropagation(); onBlockBed(room.roomId, bed.id); }}>
+                <Lock size={12} /> Bloqueo de cama
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -233,6 +264,8 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   const [viewingPatient, setViewingPatient] = useState(null);
   const [dischargingPatient, setDischargingPatient] = useState(null); // { roomId, bed }
   const [requestingIC, setRequestingIC] = useState(null); // { roomId, bed }
+  const [blockingBed, setBlockingBed] = useState(null);
+  const [unblockingBed, setUnblockingBed] = useState(null);
   
   const [selectedFloor, setSelectedFloor] = useState('todos');
   const [selectedSector, setSelectedSector] = useState('todos');
@@ -338,6 +371,54 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     setWaitingList(prev => prev.filter(p => p.id !== patient.id));
     setPendingAssignment(null);
     setSelectedPatient(null);
+  };
+
+  const handleBlockConfirm = ({ reason, observation }) => {
+    if (!blockingBed) return;
+    const now = new Date();
+    const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    
+    const newNovedad = {
+      id: Date.now(),
+      fecha: formattedDate,
+      usuario: user?.name || 'Usuario',
+      rol: user?.role || 'Desconocido',
+      contenido: `Bloqueo de cama por: ${reason}. ${observation ? `Observación: ${observation}` : ''}`
+    };
+
+    updateBedState(blockingBed.roomId, blockingBed.bed.id, {
+      status: 'blocked',
+      blockedReason: reason,
+      blockedObs: observation,
+      blockedBy: user?.name || 'Usuario',
+      blockedAt: formattedDate,
+      novedades: [newNovedad, ...(blockingBed.bed.novedades || [])]
+    });
+    setBlockingBed(null);
+  };
+
+  const handleUnblockConfirm = ({ observation }) => {
+    if (!unblockingBed) return;
+    const now = new Date();
+    const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    
+    const newNovedad = {
+      id: Date.now(),
+      fecha: formattedDate,
+      usuario: user?.name || 'Usuario',
+      rol: user?.role || 'Desconocido',
+      contenido: `Desbloqueo de cama. ${observation ? `Observación: ${observation}` : ''}`
+    };
+
+    updateBedState(unblockingBed.roomId, unblockingBed.bed.id, {
+      status: 'available',
+      blockedReason: null,
+      blockedObs: null,
+      blockedBy: null,
+      blockedAt: null,
+      novedades: [newNovedad, ...(unblockingBed.bed.novedades || [])]
+    });
+    setUnblockingBed(null);
   };
 
   const updateBedState = (roomId, bedId, updates) => {
@@ -782,11 +863,12 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             </div>
             <div style={{ marginBottom: '20px' }}>
               <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>3. ESTADO DE CAMA</div>
-              <div className="stack-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '6px' }}>
-                <button className={`stack-btn ${statusFilter === 'todos' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.72rem' }} onClick={() => setStatusFilter('todos')}>Todas</button>
-                <button className={`stack-btn ${statusFilter === 'available' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.72rem' }} onClick={() => setStatusFilter('available')}>Disp.</button>
-                <button className={`stack-btn ${statusFilter === 'cleaning' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.72rem' }} onClick={() => setStatusFilter('cleaning')}>Aseo</button>
-                <button className={`stack-btn ${statusFilter === 'pending_hodom' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.72rem' }} onClick={() => setStatusFilter('pending_hodom')}>Pend. HODOM</button>
+              <div className="stack-group" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px' }}>
+                <button className={`stack-btn ${statusFilter === 'todos' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('todos')}>Todas</button>
+                <button className={`stack-btn ${statusFilter === 'available' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('available')}>Disp.</button>
+                <button className={`stack-btn ${statusFilter === 'cleaning' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('cleaning')}>Aseo</button>
+                <button className={`stack-btn ${statusFilter === 'pending_hodom' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('pending_hodom')}>Pend. HODOM</button>
+                <button className={`stack-btn ${statusFilter === 'blocked' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('blocked')}>Bloq.</button>
               </div>
             </div>
             <div style={{ marginBottom: '20px' }}>
@@ -949,6 +1031,16 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                             onUndoAssignment={handleUndoAssignment}
                             onMarkHodomDoneByBed={onMarkHodomDoneByBed}
                             onEditGrd={(rId, b) => setEditingGrdBed({ roomId: rId, bed: b })}
+                            onBlockBed={(rId, bId) => {
+                              const roomData = bedsData[floor][sector].find(r => r.roomId === rId);
+                              const bedData = roomData.beds.find(b => b.id === bId);
+                              setBlockingBed({ roomId: rId, bed: bedData });
+                            }}
+                            onUnblockBed={(rId, bId) => {
+                              const roomData = bedsData[floor][sector].find(r => r.roomId === rId);
+                              const bedData = roomData.beds.find(b => b.id === bId);
+                              setUnblockingBed({ roomId: rId, bed: bedData });
+                            }}
                             userRole={user.role}
                             user={user}
                           />
@@ -1031,6 +1123,24 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
           <PatientDetailModal
             patient={viewingPatient}
             onClose={() => setViewingPatient(null)}
+          />
+        )}
+
+        {blockingBed && (
+          <BlockBedModal
+            bed={blockingBed.bed}
+            onConfirm={handleBlockConfirm}
+            onClose={() => setBlockingBed(null)}
+            user={user}
+          />
+        )}
+        
+        {unblockingBed && (
+          <UnblockBedModal
+            bed={unblockingBed.bed}
+            onConfirm={handleUnblockConfirm}
+            onClose={() => setUnblockingBed(null)}
+            user={user}
           />
         )}
       </div>
