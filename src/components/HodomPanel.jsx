@@ -11,7 +11,9 @@ export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRo
   }, []);
 
   const calculateWait = (isoString) => {
+    if (!isoString) return { text: '—', totalMinutes: 0 };
     const diff = now - new Date(isoString);
+    if (diff < 0) return { text: '0m', totalMinutes: 0 };
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
@@ -19,7 +21,7 @@ export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRo
     if (days > 0) parts.push(`${days}d`);
     if (hours % 24 > 0) parts.push(`${hours % 24}h`);
     parts.push(`${minutes % 60}m`);
-    return { text: parts.join(' '), totalMinutes: minutes, isCritical: minutes > 1440 };
+    return { text: parts.join(' '), totalMinutes: minutes };
   };
 
   const pending = hodomRequests
@@ -61,17 +63,30 @@ export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRo
         </div>
 
         {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-          {[
-            { label: 'Pendientes', value: hodomRequests.filter(r => r.estado === 'pendiente').length, color: '#f59e0b' },
-            { label: 'Aprobados', value: hodomRequests.filter(r => r.estado === 'aprobado').length, color: '#22c55e' },
-            { label: 'Total hoy', value: hodomRequests.length, color: '#a855f7' },
-          ].map(s => (
-            <div key={s.label} style={{ background: 'var(--inset-bg)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: 'var(--shadow-inset)' }}>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+          <div style={{ flexShrink: 0, background: 'var(--inset-bg)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: 'var(--shadow-inset)', minWidth: '150px' }}>
+            <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#f59e0b' }}>{pending.length}</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pendientes</div>
+          </div>
+          <div style={{ flex: 1, background: 'var(--inset-bg)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '16px', boxShadow: 'var(--shadow-inset)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', textAlign: 'center' }}>Desglose por Tiempo de Espera</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))', gap: '8px' }}>
+               {[
+                 { label: '≤ 1 hora', count: pending.filter(r => calculateWait(r.solicitadaAt).totalMinutes <= 60).length },
+                 { label: '1 - 2 horas', count: pending.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 60 && m <= 120; }).length },
+                 { label: '2 - 3 horas', count: pending.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 120 && m <= 180; }).length },
+                 { label: '3 - 4 horas', count: pending.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 180 && m <= 240; }).length },
+                 { label: '4 - 5 horas', count: pending.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 240 && m <= 300; }).length },
+                 { label: '5 - 6 horas', count: pending.filter(r => { const m = calculateWait(r.solicitadaAt).totalMinutes; return m > 300 && m <= 360; }).length },
+                 { label: '6+ horas', count: pending.filter(r => calculateWait(r.solicitadaAt).totalMinutes > 360).length }
+               ].map(({ label, count }) => (
+                 <div key={label} style={{ background: 'var(--panel-bg)', borderRadius: '8px', padding: '8px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
+                   <div style={{ fontSize: '1.2rem', fontWeight: 700, color: count > 0 ? '#0ea5e9' : 'var(--text-secondary)' }}>{count}</div>
+                   <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{label}</div>
+                 </div>
+               ))}
             </div>
-          ))}
+          </div>
         </div>
       </div>
 
@@ -88,7 +103,7 @@ export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRo
           const total = req.hodomChecks ? Object.keys(req.hodomChecks).length : 12;
 
           return (
-            <div key={req.id} className="glass-panel" style={{ padding: '24px', marginBottom: '16px', border: wait.isCritical ? '1px solid #ef4444' : '1px solid var(--border-light)', boxShadow: wait.isCritical ? '0 0 12px rgba(239,68,68,0.2)' : 'var(--shadow-drop)' }}>
+            <div key={req.id} className="glass-panel" style={{ padding: '24px', marginBottom: '16px', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-drop)' }}>
               {/* Patient header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
@@ -110,10 +125,12 @@ export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRo
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: wait.isCritical ? '#ef4444' : 'var(--text-primary)', fontWeight: 700 }}>
-                    <Clock size={15} />
-                    {wait.text} de espera
-                    {wait.isCritical && <span style={{ fontSize: '0.65rem', background: '#ef4444', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>DEMORADO</span>}
+                  <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Tiempo en espera</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#0ea5e9', fontWeight: 800, fontSize: '1.4rem', background: 'rgba(14, 165, 233, 0.1)', padding: '6px 14px', borderRadius: '8px', border: '1px solid rgba(14, 165, 233, 0.2)' }}>
+                      <Clock size={18} />
+                      {wait.text}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     {(userRole === 'superadmin' || userRole === 'medico_hodom' || userRole === 'gestor_camas') && userRole !== 'visor' ? (

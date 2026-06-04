@@ -12,8 +12,9 @@ export default function AseoPanel({ bedsData, onFinishCleaning, userRole }) {
   }, []);
 
   const calcWait = (isoString) => {
-    if (!isoString) return { text: '—', totalMinutes: 0, isCritical: false };
+    if (!isoString) return { text: '—', totalMinutes: 0 };
     const diff = now - new Date(isoString);
+    if (diff < 0) return { text: '0m', totalMinutes: 0 };
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
@@ -21,7 +22,7 @@ export default function AseoPanel({ bedsData, onFinishCleaning, userRole }) {
     if (days > 0) parts.push(`${days}d`);
     if (hours % 24 > 0) parts.push(`${hours % 24}h`);
     parts.push(`${minutes % 60}m`);
-    return { text: parts.join(' '), totalMinutes: minutes, isCritical: minutes > 60 };
+    return { text: parts.join(' '), totalMinutes: minutes };
   };
 
   // Collect all beds in cleaning state with their location
@@ -87,17 +88,30 @@ export default function AseoPanel({ bedsData, onFinishCleaning, userRole }) {
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-          {[
-            { label: 'En Aseo',    value: cleaningBeds.length,                                                color: '#f59e0b' },
-            { label: 'Atrasadas',  value: cleaningBeds.filter(b => calcWait(b.cleaningAt).isCritical).length, color: '#ef4444' },
-            { label: 'A tiempo',   value: cleaningBeds.filter(b => !calcWait(b.cleaningAt).isCritical).length,color: '#22c55e' },
-          ].map(s => (
-            <div key={s.label} style={{ background: 'var(--inset-bg)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: 'var(--shadow-inset)' }}>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+          <div style={{ flexShrink: 0, background: 'var(--inset-bg)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: 'var(--shadow-inset)', minWidth: '150px' }}>
+            <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#f59e0b' }}>{cleaningBeds.length}</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Camas en Aseo</div>
+          </div>
+          <div style={{ flex: 1, background: 'var(--inset-bg)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '16px', boxShadow: 'var(--shadow-inset)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', textAlign: 'center' }}>Desglose por Tiempo de Espera</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))', gap: '8px' }}>
+               {[
+                 { label: '≤ 1 hora', count: cleaningBeds.filter(b => calcWait(b.cleaningAt).totalMinutes <= 60).length },
+                 { label: '1 - 2 horas', count: cleaningBeds.filter(b => { const m = calcWait(b.cleaningAt).totalMinutes; return m > 60 && m <= 120; }).length },
+                 { label: '2 - 3 horas', count: cleaningBeds.filter(b => { const m = calcWait(b.cleaningAt).totalMinutes; return m > 120 && m <= 180; }).length },
+                 { label: '3 - 4 horas', count: cleaningBeds.filter(b => { const m = calcWait(b.cleaningAt).totalMinutes; return m > 180 && m <= 240; }).length },
+                 { label: '4 - 5 horas', count: cleaningBeds.filter(b => { const m = calcWait(b.cleaningAt).totalMinutes; return m > 240 && m <= 300; }).length },
+                 { label: '5 - 6 horas', count: cleaningBeds.filter(b => { const m = calcWait(b.cleaningAt).totalMinutes; return m > 300 && m <= 360; }).length },
+                 { label: '6+ horas', count: cleaningBeds.filter(b => calcWait(b.cleaningAt).totalMinutes > 360).length }
+               ].map(({ label, count }) => (
+                 <div key={label} style={{ background: 'var(--panel-bg)', borderRadius: '8px', padding: '8px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
+                   <div style={{ fontSize: '1.2rem', fontWeight: 700, color: count > 0 ? '#0ea5e9' : 'var(--text-secondary)' }}>{count}</div>
+                   <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{label}</div>
+                 </div>
+               ))}
             </div>
-          ))}
+          </div>
         </div>
       </div>
 
@@ -117,18 +131,14 @@ export default function AseoPanel({ bedsData, onFinishCleaning, userRole }) {
                 className="glass-panel"
                 style={{
                   padding: '24px',
-                  border: wait.isCritical ? '1px solid #ef4444' : '1px solid var(--border-light)',
-                  boxShadow: wait.isCritical ? '0 0 12px rgba(239,68,68,0.2)' : 'var(--shadow-drop)',
+                  border: '1px solid var(--border-light)',
+                  boxShadow: 'var(--shadow-drop)',
                   position: 'relative',
                   overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column'
                 }}
               >
-                {/* Glow effect for critical */}
-                {wait.isCritical && (
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #ef4444, transparent)', opacity: 0.6 }} />
-                )}
 
                 {/* Room info */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
@@ -146,16 +156,12 @@ export default function AseoPanel({ bedsData, onFinishCleaning, userRole }) {
                     </div>
                   </div>
                   
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: wait.isCritical ? '#ef4444' : 'var(--text-primary)', fontWeight: 700, fontSize: '0.9rem' }}>
-                      <Clock size={15} />
+                  <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Tiempo en espera</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#0ea5e9', fontWeight: 800, fontSize: '1.4rem', background: 'rgba(14, 165, 233, 0.1)', padding: '6px 14px', borderRadius: '8px', border: '1px solid rgba(14, 165, 233, 0.2)' }}>
+                      <Clock size={18} />
                       {wait.text}
                     </div>
-                    {wait.isCritical && (
-                      <span style={{ fontSize: '0.65rem', background: '#ef4444', color: 'white', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, marginTop: '3px', display: 'inline-block' }}>
-                        ¡ATRASADO!
-                      </span>
-                    )}
                   </div>
                 </div>
 
