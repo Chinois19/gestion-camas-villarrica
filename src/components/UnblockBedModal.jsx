@@ -10,8 +10,8 @@ export default function UnblockBedModal({ bed, onClose, onConfirm, user }) {
 
   return (
     <div className="modal-overlay" style={{ zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
-      <div className="modal-content" style={{ width: 450, padding: 24, background: '#0f172a', border: '1px solid #22c55e', borderRadius: 16, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div className="modal-content" style={{ width: 550, padding: 36, background: '#0f172a', border: '1px solid #22c55e', borderRadius: 16, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h3 style={{ margin: 0, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Unlock size={20} />
             Desbloqueo de cama
@@ -21,17 +21,17 @@ export default function UnblockBedModal({ bed, onClose, onConfirm, user }) {
           </button>
         </div>
 
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 20 }}>
-          Va a volver a habilitar la cama <strong>{bed.id}</strong> para que pueda recibir pacientes.
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: 28, lineHeight: 1.5 }}>
+          Va a volver a habilitar la cama <strong style={{ color: 'var(--text-primary)' }}>{bed.id}</strong> para que pueda recibir pacientes.
         </p>
 
-        <div style={{ marginBottom: 24 }}>
-          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+        <div style={{ marginBottom: 32 }}>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
             Observación de desbloqueo (Opcional):
           </label>
           <textarea 
             className="glass-input" 
-            rows={3}
+            rows={4}
             style={{ width: '100%', boxSizing: 'border-box' }}
             value={observation}
             onChange={(e) => setObservation(e.target.value)}

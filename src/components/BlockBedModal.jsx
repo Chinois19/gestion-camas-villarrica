@@ -23,8 +23,8 @@ export default function BlockBedModal({ bed, onClose, onConfirm, user }) {
 
   return (
     <div className="modal-overlay" style={{ zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
-      <div className="modal-content" style={{ width: 450, padding: 24, background: '#0f172a', border: '1px solid #ef4444', borderRadius: 16, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div className="modal-content" style={{ width: 550, padding: 36, background: '#0f172a', border: '1px solid #ef4444', borderRadius: 16, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h3 style={{ margin: 0, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Lock size={20} />
             Bloqueo de cama
@@ -34,12 +34,12 @@ export default function BlockBedModal({ bed, onClose, onConfirm, user }) {
           </button>
         </div>
 
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 20 }}>
-          Va a inhabilitar la cama <strong>{bed.id}</strong>. Esta cama no podrá ser utilizada hasta que sea desbloqueada.
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: 28, lineHeight: 1.5 }}>
+          Va a inhabilitar la cama <strong style={{ color: 'var(--text-primary)' }}>{bed.id}</strong>. Esta cama no podrá ser utilizada hasta que sea desbloqueada.
         </p>
 
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+        <div style={{ marginBottom: 24 }}>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
             Bloqueo de camas asociado a:
           </label>
           <select 
@@ -53,13 +53,13 @@ export default function BlockBedModal({ bed, onClose, onConfirm, user }) {
           </select>
         </div>
 
-        <div style={{ marginBottom: 24 }}>
-          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+        <div style={{ marginBottom: 32 }}>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
             Glosa de observación (Opcional):
           </label>
           <textarea 
             className="glass-input" 
-            rows={3}
+            rows={4}
             style={{ width: '100%', boxSizing: 'border-box' }}
             value={observation}
             onChange={(e) => setObservation(e.target.value)}
