@@ -43,10 +43,68 @@ function App() {
   const [bedsData, setBedsData, bedsLoading] = useFirebaseSync('appState', 'bedsData', initialBedsData);
   const [waitingList, setWaitingList, waitingLoading] = useFirebaseSync('appState', 'waitingList', WAITING_LIST);
   const [hodomRequests, setHodomRequests, hodomLoading] = useFirebaseSync('appState', 'hodomRequests', initialHodomRequests);
+  const [activeUsers, setActiveUsers, activeUsersLoading] = useFirebaseSync('appState', 'activeUsers', {});
 
   useEffect(() => {
     document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
   }, [theme]);
+
+  useEffect(() => {
+    if (!currentUser || activeUsersLoading) return;
+
+    const interval = setInterval(() => {
+      setActiveUsers(prev => {
+        const now = Date.now();
+        const updated = { ...prev };
+
+        updated[currentUser.username] = {
+          name: currentUser.name,
+          role: currentUser.role,
+          lastSeen: new Date().toISOString()
+        };
+
+        // Clean up inactive users (older than 45 seconds)
+        for (const username in updated) {
+          if (!updated[username] || !updated[username].lastSeen) {
+            delete updated[username];
+            continue;
+          }
+          const lastSeenTime = new Date(updated[username].lastSeen).getTime();
+          if (now - lastSeenTime > 45 * 1000) {
+            delete updated[username];
+          }
+        }
+
+        return updated;
+      });
+    }, 15000);
+
+    // Update presence immediately on mount/login
+    setActiveUsers(prev => {
+      const now = Date.now();
+      const updated = { ...prev };
+      
+      updated[currentUser.username] = {
+        name: currentUser.name,
+        role: currentUser.role,
+        lastSeen: new Date().toISOString()
+      };
+
+      for (const username in updated) {
+        if (!updated[username] || !updated[username].lastSeen) {
+          delete updated[username];
+          continue;
+        }
+        const lastSeenTime = new Date(updated[username].lastSeen).getTime();
+        if (now - lastSeenTime > 45 * 1000) {
+          delete updated[username];
+        }
+      }
+      return updated;
+    });
+
+    return () => clearInterval(interval);
+  }, [currentUser, activeUsersLoading]);
 
   const isLoading = bedsLoading || waitingLoading || hodomLoading;
 
@@ -57,6 +115,13 @@ function App() {
   };
 
   const handleLogout = () => {
+    if (currentUser) {
+      setActiveUsers(prev => {
+        const updated = { ...prev };
+        delete updated[currentUser.username];
+        return updated;
+      });
+    }
     setCurrentUser(null);
     localStorage.removeItem('villarrica_session');
     setCurrentView('dashboard');
@@ -449,7 +514,7 @@ function App() {
         />
       )}
       {currentView === 'usuarios' && isSuperAdmin && (
-        <UserManagement />
+        <UserManagement activeUsers={activeUsers} />
       )}
       {currentView === 'infraestructura' && isSuperAdmin && (
         <InfrastructureManagement bedsData={bedsData} setBedsData={setBedsData} />

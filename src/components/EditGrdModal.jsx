@@ -417,32 +417,42 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                       </div>
                     </div>
 
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
-                        Días de Estada Proyectada
-                      </label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <input 
-                          type="number" 
-                          value={formData.projectedDays} 
-                          onChange={handleChangeDays} 
-                          className="glass-input" 
-                          style={{ width: '80px', padding: '6px 10px', textAlign: 'center', fontWeight: 700 }}
-                          min="0"
-                        />
-                        {limitDays > 0 && (
-                          <div style={{ 
-                            padding: '6px 12px', 
-                            borderRadius: '8px', 
-                            border: '1px solid rgba(245,158,11,0.3)', 
-                            background: 'rgba(245,158,11,0.06)',
-                            color: '#f59e0b',
-                            fontSize: '0.72rem',
-                            fontWeight: 600
-                          }}>
-                            ⚠️ Límite Outlier: {limitDays} días
-                          </div>
-                        )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                      {/* Límite Outliers (Most Prominent) */}
+                      {limitDays > 0 && (
+                        <div style={{ 
+                          padding: '10px 14px', 
+                          borderRadius: '8px', 
+                          border: '1px solid rgba(239, 68, 68, 0.4)', 
+                          background: 'rgba(239, 68, 68, 0.12)',
+                          color: '#f87171',
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 0 10px rgba(239, 68, 68, 0.1)'
+                        }}>
+                          🚨 Límite Outliers: {limitDays} días
+                        </div>
+                      )}
+
+                      {/* Promedio días de estada Hospital de Villarrica (Less Prominent) */}
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px', display: 'block', fontWeight: 600 }}>
+                          Promedio días de estada Hospital de Villarrica
+                        </label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <input 
+                            type="number" 
+                            value={formData.projectedDays} 
+                            onChange={handleChangeDays} 
+                            className="glass-input" 
+                            style={{ width: '70px', padding: '5px 8px', textAlign: 'center', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.01)', borderColor: 'rgba(255,255,255,0.08)' }}
+                            min="0"
+                          />
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>días (histórico referencial)</span>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -257,18 +257,19 @@ export default function AssignmentModal({ patient, bed, onConfirm, onClose }) {
                       </div>
                     </div>
                     
-                    <div className="projection-box glass-panel" style={{ margin: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', minHeight: '100px' }}>
-                      <div className="projection-main" style={{ marginBottom: '4px' }}>
-                        <TrendingDown size={28} color="var(--accent-color)" />
-                        <div className="projection-details">
-                          <span className="label" style={{ fontSize: '0.7rem' }}>Proyección de Estada</span>
-                          <span className="value" style={{ fontSize: '2rem' }}>{projectedDays} Días</span>
-                        </div>
-                      </div>
-                      <div className="projection-meta" style={{ marginTop: '8px', borderTop: '1px solid rgba(0,212,255,0.2)', paddingTop: '8px' }}>
-                        <Calendar size={14} /> Límite (Outlier): {limitDays} días
-                      </div>
-                    </div>
+                     <div className="projection-box glass-panel" style={{ margin: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', minHeight: '100px', border: '1px solid rgba(239, 68, 68, 0.4)', background: 'rgba(239, 68, 68, 0.08)', boxShadow: '0 0 12px rgba(239, 68, 68, 0.1)' }}>
+                       <div className="projection-main" style={{ marginBottom: '4px' }}>
+                         <AlertTriangle size={28} color="#f87171" />
+                         <div className="projection-details">
+                           <span className="label" style={{ fontSize: '0.68rem', color: '#f87171', fontWeight: 700, textTransform: 'uppercase' }}>Límite Outliers</span>
+                           <span className="value" style={{ fontSize: '1.8rem', color: '#f87171', fontWeight: 800 }}>{limitDays} Días</span>
+                         </div>
+                       </div>
+                       <div className="projection-meta" style={{ marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '8px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                         <span style={{ fontSize: '0.62rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Promedio días de estada Hospital de Villarrica</span>
+                         <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{projectedDays} días <span style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--text-muted)' }}>(histórico)</span></span>
+                       </div>
+                     </div>
                   </div>
                 </div>
 

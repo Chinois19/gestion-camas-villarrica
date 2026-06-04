@@ -14,7 +14,7 @@ const defaultUsers = [
   { id: 6, name: 'Personal de Aseo', username: 'aseo', password: 'aseo', email: 'aseo@hospitalvillarrica.cl', role: 'personal_aseo', roleName: 'Personal de Aseo', status: 'active' }
 ];
 
-const UserManagement = ({ notify }) => {
+const UserManagement = ({ notify, activeUsers = {} }) => {
   const [users, setUsers, loadingUsers] = useFirebaseSync('appState', 'users', defaultUsers);
 
   const [isAdding, setIsAdding] = useState(false);
@@ -98,6 +98,45 @@ const UserManagement = ({ notify }) => {
           <UserPlus size={18} />
           <span>Agregar Profesional</span>
         </button>
+      </div>
+
+      {/* Profesionales Conectados en Tiempo Real */}
+      <div className="glass-panel" style={{ padding: '16px 20px', marginBottom: '24px', border: '1px solid rgba(34, 197, 94, 0.25)', background: 'rgba(34, 197, 94, 0.04)', borderRadius: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }}></span>
+            <span style={{ position: 'absolute', display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', transform: 'scale(2.5)', opacity: 0.35 }}></span>
+          </div>
+          <h3 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Profesionales Conectados en Tiempo Real
+          </h3>
+          <span className="role-badge gestor_camas" style={{ fontSize: '0.68rem', padding: '2px 8px', marginLeft: 'auto', background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>
+            {Object.keys(activeUsers || {}).length} Activos
+          </span>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+          {Object.keys(activeUsers || {}).length === 0 ? (
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>No se registran otros usuarios activos en este momento.</span>
+          ) : (
+            Object.entries(activeUsers).map(([username, data]) => (
+              <div key={username} style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                padding: '6px 12px', 
+                borderRadius: '8px', 
+                background: 'rgba(255,255,255,0.02)', 
+                border: '1px solid rgba(255,255,255,0.06)' 
+              }}>
+                <span className="status-indicator active" style={{ margin: 0, width: '6px', height: '6px' }}></span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)' }}>{data.name}</span>
+                  <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>@{username} • {data.role === 'superadmin' ? 'Super Admin' : data.role === 'gestor_camas' ? 'Gestor de Camas' : data.role === 'medico_general' ? 'Médico' : data.role}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       <div className="um-controls glass-panel">
