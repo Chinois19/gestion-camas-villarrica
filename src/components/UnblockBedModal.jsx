@@ -9,8 +9,8 @@ export default function UnblockBedModal({ bed, onClose, onConfirm, user }) {
   };
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-      <div className="modal-content glass-panel" style={{ width: 450, padding: 24, background: 'var(--panel-bg)', border: '1px solid #22c55e', borderRadius: 16 }}>
+    <div className="modal-overlay" style={{ zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
+      <div className="modal-content" style={{ width: 450, padding: 24, background: '#0f172a', border: '1px solid #22c55e', borderRadius: 16, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ margin: 0, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Unlock size={20} />

@@ -87,6 +87,13 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
         ${isOver && isCompatible ? 'droppable-over' : ''} 
         ${isSelecting && isCompatible ? 'compatible-highlight' : ''} 
         ${isSelecting && !isCompatible ? 'non-compatible-dim' : ''}`}
+      style={bed.status === 'blocked' ? {
+        background: 'linear-gradient(135deg, rgba(0,0,0,0.8), rgba(15,15,15,0.9))',
+        borderColor: 'rgba(239, 68, 68, 0.1)',
+        opacity: 0.75,
+        boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)',
+        filter: 'grayscale(0.4)'
+      } : {}}
     >
       <div className="bed-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -121,7 +128,7 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
               </div>
             )}
             {canManageBlocks && (
-              <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center', color: '#22c55e', borderColor: '#22c55e' }} onClick={(e) => { e.stopPropagation(); onUnblockBed(room.roomId, bed.id); }}>
+              <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', color: '#22c55e', borderColor: '#22c55e' }} onClick={(e) => { e.stopPropagation(); onUnblockBed(room.roomId, bed.id); }}>
                 <Unlock size={12} /> Desbloquear cama
               </button>
             )}
@@ -243,7 +250,7 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
               </>
             )}
             {bed.status === 'available' && canManageBlocks && (
-              <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.4)' }} onClick={(e) => { e.stopPropagation(); onBlockBed(room.roomId, bed.id); }}>
+              <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.4)' }} onClick={(e) => { e.stopPropagation(); onBlockBed(room.roomId, bed.id); }}>
                 <Lock size={12} /> Bloqueo de cama
               </button>
             )}
