@@ -18,7 +18,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
   const [isAddingBed, setIsAddingBed] = useState(false);
   const [editingBed, setEditingBed] = useState(null);
 
-  const bedTypes = ['UCI', 'UTI', 'Cuidados Medios', 'Cuidados Básicos', 'Maternidad', 'Neonatología', 'Infantil', 'Indiferenciada'];
+  const bedTypes = ['UCI', 'UTI', 'Cuidados Medios', 'Cuidados Básicos', 'Maternidad', 'Neonatología', 'Infantil'];
 
   // --- Actions ---
 
@@ -309,7 +309,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px', opacity: selectedRoom ? 1 : 0.4 }}><Bed size={16} /> Camas</h3>
             {selectedRoom && (
-              <button className="glass-button" style={{ padding: '4px', fontSize: '0.7rem' }} onClick={() => { setIsAddingBed(true); setEditingBed({ id: '', type: 'Indiferenciada' }); }}>
+              <button className="glass-button" style={{ padding: '4px', fontSize: '0.7rem' }} onClick={() => { setIsAddingBed(true); setEditingBed({ id: '', type: 'Cuidados Medios' }); }}>
                 <Plus size={14} />
               </button>
             )}

@@ -21,12 +21,16 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
     especialidadTratante: Array.isArray(bed.especialidadTratante) ? bed.especialidadTratante : (bed.especialidadTratante ? [bed.especialidadTratante] : []),
     aislamiento: Array.isArray(bed.aislamiento) ? bed.aislamiento : (bed.aislamiento ? [bed.aislamiento] : ['Precauciones de Contacto']),
     novedades: bed.novedades || [],
+    destino: bed.destino || 'Cuidados Medios',
     showTransferPanel: false,
     transferType: 'libre'
   });
 
   const [limitDays, setLimitDays] = useState(0);
   const [newNovedadText, setNewNovedadText] = useState('');
+
+  const assignedDate = bed.assignedAt ? new Date(bed.assignedAt) : null;
+  const daysOfStay = assignedDate ? Math.max(1, Math.ceil((new Date() - assignedDate) / (1000 * 60 * 60 * 24))) : 1;
 
   useEffect(() => {
     if (formData.grdId) {
@@ -90,7 +94,8 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
       prevision: formData.prevision,
       especialidadTratante: formData.especialidadTratante,
       aislamiento: formData.aislamiento,
-      novedades: formData.novedades
+      novedades: formData.novedades,
+      destino: formData.destino
     }, transferTarget);
   };
 
@@ -104,13 +109,27 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
             <div className="avatar" style={{ background: 'rgba(59,130,246,0.1)', color: 'var(--accent-color)' }}>
               <Activity size={20} />
             </div>
-            <div>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Gestión de Caso
-              </h2>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                Hab — Cama {bed.id} · {bed.tag || bed.type}
-              </p>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                  Gestión de Caso
+                </h2>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px', marginBottom: 0 }}>
+                  Hab — Cama {bed.id} · {bed.tag || bed.type}
+                </p>
+              </div>
+              {bed.assignedAt && (
+                <div style={{ 
+                  padding: '6px 16px', borderRadius: '12px', background: 'rgba(6, 182, 212, 0.05)', 
+                  color: '#06b6d4', fontSize: '0.85rem', fontWeight: 800, 
+                  border: '1px solid rgba(6, 182, 212, 0.2)',
+                  boxShadow: '0 4px 12px rgba(6, 182, 212, 0.1)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px'
+                }}>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.05em', color: 'rgba(6, 182, 212, 0.8)', textTransform: 'uppercase' }}>Días de Estada</span>
+                  <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>{daysOfStay}</span>
+                </div>
+              )}
             </div>
           </div>
           <button className="close-btn" onClick={onClose}><X size={20} /></button>
@@ -177,6 +196,20 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                         />
                       </div>
                     </div>
+
+                    <div style={{ marginTop: '12px' }}>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>Destino (Unidad Requerida) / Serv. Acueste</div>
+                      <select 
+                        className="glass-input" 
+                        style={{ padding: '6px 10px', fontSize: '0.8rem', width: '100%', background: 'var(--inset-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}
+                        value={formData.destino} 
+                        onChange={e => setFormData(prev => ({ ...prev, destino: e.target.value }))}
+                      >
+                        {['UCI', 'UTI', 'Cuidados Medios', 'Maternidad', 'Neonatología', 'Infantil', 'Básico'].map(d => (
+                          <option key={d} value={d} style={{ background: '#1e1b4b', color: '#fff' }}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
@@ -213,6 +246,40 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     placeholder="Seleccionar..."
                   />
                 </div>
+
+                {/* 3.5 INTERCONSULTAS PENDIENTES */}
+                {(() => {
+                  const pendingICs = (bed.interconsultas || []).filter(ic => ic.estado === 'pendiente');
+                  if (pendingICs.length === 0) return null;
+                  return (
+                    <div className="glass-panel" style={{ padding: '16px', background: 'rgba(168, 85, 247, 0.05)', border: '1px solid rgba(168, 85, 247, 0.2)', zIndex: 15 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid rgba(168, 85, 247, 0.2)', paddingBottom: '8px' }}>
+                        <span style={{ fontSize: '1rem' }}>📋</span>
+                        <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#a855f7' }}>
+                          IC Pendientes ({pendingICs.length})
+                        </h4>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {pendingICs.map((ic, i) => (
+                          <div key={i} style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e0f2fe', marginBottom: '4px' }}>{ic.especialidadDestino}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '2px' }}>
+                              <span style={{ color: '#a855f7' }}>{ic.tipoRequerimiento}</span> {ic.priorizacion ? `· ${ic.priorizacion}` : ''}
+                            </div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                              Sol: {new Date(ic.solicitadaAt).toLocaleString('es-CL')}
+                            </div>
+                            {(user?.role === 'administrador' || user?.role === 'Médico') && (
+                               <div style={{ marginTop: '8px', fontSize: '0.7rem', color: '#f59e0b', fontStyle: 'italic', lineHeight: 1.2 }}>
+                                 Para resolver o desestimar, diríjase al <b>Panel de Interconsultas</b>.
+                               </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* 4. ACCIONES RÁPIDAS */}
                 <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', zIndex: 10 }}>

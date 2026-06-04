@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  Activity, LayoutDashboard, FileText, Search, User, Settings, Sun, Moon, 
-  HeartPulse, Stethoscope, Users, Sparkles, LogOut, BarChart2
+  Activity, Search, User, Sun, Moon, LogOut
 } from 'lucide-react';
 import './App.css';
 import Login from './components/Login';
@@ -13,6 +12,8 @@ import AseoPanel from './components/AseoPanel';
 import UserManagement from './components/UserManagement';
 import InfrastructureManagement from './components/InfrastructureManagement';
 import InsightsDashboard from './components/InsightsDashboard';
+import DatabasePanel from './components/DatabasePanel';
+import Navbar from './components/Navbar';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
 import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
 
@@ -284,67 +285,52 @@ function App() {
 
   const canViewAll = isSuperAdmin || isVisor;
 
-  // Nav items visible by role
-  const navItems = [
-    { id: 'dashboard', label: 'Gestión de Camas', icon: <LayoutDashboard size={16} />, badge: null, show: canViewAll || isMedico || isGestor || isAseo },
-    { id: 'insights', label: 'Estadísticas', icon: <BarChart2 size={16} />, badge: null, show: canViewAll || isGestor || isMedico },
-    { id: 'interconsultas', label: 'Visor de IC', icon: <Stethoscope size={16} />, badge: pendingICCount, show: canViewAll || isMedico },
-    { id: 'hodom', label: 'HODOM', icon: <HeartPulse size={16} />, badge: pendingHodomCount, show: canViewAll || isHodom || isGestor },
-    { id: 'aseo', label: 'Aseo', icon: <Sparkles size={16} />, badge: cleaningCount, show: canViewAll || isAseo },
-    { id: 'solicitud', label: 'Solicitar Cama', icon: <FileText size={16} />, badge: null, show: isSuperAdmin || isGestor || isHodom, onClick: () => { setEditingPatient(null); setViewingPatient(null); setCurrentView('solicitud'); } },
-    { id: 'usuarios', label: 'Usuarios', icon: <Users size={16} />, badge: null, show: isSuperAdmin },
-    { id: 'infraestructura', label: 'Infraestructura', icon: <Settings size={16} />, badge: null, show: isSuperAdmin },
-  ].filter(item => item.show);
+  // Navbar permissions by role
+  const navPermissions = {
+    canDashboard: canViewAll || isMedico || isGestor || isAseo,
+    canInsights: canViewAll || isGestor || isMedico,
+    canDatabase: canViewAll || isGestor || isMedico,
+    canIC: canViewAll || isMedico,
+    canAseo: canViewAll || isAseo,
+    canHodom: canViewAll || isHodom || isGestor,
+    canSolicitud: isSuperAdmin || isGestor || isHodom,
+    canUsuarios: isSuperAdmin,
+    canInfra: isSuperAdmin,
+  };
 
   return (
     <div className="app-container">
       {/* Universal Header */}
-      <header className="glass-panel">
+      <header className="glass-panel hide-on-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
         <div className="header-title" style={{ cursor: 'pointer' }} onClick={() => setCurrentView('dashboard')}>
           <Activity className="icon-logo" size={28} />
           <h1 className="text-gradient">Gestión Camas</h1>
         </div>
 
-        {/* Global Search Bar */}
-        {currentView === 'dashboard' ? (
-          <div className="search-container">
-            <Search size={18} color="var(--text-secondary)" />
+        {/* Horizontal Navigation Menu */}
+        <Navbar
+          currentView={currentView}
+          onNavigate={setCurrentView}
+          navPermissions={navPermissions}
+          badges={{ interconsultas: pendingICCount, hodom: pendingHodomCount, aseo: cleaningCount }}
+          onSolicitudNew={() => { setEditingPatient(null); setViewingPatient(null); setCurrentView('solicitud'); }}
+        />
+
+        {/* Global Search Bar (Only in Dashboard) */}
+        {currentView === 'dashboard' && (
+          <div className="search-container" style={{ margin: '0', flexShrink: 0, width: '250px' }}>
+            <Search size={16} color="var(--text-secondary)" />
             <input
               type="text"
               className="search-input"
-              placeholder="Buscar paciente, cama o diagnóstico..."
+              placeholder="Buscar paciente o cama..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-        ) : (
-          <div style={{ flex: 1 }} />
         )}
 
         <div className="user-profile">
-          {/* Navigation */}
-          <div style={{ display: 'flex', gap: '4px', marginRight: '16px' }}>
-            {navItems.map(item => (
-              <button
-                key={item.id}
-                className={`glass-button ${currentView === item.id ? 'primary' : ''}`}
-                onClick={() => item.onClick ? item.onClick() : setCurrentView(item.id)}
-                style={{ position: 'relative', padding: '8px 14px', fontSize: '0.82rem' }}
-              >
-                {item.icon} {item.label}
-                {item.badge > 0 && (
-                  <span style={{
-                    position: 'absolute', top: '-6px', right: '-6px',
-                    background: item.id === 'hodom' ? '#22c55e' : item.id === 'aseo' ? '#f59e0b' : '#fb923c',
-                    color: 'white', fontSize: '0.65rem', fontWeight: 800,
-                    padding: '2px 5px', borderRadius: '50%',
-                    boxShadow: '0 0 8px rgba(0,0,0,0.4)'
-                  }}>{item.badge}</span>
-                )}
-              </button>
-            ))}
-          </div>
-
           {/* User info */}
           <div className="avatar">
             <User size={20} />
@@ -470,9 +456,12 @@ function App() {
       {currentView === 'insights' && (
         <InsightsDashboard bedsData={bedsData} waitingList={waitingList} />
       )}
+      {currentView === 'database' && (
+        <DatabasePanel bedsData={bedsData} />
+      )}
 
       {/* Global Footer */}
-      <footer style={{ 
+      <footer className="hide-on-print" style={{ 
         textAlign: 'center', 
         padding: '32px 16px 24px', 
         color: 'var(--text-secondary)',

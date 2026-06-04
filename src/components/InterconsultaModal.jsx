@@ -116,6 +116,7 @@ export default function InterconsultaModal({ bed, currentUser, onConfirm, onClos
     // A completar
     especialidadDestino: '',
     tipoRequerimiento: '',
+    priorizacion: '',
     otroRequerimiento: '',
     resumenHistoria: '',
     examenesRealizados: '',
@@ -129,7 +130,7 @@ export default function InterconsultaModal({ bed, currentUser, onConfirm, onClos
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.especialidadDestino || !formData.tipoRequerimiento) return;
+    if (!formData.especialidadDestino || !formData.tipoRequerimiento || !formData.priorizacion) return;
     onConfirm({
       ...formData,
       id: `IC-${Date.now()}`,
@@ -272,6 +273,41 @@ export default function InterconsultaModal({ bed, currentUser, onConfirm, onClos
                     required
                   />
                 )}
+              </div>
+            </div>
+
+            {/* Priorización de la Interconsulta */}
+            <div className="detail-panel" style={{ padding: '24px', background: 'rgba(168, 85, 247, 0.05)', border: '1px solid rgba(168, 85, 247, 0.2)', borderRadius: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#a855f7' }}>Priorización de la Interconsulta</span>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Seleccione el nivel de prioridad *</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {['URGENTE', 'DIFERIDA'].map(prio => (
+                    <button
+                      key={prio}
+                      type="button"
+                      className={`choice-btn ${formData.priorizacion === prio ? 'active' : ''}`}
+                      onClick={() => setFormData(prev => ({ ...prev, priorizacion: prio }))}
+                      style={{
+                        padding: '10px 6px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        border: '1px solid var(--glass-border)',
+                        borderRadius: '8px',
+                        background: formData.priorizacion === prio ? (prio === 'URGENTE' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(168,85,247,0.1)') : 'transparent',
+                        color: formData.priorizacion === prio ? (prio === 'URGENTE' ? '#ef4444' : '#a855f7') : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        borderColor: formData.priorizacion === prio && prio === 'URGENTE' ? 'rgba(239, 68, 68, 0.5)' : ''
+                      }}
+                    >
+                      {prio}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 

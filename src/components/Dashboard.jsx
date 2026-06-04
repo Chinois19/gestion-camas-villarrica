@@ -56,17 +56,23 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
   let remainingDays = 0;
   let exceededDays = 0;
   let isExceeded = false;
-  if ((bed.status === 'occupied' || bed.status === 'pending_hodom') && bed.assignedAt && bed.projectedDays) {
+  let daysOfStay = 1;
+
+  if ((bed.status === 'occupied' || bed.status === 'pending_hodom') && bed.assignedAt) {
     const elapsed = (new Date() - new Date(bed.assignedAt)) / (1000 * 60 * 60 * 24);
-    if (elapsed >= bed.projectedDays) {
-      isExceeded = true;
-      exceededDays = Math.round(elapsed - bed.projectedDays);
-      progress = 100;
-    } else {
-      progress = Math.min((elapsed / bed.projectedDays) * 100, 100);
-      remainingDays = Math.max(0, Math.round(bed.projectedDays - elapsed));
-      if (remainingDays === 0) {
+    daysOfStay = Math.max(1, Math.ceil(elapsed));
+    
+    if (bed.projectedDays) {
+      if (elapsed >= bed.projectedDays) {
         isExceeded = true;
+        exceededDays = Math.round(elapsed - bed.projectedDays);
+        progress = 100;
+      } else {
+        progress = Math.min((elapsed / bed.projectedDays) * 100, 100);
+        remainingDays = Math.max(0, Math.round(bed.projectedDays - elapsed));
+        if (remainingDays === 0) {
+          isExceeded = true;
+        }
       }
     }
   }
@@ -129,6 +135,9 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
                 Tratante: {bed.especialidadTratante.join(' • ')}
               </div>
             )}
+            <div style={{ fontSize: '0.7rem', color: '#06b6d4', marginTop: '4px', fontWeight: 700 }}>
+              Días de Estada: {daysOfStay}
+            </div>
             {bed.projectedDays > 0 && (
               <div className="los-progress-bar">
                 <div className="progress-fill" style={{ width: `${progress}%`, background: isExceeded ? '#ef4444' : progress > 80 ? '#f59e0b' : 'var(--accent-color)', boxShadow: isExceeded ? '0 0 8px #ef4444' : 'none' }}></div>
@@ -516,7 +525,8 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       profesionalDeriva: formData.profesionalDeriva || 'Dr. Médico Tratante',
       solicitadaAt: new Date().toISOString(),
       resumenHistoria: formData.resumenHistoria,
-      estado: 'pendiente'
+      estado: 'pendiente',
+      priorizacion: formData.priorizacion
     };
 
     setBedsData(prev => {
@@ -532,9 +542,23 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                 beds: room.beds.map(b => {
                   if (b.id === bedId) {
                     const currentICs = b.interconsultas || [];
+                    const currentNovedades = b.novedades || [];
+                    
+                    const now = new Date();
+                    const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                    
+                    const newNovedad = {
+                      id: Date.now(),
+                      fecha: formattedDate,
+                      usuario: formData.profesionalDeriva || user?.name || 'Médico Tratante',
+                      rol: user?.role || 'Médico',
+                      contenido: `Interconsulta ${formData.priorizacion ? formData.priorizacion.toLowerCase() : ''} a la especialidad de ${formData.especialidadDestino}.`
+                    };
+
                     return {
                       ...b,
-                      interconsultas: [...currentICs, newIC]
+                      interconsultas: [...currentICs, newIC],
+                      novedades: [newNovedad, ...currentNovedades]
                     };
                   }
                   return b;
@@ -584,6 +608,17 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       sourceBedInfo.grdName = newGrdData.grdName;
       sourceBedInfo.severity = newGrdData.severity;
       sourceBedInfo.projectedDays = newGrdData.projectedDays;
+      sourceBedInfo.diagnosis = newGrdData.diagnosis;
+      sourceBedInfo.rut = newGrdData.rut;
+      sourceBedInfo.comuna = newGrdData.comuna;
+      sourceBedInfo.prevision = newGrdData.prevision;
+      sourceBedInfo.especialidadTratante = newGrdData.especialidadTratante;
+      sourceBedInfo.aislamiento = newGrdData.aislamiento;
+      sourceBedInfo.novedades = newGrdData.novedades;
+      sourceBedInfo.destino = newGrdData.destino;
+      if (newGrdData.interconsultas) {
+        sourceBedInfo.interconsultas = newGrdData.interconsultas;
+      }
     }
 
     // Second pass: apply the swap or transfer
@@ -687,8 +722,13 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
 
   const formatFloor = (f) => f.replace('piso', 'Piso ');
   const formatSector = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  const availableFloors = Object.keys(bedsData).sort((a,b) => b.localeCompare(a));
-  const availableSectors = Array.from(new Set(Object.keys(bedsData).flatMap(floor => Object.keys(bedsData[floor]))));
+  const availableFloors = Object.keys(bedsData).sort((a,b) => a.localeCompare(b));
+  const availableSectors = Array.from(new Set(Object.keys(bedsData).flatMap(floor => Object.keys(bedsData[floor]))))
+    .sort((a,b) => {
+      if (a.toLowerCase() === 'poniente') return -1;
+      if (b.toLowerCase() === 'poniente') return 1;
+      return a.localeCompare(b);
+    });
   const sectorsToRender = selectedSector === 'todos' ? availableSectors : [selectedSector];
   const floorsToRender = selectedFloor === 'todos' ? availableFloors : [selectedFloor];
 
@@ -882,8 +922,12 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                   }
                   return matchStatus && matchService && matchStay && matchIc && matchEspTratante && matchSearch;
                 });
-                return { ...room, beds: filteredBeds };
-              }).filter(room => room.beds.length > 0);
+                return { 
+                  ...room, 
+                  beds: filteredBeds.sort((a,b) => String(b.id).localeCompare(String(a.id), undefined, { numeric: true })) 
+                };
+              }).filter(room => room.beds.length > 0)
+                .sort((a,b) => String(b.roomId).localeCompare(String(a.roomId), undefined, { numeric: true }));
               if (roomsWithFilteredBeds.length === 0) return null;
               hasRoomsInFloor = true;
               return (

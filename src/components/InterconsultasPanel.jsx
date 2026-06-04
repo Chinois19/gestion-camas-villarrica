@@ -6,6 +6,7 @@ export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDon
   const [allICs, setAllICs] = useState([]);
   const [filterSpecialty, setFilterSpecialty] = useState('todos');
   const [filterStatus, setFilterStatus] = useState('pendientes'); // 'pendientes', 'historial', 'todos'
+  const [filterPriorizacion, setFilterPriorizacion] = useState('todas'); // 'todas', 'URGENTE', 'DIFERIDA'
   const [searchTerm, setSearchTerm] = useState('');
   
   // Resolution Modal State
@@ -113,10 +114,11 @@ export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDon
     const isPending = ic.estado === 'pendiente';
     const matchesStatus = filterStatus === 'todos' || (filterStatus === 'pendientes' && isPending) || (filterStatus === 'historial' && !isPending);
     const matchesSpecialty = filterSpecialty === 'todos' || ic.especialidadDestino === filterSpecialty;
+    const matchesPriorizacion = filterPriorizacion === 'todas' || ic.priorizacion === filterPriorizacion;
     const matchesSearch = ic.patientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           ic.especialidadDestino.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (ic.patientRut && ic.patientRut.includes(searchTerm));
-    return matchesStatus && matchesSpecialty && matchesSearch;
+    return matchesStatus && matchesSpecialty && matchesPriorizacion && matchesSearch;
   });
 
   // Agrupar por especialidad
@@ -236,6 +238,19 @@ export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDon
             <option value="todos">Todas las Especialidades</option>
             {specialties.map(esp => <option key={esp} value={esp}>{esp}</option>)}
           </select>
+
+          <select 
+            value={filterPriorizacion}
+            onChange={(e) => setFilterPriorizacion(e.target.value)}
+            style={{
+              padding: '10px 16px', background: 'rgba(255, 255, 255, 0.9)', border: 'none',
+              borderRadius: '8px', color: '#0f172a', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer'
+            }}
+          >
+            <option value="todas">Todas las Prioridades</option>
+            <option value="URGENTE">Urgente</option>
+            <option value="DIFERIDA">Diferida</option>
+          </select>
         </div>
       </div>
 
@@ -299,7 +314,19 @@ export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDon
                         </td>
                         <td style={{ padding: '10px 16px', maxWidth: '300px' }}>
                           <div style={{ background: 'rgba(255,255,255,0.05)', padding: '6px 10px', borderRadius: '8px', color: '#f1f5f9', fontSize: '0.9rem', lineHeight: '1.4' }}>
-                            <strong style={{ color: '#60a5fa', display: 'block', marginBottom: '2px' }}>{ic.tipoRequerimiento}</strong>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
+                              <strong style={{ color: '#60a5fa' }}>{ic.tipoRequerimiento}</strong>
+                              {ic.priorizacion && (
+                                <span style={{ 
+                                  fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.05em',
+                                  background: ic.priorizacion === 'URGENTE' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(168, 85, 247, 0.2)',
+                                  color: ic.priorizacion === 'URGENTE' ? '#fca5a5' : '#d8b4fe',
+                                  border: `1px solid ${ic.priorizacion === 'URGENTE' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(168, 85, 247, 0.3)'}`
+                                }}>
+                                  {ic.priorizacion}
+                                </span>
+                              )}
+                            </div>
                             {ic.resumenHistoria?.substring(0, 70)}{ic.resumenHistoria?.length > 70 ? '...' : ''}
                           </div>
                         </td>
