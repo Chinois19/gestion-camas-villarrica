@@ -216,6 +216,38 @@ export default function WaitingList({ patients, onSelectPatient, onViewPatient, 
         <TrendingUp size={16} />
       </div>
 
+      {/* Resumen General Estadístico (Global) Compacto - SOBRE los filtros */}
+      <div style={{ marginBottom: '16px', background: 'var(--panel-bg)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+          Total Espera: <strong style={{ color: '#0ea5e9', fontSize: '0.9rem' }}>{totalWaiting}</strong> pacientes.
+        </div>
+        
+        {totalWaiting > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div>
+              <div style={{ fontSize: '0.6rem', textTransform: 'uppercase', color: 'var(--accent-color)', marginBottom: '4px', fontWeight: 700 }}>Req:</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {Object.entries(reqStats).sort((a,b) => b[1]-a[1]).map(([req, count]) => (
+                  <span key={req} style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px', color: 'var(--text-secondary)' }}>
+                    {req}: <strong style={{ color: 'var(--text-primary)' }}>{count}</strong>
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.6rem', textTransform: 'uppercase', color: 'var(--accent-color)', marginBottom: '4px', fontWeight: 700 }}>Desde:</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {Object.entries(originStats).sort((a,b) => b[1]-a[1]).slice(0, 3).map(([orig, count]) => (
+                  <span key={orig} style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px', color: 'var(--text-secondary)' }}>
+                    {orig.length > 10 ? orig.substring(0, 8) + '..' : orig}: <strong style={{ color: 'var(--text-primary)' }}>{count}</strong>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <select 
           className="glass-input" 
@@ -236,41 +268,6 @@ export default function WaitingList({ patients, onSelectPatient, onViewPatient, 
           <option value="todos">Todas las Especialidades</option>
           {ESPECIALIDADES.map(e => <option key={e} value={e}>{e}</option>)}
         </select>
-      </div>
-
-      {/* Resumen General Estadístico (Global) */}
-      <div style={{ marginBottom: '16px', background: 'var(--panel-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-          Actualmente hay <strong style={{ color: '#0ea5e9', fontSize: '1.2rem' }}>{totalWaiting}</strong> pacientes en espera de cama.
-        </div>
-        
-        {totalWaiting > 0 && (
-          <div style={{ display: 'flex', gap: '16px', marginTop: '16px', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: '130px' }}>
-              <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--accent-color)', marginBottom: '8px', fontWeight: 700, letterSpacing: '0.5px' }}>Por Requerimiento</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {Object.entries(reqStats).sort((a,b) => b[1]-a[1]).map(([req, count]) => (
-                  <div key={req} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>{req}</span>
-                    <strong style={{ color: 'var(--text-primary)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>{count}</strong>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div style={{ width: '1px', background: 'var(--border-light)' }}></div>
-            <div style={{ flex: 1, minWidth: '130px' }}>
-              <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--accent-color)', marginBottom: '8px', fontWeight: 700, letterSpacing: '0.5px' }}>Desde Servicio</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {Object.entries(originStats).sort((a,b) => b[1]-a[1]).slice(0, 5).map(([orig, count]) => (
-                  <div key={orig} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>{orig.length > 18 ? orig.substring(0, 16) + '...' : orig}</span>
-                    <strong style={{ color: 'var(--text-primary)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>{count}</strong>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Resumen Estadístico Interactivo por Tiempos */}

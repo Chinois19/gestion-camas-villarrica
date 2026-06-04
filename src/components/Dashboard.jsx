@@ -237,24 +237,29 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: bed.status === 'available' ? 'var(--status-available)' : 'var(--status-cleaning)' }}></span>
               {bed.status === 'available' ? 'Disponible' : 'En Aseo'}
             </span>
-            {bed.status === 'cleaning' && (
-              <>
-                <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center', color: 'var(--status-available)', borderColor: 'var(--status-available)' }} onClick={(e) => { e.stopPropagation(); onFinishCleaning(room.roomId, bed.id); }}>
-                  <CheckCircle size={12} /> Finalizar Aseo
-                </button>
-                {user?.role === 'superadmin' && bed.previousPatient && (
-                  <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '4px', width: '100%', display: 'flex', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); onUndoDischarge(room.roomId, bed.id); }}>
-                    <RotateCcw size={12} /> Revertir Alta (Recuperar)
-                  </button>
-                )}
-              </>
-            )}
-            {bed.status === 'available' && canManageBlocks && (
-              <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.4)' }} onClick={(e) => { e.stopPropagation(); onBlockBed(room.roomId, bed.id); }}>
-                <Lock size={12} /> Bloqueo de cama
-              </button>
-            )}
           </div>
+        </div>
+      )}
+      
+      {/* Botones de acción para camas sin paciente, ubicados al fondo de la tarjeta */}
+      {bed.status === 'cleaning' && !bed.patient && (
+        <div style={{ padding: '0 12px 12px 12px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', color: 'var(--status-available)', borderColor: 'var(--status-available)' }} onClick={(e) => { e.stopPropagation(); onFinishCleaning(room.roomId, bed.id); }}>
+            <CheckCircle size={12} /> Finalizar Aseo
+          </button>
+          {user?.role === 'superadmin' && bed.previousPatient && (
+            <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); onUndoDischarge(room.roomId, bed.id); }}>
+              <RotateCcw size={12} /> Revertir Alta
+            </button>
+          )}
+        </div>
+      )}
+      
+      {bed.status === 'available' && !bed.patient && canManageBlocks && (
+        <div style={{ padding: '0 12px 12px 12px', marginTop: 'auto' }}>
+          <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.4)' }} onClick={(e) => { e.stopPropagation(); onBlockBed(room.roomId, bed.id); }}>
+            <Lock size={12} /> Bloqueo de cama
+          </button>
         </div>
       )}
     </div>
