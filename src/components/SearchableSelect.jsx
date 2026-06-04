@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, ChevronDown } from 'lucide-react';
+import { matchesSearch } from '../utils/search';
 
 export default function SearchableSelect({ options, value, onChange, placeholder = 'Seleccionar...' }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,8 +20,8 @@ export default function SearchableSelect({ options, value, onChange, placeholder
   const selectedOption = options.find(opt => opt.value === value);
 
   const filteredOptions = options.filter(opt => 
-    opt.label.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    opt.value.toLowerCase().includes(searchTerm.toLowerCase())
+    matchesSearch(opt.label, searchTerm) || 
+    matchesSearch(opt.value, searchTerm)
   );
 
   return (

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Stethoscope, Clock, Search, CheckCircle, XCircle, Trash2, Activity, AlertTriangle, Users } from 'lucide-react';
+import { matchesSearch as matchUtils } from '../utils/search';
 
 export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDone, onDeleteIC, userRole }) {
   const isVisor = userRole === 'visor';
@@ -115,10 +116,10 @@ export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDon
     const matchesStatus = filterStatus === 'todos' || (filterStatus === 'pendientes' && isPending) || (filterStatus === 'historial' && !isPending);
     const matchesSpecialty = filterSpecialty === 'todos' || ic.especialidadDestino === filterSpecialty;
     const matchesPriorizacion = filterPriorizacion === 'todas' || ic.priorizacion === filterPriorizacion;
-    const matchesSearch = ic.patientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          ic.especialidadDestino.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (ic.patientRut && ic.patientRut.includes(searchTerm));
-    return matchesStatus && matchesSpecialty && matchesPriorizacion && matchesSearch;
+    const matchesSearchVal = matchUtils(ic.patientName, searchTerm) || 
+                          matchUtils(ic.especialidadDestino, searchTerm) ||
+                          (ic.patientRut && matchUtils(ic.patientRut, searchTerm));
+    return matchesStatus && matchesSpecialty && matchesPriorizacion && matchesSearchVal;
   });
 
   // Agrupar por especialidad

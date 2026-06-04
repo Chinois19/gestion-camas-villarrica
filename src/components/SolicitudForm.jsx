@@ -5,6 +5,7 @@ import cie10Data from '../data/cie10.json';
 import { SERVICIOS_SOLICITANTES, PREVISIONES, ESPECIALIDADES, COMUNAS_CHILE } from '../data/formData';
 import { MEDICOS } from '../data/medicos';
 import MultiSearchableSelect from './MultiSearchableSelect';
+import { matchesSearch } from '../utils/search';
 
 const DESTINOS = ['UCI', 'UTI', 'Cuidados Medios', 'Maternidad', 'Neonatología', 'Infantil', 'Básico'];
 const SEXOS = ['—', 'Masculino', 'Femenino', 'Otro'];
@@ -26,7 +27,7 @@ function SearchableSelect({ name, value, onChange, options, placeholder, allowFr
 
   const filtered = query.trim() === ''
     ? options
-    : options.filter(o => o.toLowerCase().includes(query.toLowerCase()));
+    : options.filter(o => matchesSearch(o, query));
 
   const handleInput = e => {
     setQuery(e.target.value);
@@ -313,7 +314,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     setSearchTerm(val);
     if (val.length > 2) {
       const lv = val.toLowerCase();
-      const filtered = cie10Data.filter(i => i.code.toLowerCase().includes(lv) || i.desc.toLowerCase().includes(lv)).slice(0, 10);
+      const filtered = cie10Data.filter(i => matchesSearch(i.code, val) || matchesSearch(i.desc, val)).slice(0, 10);
       setSuggestions(filtered);
       setShowSuggestions(true);
     } else setShowSuggestions(false);

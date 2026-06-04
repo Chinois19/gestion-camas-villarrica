@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Search, ChevronDown, X } from 'lucide-react';
+import { matchesSearch } from '../utils/search';
 
 export default function MultiSearchableSelect({ options, value = [], onChange, placeholder = 'Seleccionar...', maxSelections = 5 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,10 +20,9 @@ export default function MultiSearchableSelect({ options, value = [], onChange, p
   // filter options
   const filteredOptions = useMemo(() => {
     if (!searchTerm) return options.slice(0, 50); // Only show first 50 to avoid lag when no search term
-    const lowerSearch = searchTerm.toLowerCase();
     return options.filter(opt => 
-      opt.label.toLowerCase().includes(lowerSearch) || 
-      opt.value.toLowerCase().includes(lowerSearch)
+      matchesSearch(opt.label, searchTerm) || 
+      matchesSearch(opt.value, searchTerm)
     ).slice(0, 100);
   }, [options, searchTerm]);
 

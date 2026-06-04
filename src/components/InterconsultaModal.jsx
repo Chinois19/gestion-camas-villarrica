@@ -4,6 +4,7 @@ import { CIE10_OPTIONS } from '../data/cie10Options';
 import MultiSearchableSelect from './MultiSearchableSelect';
 import { MEDICOS } from '../data/medicos';
 import { ESPECIALIDADES } from '../data/formData';
+import { matchesSearch } from '../utils/search';
 
 /* ── SearchableSelect ─────────────────────────────── */
 function SearchableSelect({ name, value, onChange, options, placeholder, allowFreeText }) {
@@ -22,7 +23,7 @@ function SearchableSelect({ name, value, onChange, options, placeholder, allowFr
 
   const filtered = query.trim() === ''
     ? options
-    : options.filter(o => o.toLowerCase().includes(query.toLowerCase()));
+    : options.filter(o => matchesSearch(o, query));
 
   const handleInput = e => {
     setQuery(e.target.value);

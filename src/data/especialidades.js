@@ -74,6 +74,8 @@ export const ESPECIALIDADES_MEDICAS = [
     'Medicina del Trabajo',
     'Medicina Legal',
     'Genética Clínica',
+    'MIDLINE (catéter de línea media)',
+    'Comité Cuidados de la Piel',
   ]},
   // ODONTOLOGÍA
   { grupo: 'Odontología y Especialidades Odontológicas', especialidades: [

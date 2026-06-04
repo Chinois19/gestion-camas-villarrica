@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Sparkles, Clock, Search, CheckCircle, MapPin, User } from 'lucide-react';
+import { matchesSearch } from '../utils/search';
 
 export default function AseoPanel({ bedsData, onFinishCleaning, userRole }) {
   const [now, setNow] = useState(new Date());
@@ -54,8 +55,8 @@ export default function AseoPanel({ bedsData, onFinishCleaning, userRole }) {
   });
 
   const filtered = cleaningBeds.filter(b => {
-    const matchesSearch = `${b.roomId} ${b.id} ${b.roomType} ${b.floor}`.toLowerCase().includes(searchTerm.toLowerCase());
-    if (!matchesSearch) return false;
+    const matchesSearchVal = matchesSearch(`${b.roomId} ${b.id} ${b.roomType} ${b.floor}`, searchTerm);
+    if (!matchesSearchVal) return false;
     
     if (timeFilter) {
       const mins = calcWait(b.cleaningAt).totalMinutes;

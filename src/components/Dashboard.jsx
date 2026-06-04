@@ -11,6 +11,7 @@ import MultiSearchableSelect from './MultiSearchableSelect';
 import BlockBedModal from './BlockBedModal';
 import UnblockBedModal from './UnblockBedModal';
 import { ESPECIALIDADES } from '../data/formData';
+import { matchesSearch } from '../utils/search';
 import { DndContext, useDroppable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 
 const checkCompatibility = (bed, patient) => {
@@ -1006,13 +1007,12 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                   }
                   let matchSearch = true;
                   if (searchQuery) {
-                    const sq = searchQuery.toLowerCase();
                     const bStr = [
                       bed.patient, bed.rut, bed.diagnosis, bed.info, bed.grdName, bed.id, room.roomId,
                       ...(bed.especialidadTratante || []),
                       ...(bed.interconsultas?.map(ic => ic.especialidadDestino) || [])
-                    ].filter(Boolean).join(' ').toLowerCase();
-                    matchSearch = bStr.includes(sq);
+                    ].filter(Boolean).join(' ');
+                    matchSearch = matchesSearch(bStr, searchQuery);
                   }
                   return matchStatus && matchService && matchStay && matchIc && matchEspTratante && matchSearch;
                 });

@@ -3,6 +3,7 @@ import { Clock, TrendingUp, User, ArrowRight, AlertCircle, CheckCircle, Filter, 
 import { useDraggable } from '@dnd-kit/core';
 import { SERVICIOS_SOLICITANTES, ESPECIALIDADES } from '../data/formData';
 import cie10Data from '../data/cie10.json';
+import { matchesSearch } from '../utils/search';
 
 const calculateWaitTime = (requestedAt) => {
   const diff = Date.now() - new Date(requestedAt).getTime();
@@ -157,12 +158,11 @@ export default function WaitingList({ patients, onSelectPatient, onViewPatient, 
   const filteredPatients = patients.filter(p => {
     let matchSearch = true;
     if (searchQuery) {
-      const sq = searchQuery.toLowerCase();
       const pStr = [
         p.name, p.rut, p.diagnosis, p.origin, p.bedTypeRequired,
         ...(p.especialidadTratante || [])
-      ].filter(Boolean).join(' ').toLowerCase();
-      matchSearch = pStr.includes(sq);
+      ].filter(Boolean).join(' ');
+      matchSearch = matchesSearch(pStr, searchQuery);
     }
     if (!matchSearch) return false;
 

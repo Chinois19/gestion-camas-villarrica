@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Database, Search, Download, Filter, Printer } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
+import { matchesSearch } from '../utils/search';
 
 const formatDateToDDMMYYYY = (dateVal) => {
   if (!dateVal) return '—';
@@ -199,16 +200,15 @@ export default function DatabasePanel({ bedsData }) {
 
   const filteredData = useMemo(() => {
     if (!searchTerm) return patientsData;
-    const lowerSearch = searchTerm.toLowerCase();
     return patientsData.filter(row => 
       Object.entries(row).some(([key, val]) => {
         if (key === 'actualizacion' && Array.isArray(val)) {
           return val.some(act => 
-            act.texto.toLowerCase().includes(lowerSearch) || 
-            act.fecha.toLowerCase().includes(lowerSearch)
+            matchesSearch(act.texto, searchTerm) || 
+            matchesSearch(act.fecha, searchTerm)
           );
         }
-        return String(val).toLowerCase().includes(lowerSearch);
+        return matchesSearch(String(val), searchTerm);
       })
     );
   }, [patientsData, searchTerm]);

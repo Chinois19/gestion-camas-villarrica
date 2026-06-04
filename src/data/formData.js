@@ -113,6 +113,8 @@ export const ESPECIALIDADES = [
   'Rehabilitación Oral (Prostodoncia)',
   'Odontopediatría',
   'Salud Pública Odontológica',
+  'MIDLINE (catéter de línea media)',
+  'Comité Cuidados de la Piel',
 ];
 
 export const COMUNAS_CHILE = [

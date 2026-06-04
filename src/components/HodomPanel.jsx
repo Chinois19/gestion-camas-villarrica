@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { HeartPulse, Clock, Search, CheckSquare, Square, User, ChevronDown, ChevronRight } from 'lucide-react';
+import { matchesSearch } from '../utils/search';
 
 export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRole }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,8 +31,8 @@ export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRo
     .sort((a, b) => new Date(a.solicitadaAt) - new Date(b.solicitadaAt));
 
   const pending = pendingAll.filter(r => {
-    const matchesSearch = (r.patientName || '').toLowerCase().includes(searchTerm.toLowerCase()) || (r.rut || '').toLowerCase().includes(searchTerm.toLowerCase());
-    if (!matchesSearch) return false;
+    const matchesSearchVal = matchesSearch(r.patientName, searchTerm) || matchesSearch(r.rut, searchTerm);
+    if (!matchesSearchVal) return false;
 
     if (timeFilter) {
       const mins = calculateWait(r.solicitadaAt).totalMinutes;

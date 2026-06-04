@@ -3,6 +3,7 @@ import { UserPlus, Search, Shield, User, Mail, MoreVertical, Trash2, Edit2, Chec
 import emailjs from '@emailjs/browser';
 import { useFirebaseSync } from '../hooks/useFirebaseSync';
 import './UserManagement.css';
+import { matchesSearch } from '../utils/search';
 
 const defaultUsers = [
   { id: 1, name: 'Super Administrador', username: 'admin', password: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', roleName: 'Super Administrador', status: 'active' },
@@ -74,8 +75,8 @@ const UserManagement = ({ notify }) => {
   };
 
   const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    u.username.toLowerCase().includes(searchQuery.toLowerCase())
+    matchesSearch(u.name, searchQuery) || 
+    matchesSearch(u.username, searchQuery)
   );
 
   if (loadingUsers) {
