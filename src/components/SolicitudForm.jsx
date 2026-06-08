@@ -243,6 +243,8 @@ function ReadOnlyField({ label, value }) {
 export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient, currentUser, onUpdatePatient, onClose, onSwitchToEdit, onRequestIC }) {
   const isVisor = currentUser?.role === 'visor';
   const isSuperAdmin = currentUser?.role === 'superadmin';
+  const isGestor = currentUser?.role === 'gestor_camas';
+  const canEditDateTime = isSuperAdmin || isGestor;
   const patientData = editingPatient || viewingPatient;
   const isViewMode = !!viewingPatient && !editingPatient;
   const isEditMode = !!editingPatient;
@@ -250,9 +252,37 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   const [submitted, setSubmitted] = useState(false);
 
   // Superadmin: campos editables de fecha/hora para ingresos retroactivos
-  const nowInit = new Date();
-  const [customDate, setCustomDate] = useState(nowInit.toISOString().slice(0, 10));
-  const [customTime, setCustomTime] = useState(nowInit.toTimeString().slice(0, 5));
+  const getInitialDateTime = () => {
+    let d = new Date();
+    if (patientData?.requestedAt) {
+      const parsed = new Date(patientData.requestedAt);
+      if (!isNaN(parsed.getTime())) {
+        d = parsed;
+      }
+    }
+    const pad = (num) => String(num).padStart(2, '0');
+    return {
+      date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+      time: `${pad(d.getHours())}:${pad(d.getMinutes())}`
+    };
+  };
+
+  const initialDT = getInitialDateTime();
+  const [customDate, setCustomDate] = useState(initialDT.date);
+  const [customTime, setCustomTime] = useState(initialDT.time);
+
+  useEffect(() => {
+    let d = new Date();
+    if (patientData?.requestedAt) {
+      const parsed = new Date(patientData.requestedAt);
+      if (!isNaN(parsed.getTime())) {
+        d = parsed;
+      }
+    }
+    const pad = (num) => String(num).padStart(2, '0');
+    setCustomDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+    setCustomTime(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+  }, [patientData?.id]);
   const [ticketNumber, setTicketNumber] = useState('');
   const [aislamiento, setAislamiento] = useState(null); // null | true | false
   const [searchTerm, setSearchTerm] = useState('');
@@ -376,11 +406,17 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
         role: currentUser?.roleName || currentUser?.role || 'Profesional',
         note: '✏️ Datos de solicitud actualizados'
       }, ...evolutions];
+
+      const effectiveDate = canEditDateTime
+        ? new Date(`${customDate}T${customTime}:00`)
+        : (patientData.requestedAt ? new Date(patientData.requestedAt) : new Date());
+
       onUpdatePatient({
         ...patientData, ...formData, secondaryCodes, evolutions: evolWithSave,
         name: formData.nombre, age: parseInt(formData.edad) || 0, origin: formData.servicioSol,
         bedTypeRequired: formData.destino, updatedAt: new Date().toISOString(),
-        updatedBy: currentUser?.name || 'Usuario'
+        updatedBy: currentUser?.name || 'Usuario',
+        requestedAt: effectiveDate.toISOString()
       });
       return;
     }
@@ -390,8 +426,8 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     if (formData.destino === 'UCI') calculatedPriority = 1;
     else if (formData.destino === 'UTI') calculatedPriority = 2;
 
-    // Superadmin puede definir fecha/hora retroactiva
-    const effectiveDate = isSuperAdmin
+    // Superadmin o Gestor puede definir fecha/hora retroactiva
+    const effectiveDate = canEditDateTime
       ? new Date(`${customDate}T${customTime}:00`)
       : new Date();
 
@@ -436,10 +472,10 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       evolutions: [
         {
           id: Date.now().toString(),
-          timestamp: (isSuperAdmin ? effectiveDate : new Date()).toLocaleString('es-CL'),
+          timestamp: (canEditDateTime ? effectiveDate : new Date()).toLocaleString('es-CL'),
           user: currentUser?.name || 'Sistema',
           role: currentUser?.role || 'Médico',
-          note: isSuperAdmin && effectiveDate.toDateString() !== new Date().toDateString()
+          note: canEditDateTime && effectiveDate.toDateString() !== new Date().toDateString()
             ? `🆕 Solicitud de cama ingresada al sistema (ingreso retroactivo: ${effectiveDate.toLocaleString('es-CL')})`
             : '🆕 Solicitud de cama ingresada al sistema.'
         }
@@ -453,12 +489,22 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   };
 
   const now = new Date();
-  const displayDate = isSuperAdmin
-    ? new Date(`${customDate}T${customTime}:00`).toLocaleDateString('es-CL')
-    : now.toLocaleDateString('es-CL');
-  const displayTime = isSuperAdmin
-    ? customTime
-    : now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+  const getDisplayDT = () => {
+    let d = now;
+    if (patientData?.requestedAt) {
+      const parsed = new Date(patientData.requestedAt);
+      if (!isNaN(parsed.getTime())) {
+        d = parsed;
+      }
+    }
+    return {
+      date: d.toLocaleDateString('es-CL'),
+      time: d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+    };
+  };
+  const displayDT = getDisplayDT();
+  const displayDate = displayDT.date;
+  const displayTime = displayDT.time;
 
   if (submitted) {
     return (
@@ -526,8 +572,8 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
               ✏️ Editar
             </button>
           )}
-          {isSuperAdmin && !isViewMode ? (
-            /* Superadmin: campos editables para ingreso retroactivo */
+          {canEditDateTime && !isViewMode ? (
+            /* Superadmin/Gestor: campos editables para ingreso retroactivo */
             <>
               <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: 10, padding: '6px 12px', textAlign: 'center' }}>
                 <div style={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#f59e0b' }}>📅 FECHA (EDITABLE)</div>
