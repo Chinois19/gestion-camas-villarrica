@@ -312,7 +312,7 @@ export default function WaitingList({ patients, onSelectPatient, onViewPatient, 
             onViewDetails={onViewPatient}
             onEditPatient={onEditPatient}
             onDischargeWaiting={onDischargeWaiting}
-            userRole={userRole}
+            isVisor={isVisor}
           />
         ))}
       </div>

@@ -242,11 +242,17 @@ function ReadOnlyField({ label, value }) {
 
 export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient, currentUser, onUpdatePatient, onClose, onSwitchToEdit, onRequestIC }) {
   const isVisor = currentUser?.role === 'visor';
+  const isSuperAdmin = currentUser?.role === 'superadmin';
   const patientData = editingPatient || viewingPatient;
   const isViewMode = !!viewingPatient && !editingPatient;
   const isEditMode = !!editingPatient;
   const isNewMode = !editingPatient && !viewingPatient;
   const [submitted, setSubmitted] = useState(false);
+
+  // Superadmin: campos editables de fecha/hora para ingresos retroactivos
+  const nowInit = new Date();
+  const [customDate, setCustomDate] = useState(nowInit.toISOString().slice(0, 10));
+  const [customTime, setCustomTime] = useState(nowInit.toTimeString().slice(0, 5));
   const [ticketNumber, setTicketNumber] = useState('');
   const [aislamiento, setAislamiento] = useState(null); // null | true | false
   const [searchTerm, setSearchTerm] = useState('');
@@ -384,14 +390,19 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     if (formData.destino === 'UCI') calculatedPriority = 1;
     else if (formData.destino === 'UTI') calculatedPriority = 2;
 
-    const generatedTicket = `REQ-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900) + 100}`;
+    // Superadmin puede definir fecha/hora retroactiva
+    const effectiveDate = isSuperAdmin
+      ? new Date(`${customDate}T${customTime}:00`)
+      : new Date();
+
+    const generatedTicket = `REQ-${effectiveDate.toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900) + 100}`;
     setTicketNumber(generatedTicket);
 
     const newPatient = {
       id: `W-${Date.now()}`,
       name: formData.nombre || 'Paciente Sin Nombre',
       age: parseInt(formData.edad) || 0,
-      requestedAt: new Date().toISOString(),
+      requestedAt: effectiveDate.toISOString(),
       diagnosis: formData.dxPrincipal || (formData.dxCie10 ? `${formData.dxCie10} - ${cie10Data.find(c => c.code === formData.dxCie10)?.desc || ''}` : 'Sin diagnóstico principal'),
       priority: calculatedPriority,
       origin: formData.servicioSol || 'Urgencia',
@@ -425,10 +436,12 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       evolutions: [
         {
           id: Date.now().toString(),
-          timestamp: new Date().toLocaleString('es-CL'),
+          timestamp: (isSuperAdmin ? effectiveDate : new Date()).toLocaleString('es-CL'),
           user: currentUser?.name || 'Sistema',
           role: currentUser?.role || 'Médico',
-          note: '🆕 Solicitud de cama ingresada al sistema.'
+          note: isSuperAdmin && effectiveDate.toDateString() !== new Date().toDateString()
+            ? `🆕 Solicitud de cama ingresada al sistema (ingreso retroactivo: ${effectiveDate.toLocaleString('es-CL')})`
+            : '🆕 Solicitud de cama ingresada al sistema.'
         }
       ]
     };
@@ -440,8 +453,12 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   };
 
   const now = new Date();
-  const currentDate = now.toLocaleDateString('es-CL');
-  const currentTime = now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+  const displayDate = isSuperAdmin
+    ? new Date(`${customDate}T${customTime}:00`).toLocaleDateString('es-CL')
+    : now.toLocaleDateString('es-CL');
+  const displayTime = isSuperAdmin
+    ? customTime
+    : now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
 
   if (submitted) {
     return (
@@ -509,12 +526,45 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
               ✏️ Editar
             </button>
           )}
-          {[{ label: 'FECHA', val: currentDate, icon: '📅' }, { label: 'HORA', val: currentTime, icon: '🕐' }].map(({ label, val, icon }) => (
-            <div key={label} style={{ background: 'var(--inset-bg)', border: '1px solid var(--border-subtle)', borderRadius: 10, padding: '8px 16px', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>{label}</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#38bdf8', marginTop: 2 }}>{icon} {val}</div>
-            </div>
-          ))}
+          {isSuperAdmin && !isViewMode ? (
+            /* Superadmin: campos editables para ingreso retroactivo */
+            <>
+              <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: 10, padding: '6px 12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#f59e0b' }}>📅 FECHA (EDITABLE)</div>
+                <input
+                  type="date"
+                  value={customDate}
+                  onChange={e => setCustomDate(e.target.value)}
+                  style={{
+                    background: 'transparent', border: 'none', color: '#f59e0b',
+                    fontFamily: 'var(--font)', fontSize: '0.85rem', fontWeight: 700,
+                    outline: 'none', textAlign: 'center', width: '100%', cursor: 'pointer',
+                  }}
+                />
+              </div>
+              <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: 10, padding: '6px 12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#f59e0b' }}>🕐 HORA (EDITABLE)</div>
+                <input
+                  type="time"
+                  value={customTime}
+                  onChange={e => setCustomTime(e.target.value)}
+                  style={{
+                    background: 'transparent', border: 'none', color: '#f59e0b',
+                    fontFamily: 'var(--font)', fontSize: '0.85rem', fontWeight: 700,
+                    outline: 'none', textAlign: 'center', width: '100%', cursor: 'pointer',
+                  }}
+                />
+              </div>
+            </>
+          ) : (
+            /* Otros roles: fecha/hora actual de solo lectura */
+            [{label: 'FECHA', val: displayDate, icon: '📅'}, {label: 'HORA', val: displayTime, icon: '🕐'}].map(({label, val, icon}) => (
+              <div key={label} style={{ background: 'var(--inset-bg)', border: '1px solid var(--border-subtle)', borderRadius: 10, padding: '8px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>{label}</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#38bdf8', marginTop: 2 }}>{icon} {val}</div>
+              </div>
+            ))
+          )}
           {onClose && (
             <button type="button" className="glass-button" onClick={onClose} style={{ padding: 8, borderRadius: '50%' }}>
               <X size={18} />

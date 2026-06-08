@@ -111,8 +111,46 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     setIsAddingBed(false);
   };
 
+  // Helper: cuenta pacientes activos en una estructura dada
+  const countPatientsInFloor = (floorKey) => {
+    let count = 0;
+    const floorData = bedsData[floorKey];
+    if (!floorData) return 0;
+    Object.values(floorData).forEach(rooms => {
+      if (!Array.isArray(rooms)) return;
+      rooms.forEach(room => {
+        (room.beds || []).forEach(bed => {
+          if (bed.status === 'occupied' && bed.patient) count++;
+        });
+      });
+    });
+    return count;
+  };
+
+  const countPatientsInWing = (floorKey, wingKey) => {
+    let count = 0;
+    const rooms = bedsData[floorKey]?.[wingKey];
+    if (!Array.isArray(rooms)) return 0;
+    rooms.forEach(room => {
+      (room.beds || []).forEach(bed => {
+        if (bed.status === 'occupied' && bed.patient) count++;
+      });
+    });
+    return count;
+  };
+
+  const countPatientsInRoom = (room) => {
+    if (!room?.beds) return 0;
+    return room.beds.filter(b => b.status === 'occupied' && b.patient).length;
+  };
+
   const handleDeleteFloor = (floorKey) => {
-    if (!window.confirm('¿Eliminar piso completo?')) return;
+    const patientCount = countPatientsInFloor(floorKey);
+    if (patientCount > 0) {
+      alert(`⛔ No se puede eliminar "${floorKey}": tiene ${patientCount} paciente(s) activo(s).\n\nPrimero debe dar de alta a todos los pacientes de este piso.`);
+      return;
+    }
+    if (!window.confirm('¿Eliminar piso completo? (Sin pacientes activos)')) return;
     const updated = JSON.parse(JSON.stringify(bedsData));
     delete updated[floorKey];
     setBedsData(updated);
@@ -124,7 +162,12 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
   };
 
   const handleDeleteWing = (wingKey) => {
-    if (!window.confirm('¿Eliminar ala completa?')) return;
+    const patientCount = countPatientsInWing(selectedFloor, wingKey);
+    if (patientCount > 0) {
+      alert(`⛔ No se puede eliminar el ala "${wingKey}": tiene ${patientCount} paciente(s) activo(s).\n\nPrimero debe dar de alta a todos los pacientes de esta ala.`);
+      return;
+    }
+    if (!window.confirm('¿Eliminar ala completa? (Sin pacientes activos)')) return;
     const updated = JSON.parse(JSON.stringify(bedsData));
     delete updated[selectedFloor][wingKey];
     setBedsData(updated);
@@ -135,7 +178,13 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
   };
 
   const handleDeleteRoom = (roomId) => {
-    if (!window.confirm('¿Eliminar habitación?')) return;
+    const room = bedsData[selectedFloor]?.[selectedWing]?.find(r => r.roomId === roomId);
+    const patientCount = room ? countPatientsInRoom(room) : 0;
+    if (patientCount > 0) {
+      alert(`⛔ No se puede eliminar la habitación ${roomId}: tiene ${patientCount} paciente(s) activo(s).\n\nPrimero debe dar de alta a todos los pacientes de esta habitación.`);
+      return;
+    }
+    if (!window.confirm(`¿Eliminar habitación ${roomId}? (Sin pacientes activos)`)) return;
     const updated = JSON.parse(JSON.stringify(bedsData));
     updated[selectedFloor][selectedWing] = updated[selectedFloor][selectedWing].filter(r => r.roomId !== roomId);
     setBedsData(updated);
@@ -145,7 +194,13 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
   };
 
   const handleDeleteBed = (bedId) => {
-    if (!window.confirm('¿Eliminar cama?')) return;
+    const room = bedsData[selectedFloor]?.[selectedWing]?.find(r => r.roomId === selectedRoom.roomId);
+    const bed = room?.beds?.find(b => b.id === bedId);
+    if (bed && bed.status === 'occupied' && bed.patient) {
+      alert(`⛔ No se puede eliminar la cama ${bedId}: está ocupada por "${bed.patient}".\n\nPrimero debe dar de alta al paciente.`);
+      return;
+    }
+    if (!window.confirm(`¿Eliminar cama ${bedId}? (Sin paciente activo)`)) return;
     const updated = JSON.parse(JSON.stringify(bedsData));
     const roomIndex = updated[selectedFloor][selectedWing].findIndex(r => r.roomId === selectedRoom.roomId);
     updated[selectedFloor][selectedWing][roomIndex].beds = updated[selectedFloor][selectedWing][roomIndex].beds.filter(b => b.id !== bedId);

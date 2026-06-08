@@ -14,9 +14,11 @@ import InfrastructureManagement from './components/InfrastructureManagement';
 import InsightsDashboard from './components/InsightsDashboard';
 import DatabasePanel from './components/DatabasePanel';
 import DischargesDatabasePanel from './components/DischargesDatabasePanel';
+import TransfersDatabasePanel from './components/TransfersDatabasePanel';
 import Navbar from './components/Navbar';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
 import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
+import { MOCK_TRANSFERS } from './data/mockTransfers';
 
 // Pre-fill some realistic interconsultas in the DUMMY_DATA to make the initial view visually rich
 const initialBedsData = JSON.parse(JSON.stringify(DUMMY_DATA));
@@ -44,6 +46,7 @@ function App() {
   const [waitingList, setWaitingList, waitingLoading] = useFirebaseSync('appState', 'waitingList', WAITING_LIST);
   const [hodomRequests, setHodomRequests, hodomLoading] = useFirebaseSync('appState', 'hodomRequests', initialHodomRequests);
   const [activeUsers, setActiveUsers, activeUsersLoading] = useFirebaseSync('appState', 'activeUsers', {});
+  const [transferHistory, setTransferHistory, transfersLoading] = useFirebaseSync('appState', 'transferHistory', MOCK_TRANSFERS);
 
   useEffect(() => {
     document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
@@ -106,7 +109,7 @@ function App() {
     return () => clearInterval(interval);
   }, [currentUser, activeUsersLoading]);
 
-  const isLoading = bedsLoading || waitingLoading || hodomLoading;
+  const isLoading = bedsLoading || waitingLoading || hodomLoading || transfersLoading;
 
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -439,6 +442,7 @@ function App() {
           onMarkHodomDoneByBed={handleHodomMarkDoneByBed}
           onEditPatient={handleEditPatient}
           onViewPatient={handleViewPatient}
+          onAddTransfers={(newTransfers) => setTransferHistory(prev => [...newTransfers, ...(prev || [])])}
           user={currentUser}
         />
       )}
@@ -527,6 +531,9 @@ function App() {
       )}
       {currentView === 'altas_database' && (
         <DischargesDatabasePanel bedsData={bedsData} setBedsData={setBedsData} userRole={currentUser.role} />
+      )}
+      {currentView === 'traslados_database' && (
+        <TransfersDatabasePanel transferHistory={transferHistory || []} />
       )}
 
       {/* Global Footer */}

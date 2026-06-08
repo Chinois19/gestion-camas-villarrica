@@ -42,7 +42,7 @@ const getBedStayStatus = (bed) => {
   return 'inlier';
 };
 
-function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleaning, onUndoDischarge, onUndoAssignment, onMarkHodomDoneByBed, onEditGrd, onBlockBed, onUnblockBed, userRole, user }) {
+function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge, onFinishCleaning, onUndoDischarge, onUndoAssignment, onMarkHodomDoneByBed, onEditGrd, onBlockBed, onUnblockBed, userRole, user }) {
   const isVisor = userRole === 'visor';
   const canManageBlocks = userRole === 'superadmin' || userRole === 'administrador' || userRole === 'gestor_camas';
   const isCompatible = checkCompatibility(bed, selectedPatient);
@@ -81,6 +81,22 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
     }
   }
 
+  const handleCardClick = () => {
+    if (isSelecting && isCompatible && bed.status === 'available' && !isVisor) {
+      if (onAssignPatient) {
+        onAssignPatient(room.roomId, bed.id, selectedPatient);
+      }
+    }
+  };
+
+  const cardStyle = bed.status === 'blocked' ? {
+    background: 'linear-gradient(135deg, rgba(0,0,0,0.8), rgba(15,15,15,0.9))',
+    borderColor: 'rgba(239, 68, 68, 0.1)',
+    opacity: 0.75,
+    boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)',
+    filter: 'grayscale(0.4)'
+  } : (isSelecting && isCompatible && !isVisor ? { cursor: 'pointer' } : {});
+
   return (
     <div 
       ref={setNodeRef}
@@ -88,13 +104,8 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
         ${isOver && isCompatible ? 'droppable-over' : ''} 
         ${isSelecting && isCompatible ? 'compatible-highlight' : ''} 
         ${isSelecting && !isCompatible ? 'non-compatible-dim' : ''}`}
-      style={bed.status === 'blocked' ? {
-        background: 'linear-gradient(135deg, rgba(0,0,0,0.8), rgba(15,15,15,0.9))',
-        borderColor: 'rgba(239, 68, 68, 0.1)',
-        opacity: 0.75,
-        boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)',
-        filter: 'grayscale(0.4)'
-      } : {}}
+      style={cardStyle}
+      onClick={handleCardClick}
     >
       <div className="bed-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -267,7 +278,7 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
   );
 }
 
-export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, onMarkHodomDoneByBed, user, onEditPatient, onViewPatient }) {
+export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, onMarkHodomDoneByBed, user, onEditPatient, onViewPatient, onAddTransfers }) {
   const userRole = user?.role || 'visor';
   const isVisor = userRole === 'visor';
 
@@ -328,6 +339,35 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       // En lugar de asignar, abrimos el modal
       setPendingAssignment({ patient, roomId, bedId, serviceMismatch, bedType: targetBed?.tag || targetBed?.type });
     }
+  };
+
+  const handleAssignPatientClick = (roomId, bedId, patient) => {
+    if (isVisor) return;
+    
+    // Encontrar la cama para checkear servicio y estado
+    let targetBed = null;
+    for (const floor in bedsData) {
+      for (const sector in bedsData[floor]) {
+        const room = bedsData[floor][sector].find(r => r.roomId === roomId);
+        if (room) {
+          targetBed = room.beds.find(b => b.id === bedId);
+          break;
+        }
+      }
+      if (targetBed) break;
+    }
+    
+    if (!targetBed) return;
+    
+    if (targetBed.status !== 'available') {
+      alert('No puede asignar un paciente sobre una cama que se encuentra ocupada o en aseo. El paciente de esta cama debe pasar primero por el proceso de Alta y Aseo.');
+      return;
+    }
+    
+    const serviceMismatch = !checkServiceMatch(targetBed, patient);
+
+    // Abrimos el modal
+    setPendingAssignment({ patient, roomId, bedId, serviceMismatch, bedType: targetBed?.tag || targetBed?.type });
   };
 
   const confirmAssignment = (assignmentData) => {
@@ -715,6 +755,260 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       }
     }
 
+    // Register transfer history logs
+    if (onAddTransfers) {
+      const formatDateToDDMMYYYY = (dateVal) => {
+        if (!dateVal) return '—';
+        try {
+          const d = new Date(dateVal);
+          if (!isNaN(d.getTime())) {
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}-${month}-${year}`;
+          }
+        } catch (e) {}
+        return '—';
+      };
+
+      const parseEntryDate = (entry) => {
+        const idNum = Number(entry.id);
+        if (!isNaN(idNum) && idNum > 1000000000000) {
+          return new Date(idNum);
+        }
+        const dateStr = entry.fecha || entry.timestamp || entry.solicitadaAt || entry.cleaningAt || entry.assignedAt;
+        if (dateStr) {
+          const cleaned = dateStr.replace(/-/g, '/');
+          const d = new Date(cleaned);
+          if (!isNaN(d.getTime())) return d;
+        }
+        return new Date(0);
+      };
+
+      const newTransfersList = [];
+
+      const sourceService = sourceBedInfo.destino || sourceBedInfo.tag || sourceBedInfo.type || 'No definido';
+      const targetService = targetBedInfo.destino || targetBedInfo.tag || targetBedInfo.type || 'No definido';
+
+      // Calculate source estada
+      let estadaSource = '—';
+      const admDateSource = sourceBedInfo.admissionDate || sourceBedInfo.assignedAt;
+      if (admDateSource) {
+        try {
+          const date = new Date(admDateSource);
+          if (!isNaN(date.getTime())) {
+            const diffTime = Math.abs(new Date() - date);
+            estadaSource = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + ' días';
+          }
+        } catch (e) {}
+      }
+
+      // Diagnostics source
+      let dxListSource = [];
+      if (sourceBedInfo.diagnosis) {
+        if (Array.isArray(sourceBedInfo.diagnosis)) {
+          dxListSource = [...dxListSource, ...sourceBedInfo.diagnosis];
+        } else {
+          dxListSource.push(sourceBedInfo.diagnosis);
+        }
+      }
+      if (sourceBedInfo.dxPrincipal) dxListSource.push(sourceBedInfo.dxPrincipal);
+      if (sourceBedInfo.diagnostics && Array.isArray(sourceBedInfo.diagnostics)) {
+        dxListSource = [...dxListSource, ...sourceBedInfo.diagnostics];
+      }
+      const uniqueDxSource = [...new Set(dxListSource.filter(Boolean))].join(' | ');
+
+      // Specialties source
+      let specsSource = [];
+      if (sourceBedInfo.especialidadTratante) {
+        if (Array.isArray(sourceBedInfo.especialidadTratante)) {
+          specsSource = [...specsSource, ...sourceBedInfo.especialidadTratante];
+        } else {
+          specsSource.push(sourceBedInfo.especialidadTratante);
+        }
+      }
+      if (sourceBedInfo.specialty) specsSource.push(sourceBedInfo.specialty);
+      const uniqueSpecsSource = [...new Set(specsSource.filter(Boolean))].join(', ');
+
+      // Precautions source
+      let precautionsSource = [];
+      if (sourceBedInfo.aislamiento) {
+        if (Array.isArray(sourceBedInfo.aislamiento)) {
+          precautionsSource = [...sourceBedInfo.aislamiento];
+        } else {
+          precautionsSource = [sourceBedInfo.aislamiento];
+        }
+      }
+      const precStrSource = precautionsSource.length > 0 ? precautionsSource.join(', ') : 'Ninguna';
+
+      // Format actualizacion source
+      let updatesSource = [];
+      if (sourceBedInfo.evolutions && Array.isArray(sourceBedInfo.evolutions)) {
+        sourceBedInfo.evolutions.forEach(ev => {
+          if (ev.note) {
+            updatesSource.push({
+              texto: `Evolución: ${ev.note}`,
+              fecha: formatDateToDDMMYYYY(ev.timestamp),
+              rawDate: parseEntryDate(ev)
+            });
+          }
+        });
+      }
+      if (sourceBedInfo.novedades && Array.isArray(sourceBedInfo.novedades)) {
+        sourceBedInfo.novedades.forEach(nov => {
+          if (nov.contenido) {
+            updatesSource.push({
+              texto: nov.contenido,
+              fecha: formatDateToDDMMYYYY(nov.fecha),
+              rawDate: parseEntryDate(nov)
+            });
+          }
+        });
+      }
+      updatesSource.sort((a, b) => b.rawDate - a.rawDate);
+      if (updatesSource.length === 0) {
+        const fallbackDate = sourceBedInfo.updatedAt || sourceBedInfo.assignedAt;
+        updatesSource.push({
+          texto: 'Ingreso registrado',
+          fecha: formatDateToDDMMYYYY(fallbackDate),
+          rawDate: fallbackDate ? new Date(fallbackDate) : new Date()
+        });
+      }
+
+      newTransfersList.push({
+        id: `transfer-src-${Date.now()}-${Math.random()}`,
+        fechaTraslado: new Date().toISOString(),
+        nombre: sourceBedInfo.patient || 'Desconocido',
+        run: sourceBedInfo.rut || '—',
+        edad: sourceBedInfo.age || sourceBedInfo.edad || '—',
+        comuna: sourceBedInfo.comuna || '—',
+        prevision: sourceBedInfo.prevision || '—',
+        servicioOrigen: sourceService,
+        salaOrigen: sourceRoomId,
+        camaOrigen: sourceBedId,
+        servicioDestino: targetService,
+        salaDestino: targetRoomId,
+        camaDestino: targetBedId,
+        estada: estadaSource,
+        fechaIngreso: admDateSource ? new Date(admDateSource).toISOString() : '—',
+        precauciones: precStrSource,
+        diagnosticos: uniqueDxSource || 'No registrado',
+        especialidades: uniqueSpecsSource || 'No asignada',
+        actualizacion: updatesSource
+      });
+
+      if (transferType === 'enroque' && targetBedInfo && targetBedInfo.patient) {
+        // Calculate target estada
+        let estadaTarget = '—';
+        const admDateTarget = targetBedInfo.admissionDate || targetBedInfo.assignedAt;
+        if (admDateTarget) {
+          try {
+            const date = new Date(admDateTarget);
+            if (!isNaN(date.getTime())) {
+              const diffTime = Math.abs(new Date() - date);
+              estadaTarget = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + ' días';
+            }
+          } catch (e) {}
+        }
+
+        // Diagnostics target
+        let dxListTarget = [];
+        if (targetBedInfo.diagnosis) {
+          if (Array.isArray(targetBedInfo.diagnosis)) {
+            dxListTarget = [...dxListTarget, ...targetBedInfo.diagnosis];
+          } else {
+            dxListTarget.push(targetBedInfo.diagnosis);
+          }
+        }
+        if (targetBedInfo.dxPrincipal) dxListTarget.push(targetBedInfo.dxPrincipal);
+        if (targetBedInfo.diagnostics && Array.isArray(targetBedInfo.diagnostics)) {
+          dxListTarget = [...dxListTarget, ...targetBedInfo.diagnostics];
+        }
+        const uniqueDxTarget = [...new Set(dxListTarget.filter(Boolean))].join(' | ');
+
+        // Specialties target
+        let specsTarget = [];
+        if (targetBedInfo.especialidadTratante) {
+          if (Array.isArray(targetBedInfo.especialidadTratante)) {
+            specsTarget = [...specsTarget, ...targetBedInfo.especialidadTratante];
+          } else {
+            specsTarget.push(targetBedInfo.especialidadTratante);
+          }
+        }
+        if (targetBedInfo.specialty) specsTarget.push(targetBedInfo.specialty);
+        const uniqueSpecsTarget = [...new Set(specsTarget.filter(Boolean))].join(', ');
+
+        // Precautions target
+        let precautionsTarget = [];
+        if (targetBedInfo.aislamiento) {
+          if (Array.isArray(targetBedInfo.aislamiento)) {
+            precautionsTarget = [...targetBedInfo.aislamiento];
+          } else {
+            precautionsTarget = [targetBedInfo.aislamiento];
+          }
+        }
+        const precStrTarget = precautionsTarget.length > 0 ? precautionsTarget.join(', ') : 'Ninguna';
+
+        // Format actualizacion target
+        let updatesTarget = [];
+        if (targetBedInfo.evolutions && Array.isArray(targetBedInfo.evolutions)) {
+          targetBedInfo.evolutions.forEach(ev => {
+            if (ev.note) {
+              updatesTarget.push({
+                texto: `Evolución: ${ev.note}`,
+                fecha: formatDateToDDMMYYYY(ev.timestamp),
+                rawDate: parseEntryDate(ev)
+              });
+            }
+          });
+        }
+        if (targetBedInfo.novedades && Array.isArray(targetBedInfo.novedades)) {
+          targetBedInfo.novedades.forEach(nov => {
+            if (nov.contenido) {
+              updatesTarget.push({
+                texto: nov.contenido,
+                fecha: formatDateToDDMMYYYY(nov.fecha),
+                rawDate: parseEntryDate(nov)
+              });
+            }
+          });
+        }
+        updatesTarget.sort((a, b) => b.rawDate - a.rawDate);
+        if (updatesTarget.length === 0) {
+          const fallbackDate = targetBedInfo.updatedAt || targetBedInfo.assignedAt;
+          updatesTarget.push({
+            texto: 'Ingreso registrado',
+            fecha: formatDateToDDMMYYYY(fallbackDate),
+            rawDate: fallbackDate ? new Date(fallbackDate) : new Date()
+          });
+        }
+
+        newTransfersList.push({
+          id: `transfer-tgt-${Date.now()}-${Math.random()}`,
+          fechaTraslado: new Date().toISOString(),
+          nombre: targetBedInfo.patient || 'Desconocido',
+          run: targetBedInfo.rut || '—',
+          edad: targetBedInfo.age || targetBedInfo.edad || '—',
+          comuna: targetBedInfo.comuna || '—',
+          prevision: targetBedInfo.prevision || '—',
+          servicioOrigen: targetService,
+          salaOrigen: targetRoomId,
+          camaOrigen: targetBedId,
+          servicioDestino: sourceService,
+          salaDestino: sourceRoomId,
+          camaDestino: sourceBedId,
+          estada: estadaTarget,
+          fechaIngreso: admDateTarget ? new Date(admDateTarget).toISOString() : '—',
+          precauciones: precStrTarget,
+          diagnosticos: uniqueDxTarget || 'No registrado',
+          especialidades: uniqueSpecsTarget || 'No asignada',
+          actualizacion: updatesTarget
+        });
+      }
+
+      onAddTransfers(newTransfersList);
+    }
+
     // Second pass: apply the swap or transfer
     for (const floor in newBedsData) {
       for (const sector in newBedsData[floor]) {
@@ -1037,6 +1331,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                             bed={bed} 
                             room={room} 
                             selectedPatient={selectedPatient} 
+                            onAssignPatient={handleAssignPatientClick}
                             onDischarge={handleDischarge}
                             onFinishCleaning={handleFinishCleaning}
                             onUndoDischarge={handleUndoDischarge}

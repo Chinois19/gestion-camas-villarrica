@@ -50,6 +50,12 @@ export default function Navbar({ currentView, onNavigate, navPermissions, badges
           show: navPermissions.canDatabase,
         },
         {
+          id: 'traslados_database',
+          label: 'Base de Datos de Traslados',
+          icon: <Database size={16} />,
+          show: navPermissions.canDatabase,
+        },
+        {
           id: 'altas_database',
           label: 'Base de Datos de Altas',
           icon: <Database size={16} />,
