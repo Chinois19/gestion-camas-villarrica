@@ -1418,6 +1418,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
           <AssignmentModal 
             patient={pendingAssignment.patient}
             bed={pendingAssignment}
+            user={user}
             onConfirm={confirmAssignment}
             onClose={() => setPendingAssignment(null)}
           />

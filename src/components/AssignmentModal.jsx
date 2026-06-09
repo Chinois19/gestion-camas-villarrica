@@ -16,7 +16,7 @@ function ReadOnlyField({ label, value, color }) {
   );
 }
 
-export default function AssignmentModal({ patient, bed, onConfirm, onClose }) {
+export default function AssignmentModal({ patient, bed, user, onConfirm, onClose }) {
   const [formData, setFormData] = useState({
     patientName: patient.name || '',
     diagnosis: Array.isArray(patient.diagnosis) ? patient.diagnosis : (patient.diagnosis ? [patient.diagnosis] : []),
@@ -28,8 +28,37 @@ export default function AssignmentModal({ patient, bed, onConfirm, onClose }) {
 
   const [projectedDays, setProjectedDays] = useState(0);
   const [limitDays, setLimitDays] = useState(0);
+  
+  const canEditRetroactive = user?.role === 'superadmin' || user?.role === 'gestor_camas';
+
+  const [customDate, setCustomDate] = useState(() => {
+    const d = new Date();
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  });
+
+  const [customTime, setCustomTime] = useState(() => {
+    const d = new Date();
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  });
+
+  const getParsedAssignTime = () => {
+    if (!canEditRetroactive) {
+      return new Date();
+    }
+    if (!customDate || !customTime) {
+      return new Date();
+    }
+    const parsed = new Date(`${customDate}T${customTime}:00`);
+    if (isNaN(parsed.getTime())) {
+      return new Date();
+    }
+    return parsed;
+  };
+
   const requestTime = new Date(patient.requestedAt);
-  const assignTime = new Date();
+  const assignTime = getParsedAssignTime();
   
   const waitMinutes = Math.floor((assignTime - requestTime) / (1000 * 60));
   const waitHours = Math.floor(waitMinutes / 60);
@@ -48,6 +77,20 @@ export default function AssignmentModal({ patient, bed, onConfirm, onClose }) {
 
   const handleConfirm = (e) => {
     e.preventDefault();
+    
+    if (canEditRetroactive) {
+      const selectedTime = getParsedAssignTime();
+      if (selectedTime < requestTime) {
+        alert('La fecha y hora del acueste no puede ser anterior a la fecha de la solicitud.');
+        return;
+      }
+      const now = new Date();
+      if (selectedTime > now) {
+        alert('La fecha y hora del acueste no puede ser posterior a la fecha y hora actual.');
+        return;
+      }
+    }
+
     onConfirm({
       ...formData,
       waitMinutes,
@@ -118,13 +161,76 @@ export default function AssignmentModal({ patient, bed, onConfirm, onClose }) {
                     <span className="label" style={{ fontSize: '0.65rem' }}>Solicitud:</span>
                     <span className="value" style={{ fontSize: '0.85rem' }}>{requestTime.toLocaleString('es-CL')}</span>
                   </div>
-                  <div className="trace-item" style={{ marginBottom: '8px' }}>
-                    <span className="label" style={{ fontSize: '0.65rem' }}>Asignación:</span>
-                    <span className="value" style={{ fontSize: '0.85rem' }}>{assignTime.toLocaleString('es-CL')}</span>
-                  </div>
-                  <div className="trace-item highlight" style={{ marginBottom: '8px', background: 'rgba(0,212,255,0.05)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(0,212,255,0.2)' }}>
-                    <span className="label" style={{ fontSize: '0.65rem', color: 'var(--accent-color)' }}>Tiempo Total de Espera:</span>
-                    <span className="value" style={{ fontSize: '1.2rem', color: 'var(--accent-color)' }}>{waitHours}h {waitMinutes % 60}m</span>
+                  {canEditRetroactive ? (
+                    <>
+                      <div className="form-group" style={{ marginBottom: '10px' }}>
+                        <label style={{ fontSize: '0.65rem', color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', display: 'block' }}>
+                          Fecha Asignación (Editable):
+                        </label>
+                        <input
+                          type="date"
+                          value={customDate}
+                          onChange={e => setCustomDate(e.target.value)}
+                          className="glass-input"
+                          style={{
+                            width: '100%',
+                            background: 'rgba(245,158,11,0.05)',
+                            border: '1px solid rgba(245,158,11,0.4)',
+                            borderRadius: '8px',
+                            color: '#f59e0b',
+                            fontFamily: 'var(--font)',
+                            fontSize: '0.85rem',
+                            fontWeight: 700,
+                            padding: '8px 12px',
+                            boxSizing: 'border-box',
+                            outline: 'none',
+                            cursor: 'pointer'
+                          }}
+                        />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: '12px' }}>
+                        <label style={{ fontSize: '0.65rem', color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', display: 'block' }}>
+                          Hora Asignación (Editable):
+                        </label>
+                        <input
+                          type="time"
+                          value={customTime}
+                          onChange={e => setCustomTime(e.target.value)}
+                          className="glass-input"
+                          style={{
+                            width: '100%',
+                            background: 'rgba(245,158,11,0.05)',
+                            border: '1px solid rgba(245,158,11,0.4)',
+                            borderRadius: '8px',
+                            color: '#f59e0b',
+                            fontFamily: 'var(--font)',
+                            fontSize: '0.85rem',
+                            fontWeight: 700,
+                            padding: '8px 12px',
+                            boxSizing: 'border-box',
+                            outline: 'none',
+                            cursor: 'pointer'
+                          }}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="trace-item" style={{ marginBottom: '8px' }}>
+                      <span className="label" style={{ fontSize: '0.65rem' }}>Asignación:</span>
+                      <span className="value" style={{ fontSize: '0.85rem' }}>{assignTime.toLocaleString('es-CL')}</span>
+                    </div>
+                  )}
+                  <div className="trace-item highlight" style={{ 
+                    marginBottom: '8px', 
+                    background: assignTime < requestTime ? 'rgba(239,68,68,0.05)' : 'rgba(0,212,255,0.05)', 
+                    padding: '8px', 
+                    borderRadius: '8px', 
+                    border: assignTime < requestTime ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(0,212,255,0.2)' 
+                  }}>
+                    <span className="label" style={{ fontSize: '0.65rem', color: assignTime < requestTime ? '#ef4444' : 'var(--accent-color)' }}>Tiempo Total de Espera:</span>
+                    <span className="value" style={{ fontSize: '1.2rem', color: assignTime < requestTime ? '#ef4444' : 'var(--accent-color)' }}>
+                      {assignTime < requestTime ? 'Inválido (menor a solicitud)' : `${waitHours}h ${waitMinutes % 60}m`}
+                    </span>
                   </div>
                   <div className="trace-item" style={{ marginTop: '12px', borderTop: '1px solid var(--glass-border)', paddingTop: '12px' }}>
                     <span className="label" style={{ fontSize: '0.65rem' }}>Destino de Asignación:</span>
