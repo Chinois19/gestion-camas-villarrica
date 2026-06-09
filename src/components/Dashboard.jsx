@@ -278,7 +278,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
   );
 }
 
-export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, onMarkHodomDoneByBed, user, onEditPatient, onViewPatient, onAddTransfers }) {
+export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, onMarkHodomDoneByBed, user, onEditPatient, onViewPatient, onAddTransfers, setWaitingListDischarges }) {
   const userRole = user?.role || 'visor';
   const isVisor = userRole === 'visor';
 
@@ -519,6 +519,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       sex: patient.sexo || '—',
       prevision: patient.prevision || '—',
       diagnosis: patient.diagnosis || '—',
+      requestedAt: patient.requestedAt || new Date().toISOString(),
       isWaiting: true
     };
     setDischargingPatient({ roomId: 'Espera', bed: mockBed, isWaiting: true });
@@ -530,7 +531,33 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     const bedId = bed.id;
 
     if (dischargingPatient.isWaiting) {
+      // 1. Remove from waiting list
       setWaitingList(prev => prev.filter(p => p.id !== bedId));
+      
+      // 2. Add to waiting list discharges
+      if (setWaitingListDischarges) {
+        setWaitingListDischarges(prev => {
+          const arr = Array.isArray(prev) ? prev : [];
+          const dischargeRecord = {
+            id: bedId,
+            patient: bed.patient,
+            rut: bed.rut,
+            age: bed.age,
+            sex: bed.sex,
+            prevision: bed.prevision,
+            diagnosis: bed.diagnosis,
+            requestedAt: bed.requestedAt,
+            dischargeAt: new Date().toISOString(),
+            destino: formData.destino || 'No definido',
+            establecimientoRed: formData.establecimientoRed || '',
+            redPrivadaDetalle: formData.redPrivadaDetalle || '',
+            observaciones: formData.observaciones || '',
+            isWaitingListDischarge: true
+          };
+          return [...arr, dischargeRecord];
+        });
+      }
+      
       setDischargingPatient(null);
       return;
     }

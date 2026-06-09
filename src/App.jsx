@@ -47,6 +47,7 @@ function App() {
   const [hodomRequests, setHodomRequests, hodomLoading] = useFirebaseSync('appState', 'hodomRequests', initialHodomRequests);
   const [activeUsers, setActiveUsers, activeUsersLoading] = useFirebaseSync('appState', 'activeUsers', {});
   const [transferHistory, setTransferHistory, transfersLoading] = useFirebaseSync('appState', 'transferHistory', MOCK_TRANSFERS);
+  const [waitingListDischarges, setWaitingListDischarges, dischargesLoading] = useFirebaseSync('appState', 'waitingListDischarges', []);
 
   useEffect(() => {
     document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
@@ -109,7 +110,7 @@ function App() {
     return () => clearInterval(interval);
   }, [currentUser, activeUsersLoading]);
 
-  const isLoading = bedsLoading || waitingLoading || hodomLoading || transfersLoading;
+  const isLoading = bedsLoading || waitingLoading || hodomLoading || transfersLoading || dischargesLoading;
 
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -444,6 +445,7 @@ function App() {
           onViewPatient={handleViewPatient}
           onAddTransfers={(newTransfers) => setTransferHistory(prev => [...newTransfers, ...(prev || [])])}
           user={currentUser}
+          setWaitingListDischarges={setWaitingListDischarges}
         />
       )}
       {currentView === 'solicitud' && (
@@ -530,7 +532,14 @@ function App() {
         <DatabasePanel bedsData={bedsData} />
       )}
       {currentView === 'altas_database' && (
-        <DischargesDatabasePanel bedsData={bedsData} setBedsData={setBedsData} userRole={currentUser.role} />
+        <DischargesDatabasePanel 
+          bedsData={bedsData} 
+          setBedsData={setBedsData} 
+          waitingListDischarges={waitingListDischarges}
+          setWaitingListDischarges={setWaitingListDischarges}
+          setWaitingList={setWaitingList}
+          userRole={currentUser.role} 
+        />
       )}
       {currentView === 'traslados_database' && (
         <TransfersDatabasePanel transferHistory={transferHistory || []} />

@@ -139,7 +139,7 @@ const EditAltaModal = ({ row, onClose, onSave }) => {
   );
 };
 
-export default function DischargesDatabasePanel({ bedsData, setBedsData, userRole }) {
+export default function DischargesDatabasePanel({ bedsData, setBedsData, waitingListDischarges, setWaitingListDischarges, setWaitingList, userRole }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('2026-01-01');
   const [endDate, setEndDate] = useState('2026-12-31');
@@ -149,7 +149,12 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, userRol
 
   const patientsData = useMemo(() => {
     const data = [];
-    const floors = Object.keys(bedsData || {}).sort((a, b) => a.localeCompare(b));
+    const floors = Object.keys(bedsData || {}).filter(key => 
+      key !== 'waitingListDischarges' && 
+      bedsData[key] && 
+      typeof bedsData[key] === 'object' && 
+      !Array.isArray(bedsData[key])
+    ).sort((a, b) => a.localeCompare(b));
     floors.forEach(floor => {
       const sectors = Object.keys(bedsData[floor] || {}).sort((a, b) => {
         if (a.toLowerCase() === 'poniente') return -1;
@@ -308,8 +313,64 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, userRol
         });
       });
     });
+
+    // Include waiting list discharges
+    if (Array.isArray(waitingListDischarges)) {
+      waitingListDischarges.forEach(p => {
+        let dxList = [];
+        if (p.diagnosis) {
+          if (Array.isArray(p.diagnosis)) {
+            dxList = [...dxList, ...p.diagnosis];
+          } else {
+            dxList.push(p.diagnosis);
+          }
+        }
+        const uniqueDx = [...new Set(dxList.filter(Boolean))].join(' | ');
+
+        const formatDateTime = (isoString) => {
+          if (!isoString) return '—';
+          try {
+            const date = new Date(isoString);
+            if (isNaN(date.getTime())) return isoString;
+            return date.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+          } catch {
+            return isoString;
+          }
+        };
+
+        const dischargeDateObj = p.dischargeAt ? new Date(p.dischargeAt) : new Date();
+        const fechaAlta = formatDateTime(p.dischargeAt);
+
+        data.push({
+          rawBedData: p,
+          rawDischargeDate: dischargeDateObj,
+          servicio: 'Lista de Espera',
+          estada: 'Alta previa a asignación',
+          sala: 'Espera',
+          cama: '—',
+          fechaIngreso: formatDateTime(p.requestedAt),
+          fechaAlta: fechaAlta,
+          precauciones: 'Ninguna',
+          nombre: p.patient || p.patientName || p.nombre || 'Desconocido',
+          run: p.rut || '—',
+          edad: p.age || p.edad || '—',
+          diagnosticos: uniqueDx || 'No registrado',
+          especialidades: 'No asignada',
+          actualizacion: [
+            {
+              texto: 'Alta previa a asignación de cama',
+              fecha: formatDateToDDMMYYYY(p.dischargeAt),
+              rawDate: p.dischargeAt ? new Date(p.dischargeAt) : new Date()
+            }
+          ],
+          comuna: p.comuna || '—',
+          isWaitingListDischarge: true
+        });
+      });
+    }
+
     return data;
-  }, [bedsData]);
+  }, [bedsData, waitingListDischarges]);
 
   const filteredData = useMemo(() => {
     let result = patientsData;
@@ -375,7 +436,7 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, userRol
       row.fechaIngreso || '',
       row.fechaAlta || '',
       row.precauciones || '',
-      row.nombre || '',
+      row.nombre + (row.isWaitingListDischarge ? ' (Alta previa a asignación de cama)' : ''),
       row.run || '',
       row.edad || '',
       row.diagnosticos || '',
@@ -405,6 +466,44 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, userRol
   };
 
   const handleRevokeDischarge = (roomId, bedId) => {
+    if (roomId === 'Espera') {
+      if (!window.confirm(`¿Estás seguro de que deseas revocar el alta y volver a colocar al paciente en la lista de espera?`)) return;
+      
+      const targetDischarge = waitingListDischarges?.find(p => p.id === bedId);
+      if (!targetDischarge) {
+        alert("No se pudo encontrar el registro de alta para restaurar.");
+        return;
+      }
+
+      // 1. Remove from waitingListDischarges
+      if (setWaitingListDischarges) {
+        setWaitingListDischarges(prev => {
+          const arr = Array.isArray(prev) ? prev : [];
+          return arr.filter(p => p.id !== bedId);
+        });
+      }
+
+      // 2. Add back to waitingList
+      if (setWaitingList) {
+        setWaitingList(prev => {
+          if (prev.some(p => p.id === bedId)) return prev;
+          const restoredPatient = {
+            id: targetDischarge.id,
+            name: targetDischarge.patient,
+            rut: targetDischarge.rut,
+            age: targetDischarge.age,
+            sexo: targetDischarge.sex,
+            prevision: targetDischarge.prevision,
+            diagnosis: targetDischarge.diagnosis,
+            requestedAt: targetDischarge.requestedAt || new Date().toISOString(),
+            status: 'waiting'
+          };
+          return [...prev, restoredPatient];
+        });
+      }
+      return;
+    }
+
     if (!window.confirm(`¿Estás seguro de que deseas revocar el alta y volver a acostar al paciente en la cama ${bedId}?`)) return;
 
     setBedsData(prev => {
@@ -446,6 +545,31 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, userRol
   };
 
   const handleSaveEdit = (roomId, bedId, updatedData) => {
+    if (roomId === 'Espera') {
+      if (setWaitingListDischarges) {
+        setWaitingListDischarges(prev => {
+          const arr = Array.isArray(prev) ? prev : [];
+          return arr.map(p => {
+            if (p.id === bedId) {
+              return {
+                ...p,
+                patient: updatedData.nombre,
+                rut: updatedData.run,
+                diagnosis: updatedData.diagnosticos,
+                destino: updatedData.destino,
+                establecimientoRed: updatedData.establecimientoRed,
+                redPrivadaDetalle: updatedData.redPrivadaDetalle,
+                observaciones: updatedData.observaciones
+              };
+            }
+            return p;
+          });
+        });
+      }
+      setEditingRow(null);
+      return;
+    }
+
     setBedsData(prev => {
       const next = JSON.parse(JSON.stringify(prev));
       for (const f of ['piso4', 'piso3', 'piso2']) {
@@ -565,7 +689,25 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, userRol
                       <span className="badge-precaucion">{row.precauciones}</span>
                     ) : 'Ninguna'}
                   </td>
-                  <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{row.nombre}</td>
+                  <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {row.nombre}
+                    {row.isWaitingListDischarge && (
+                      <span className="badge-prev-discharge" style={{
+                        marginLeft: '8px',
+                        background: 'rgba(245, 158, 11, 0.1)',
+                        color: '#f59e0b',
+                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                        borderRadius: '4px',
+                        padding: '2px 6px',
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        display: 'inline-block',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        alta previa a asignación de cama
+                      </span>
+                    )}
+                  </td>
                   <td>{row.run}</td>
                   <td>{row.edad}</td>
                   <td className="cell-truncate" title={row.diagnosticos}>{row.diagnosticos}</td>
