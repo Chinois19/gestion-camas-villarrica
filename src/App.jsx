@@ -524,7 +524,7 @@ function App() {
         <InfrastructureManagement bedsData={bedsData} setBedsData={setBedsData} />
       )}
       {currentView === 'insights' && (
-        <InsightsDashboard bedsData={bedsData} waitingList={waitingList} />
+        <InsightsDashboard bedsData={bedsData} waitingList={waitingList} transferHistory={transferHistory} />
       )}
       {currentView === 'database' && (
         <DatabasePanel bedsData={bedsData} />
