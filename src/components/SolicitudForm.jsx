@@ -398,6 +398,25 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     e.preventDefault();
     if (isViewMode) return;
 
+    // Helper para parsear la fecha de forma segura y evitar RangeError
+    const getParsedEffectiveDate = () => {
+      if (!canEditDateTime) {
+        return (isEditMode && patientData?.requestedAt) ? new Date(patientData.requestedAt) : new Date();
+      }
+      if (!customDate || !customTime) {
+        const fallback = (isEditMode && patientData?.requestedAt) ? new Date(patientData.requestedAt) : new Date();
+        return isNaN(fallback.getTime()) ? new Date() : fallback;
+      }
+      const parsed = new Date(`${customDate}T${customTime}:00`);
+      if (isNaN(parsed.getTime())) {
+        const fallback = (isEditMode && patientData?.requestedAt) ? new Date(patientData.requestedAt) : new Date();
+        return isNaN(fallback.getTime()) ? new Date() : fallback;
+      }
+      return parsed;
+    };
+
+    const effectiveDate = getParsedEffectiveDate();
+
     if (isEditMode && onUpdatePatient) {
       const evolWithSave = [{
         id: Date.now().toString(),
@@ -406,10 +425,6 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
         role: currentUser?.roleName || currentUser?.role || 'Profesional',
         note: '✏️ Datos de solicitud actualizados'
       }, ...evolutions];
-
-      const effectiveDate = canEditDateTime
-        ? new Date(`${customDate}T${customTime}:00`)
-        : (patientData.requestedAt ? new Date(patientData.requestedAt) : new Date());
 
       onUpdatePatient({
         ...patientData, ...formData, secondaryCodes, evolutions: evolWithSave,
@@ -425,11 +440,6 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     let calculatedPriority = 3;
     if (formData.destino === 'UCI') calculatedPriority = 1;
     else if (formData.destino === 'UTI') calculatedPriority = 2;
-
-    // Superadmin o Gestor puede definir fecha/hora retroactiva
-    const effectiveDate = canEditDateTime
-      ? new Date(`${customDate}T${customTime}:00`)
-      : new Date();
 
     const generatedTicket = `REQ-${effectiveDate.toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900) + 100}`;
     setTicketNumber(generatedTicket);

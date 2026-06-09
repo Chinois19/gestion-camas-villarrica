@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, runTransaction } from 'firebase/firestore';
 import { db } from '../firebase';
 
 /**
@@ -71,21 +71,18 @@ export function useFirebaseSync(collectionName, documentId, initialData) {
   }, [collectionName, documentId]);
 
   const updateData = useCallback(async (newDataOrUpdater) => {
-    // Always compute from the latest ref value, avoiding stale closures
+    // 1. Compute local update immediately for responsive UI
     const currentData = dataRef.current;
-    const newData = typeof newDataOrUpdater === 'function'
+    const localNewData = typeof newDataOrUpdater === 'function'
       ? newDataOrUpdater(currentData)
       : newDataOrUpdater;
 
-    // ═══════════════════════════════════════════════════════════════
-    // PROTECCIÓN CAPA 3: Validación de integridad para bedsData.
-    // Detecta y bloquea escrituras que eliminarían masivamente pacientes.
-    // ═══════════════════════════════════════════════════════════════
+    // Validation checks for bedsData (Capa 3)
     if (documentId === 'bedsData') {
       const oldCount = countOccupiedBeds(currentData);
-      const newCount = countOccupiedBeds(newData);
+      const newCount = countOccupiedBeds(localNewData);
 
-      // Bloquear si se eliminan TODOS los pacientes de golpe
+      // Block if all patients are deleted at once
       if (oldCount > 0 && newCount === 0) {
         console.error(
           `[PROTECCIÓN] ❌ ESCRITURA BLOQUEADA: Se intentó eliminar TODOS los pacientes ` +
@@ -94,7 +91,7 @@ export function useFirebaseSync(collectionName, documentId, initialData) {
         return;
       }
 
-      // Bloquear si se pierden más del 50% de pacientes en una sola operación
+      // Block if more than 50% of patients are lost in a single operation
       if (oldCount > 3 && newCount < oldCount * 0.5) {
         console.error(
           `[PROTECCIÓN] ❌ ESCRITURA BLOQUEADA: Reducción sospechosa de pacientes ` +
@@ -105,39 +102,70 @@ export function useFirebaseSync(collectionName, documentId, initialData) {
       }
     }
 
-    // Immediately update local state + ref for responsive UI
-    setData(newData);
-    dataRef.current = newData;
+    // Immediately update local state + ref for a fast UI response
+    setData(localNewData);
+    dataRef.current = localNewData;
+
+    const docRef = doc(db, collectionName, documentId);
+
+    // Auto-backup before write for bedsData (Capa 2)
+    if (documentId === 'bedsData' && currentData) {
+      try {
+        const backupRef = doc(db, collectionName, `${documentId}_lastBackup`);
+        await setDoc(backupRef, {
+          data: currentData,
+          backedUpAt: new Date().toISOString(),
+          occupiedBeds: countOccupiedBeds(currentData),
+          reason: 'auto_backup_before_write'
+        });
+      } catch (backupErr) {
+        console.warn('[Backup] No se pudo guardar respaldo automático:', backupErr);
+      }
+    }
 
     try {
-      const docRef = doc(db, collectionName, documentId);
+      // Use transaction to ensure concurrent updates are merged correctly
+      await runTransaction(db, async (transaction) => {
+        const docSnap = await transaction.get(docRef);
+        let freshFirestoreData = docSnap.exists() ? docSnap.data().data : undefined;
 
-      // ═══════════════════════════════════════════════════════════════
-      // PROTECCIÓN CAPA 2: Backup automático antes de cada escritura
-      // a bedsData. Guarda el estado anterior para poder recuperar
-      // en caso de cualquier problema.
-      // ═══════════════════════════════════════════════════════════════
-      if (documentId === 'bedsData' && currentData) {
-        try {
-          const backupRef = doc(db, collectionName, `${documentId}_lastBackup`);
-          await setDoc(backupRef, {
-            data: currentData,
-            backedUpAt: new Date().toISOString(),
-            occupiedBeds: countOccupiedBeds(currentData),
-            reason: 'auto_backup_before_write'
-          });
-        } catch (backupErr) {
-          console.warn('[Backup] No se pudo guardar respaldo automático:', backupErr);
-          // Continue with the write even if backup fails
+        if (freshFirestoreData === undefined) {
+          freshFirestoreData = currentData;
         }
+
+        const finalNewData = typeof newDataOrUpdater === 'function'
+          ? newDataOrUpdater(freshFirestoreData)
+          : newDataOrUpdater;
+
+        // Double check validation on the fresh server data if it's bedsData
+        if (documentId === 'bedsData') {
+          const freshOldCount = countOccupiedBeds(freshFirestoreData);
+          const freshNewCount = countOccupiedBeds(finalNewData);
+          if (freshOldCount > 0 && freshNewCount === 0) {
+            throw new Error('PROTECCIÓN TRANSACCIÓN: Se intentó eliminar todos los pacientes.');
+          }
+        }
+
+        transaction.set(docRef, { data: finalNewData });
+      });
+      console.log(`[useFirebaseSync] Sincronización exitosa (transacción) para ${documentId}`);
+    } catch (txError) {
+      if (txError.message && txError.message.includes('PROTECCIÓN')) {
+        console.error('[useFirebaseSync] Transacción cancelada por reglas de protección de datos:', txError);
+        // Revert local state to the previous value before the edit
+        setData(currentData);
+        dataRef.current = currentData;
+        return;
       }
 
-      await setDoc(docRef, { data: newData });
-      // The onSnapshot listener will confirm this write and update all clients
-    } catch (error) {
-      console.error(`Error updating ${collectionName}/${documentId}:`, error);
-      // Revert to the Firestore version on failure
-      // The onSnapshot listener will auto-correct on reconnection
+      // Fallback: If transaction fails (e.g. offline, permissions, timeout), fallback to setDoc
+      console.warn(`[useFirebaseSync] Transacción fallida para ${documentId}, intentando setDoc fallback:`, txError);
+      try {
+        await setDoc(docRef, { data: localNewData });
+        console.log(`[useFirebaseSync] Sincronización exitosa (fallback setDoc) para ${documentId}`);
+      } catch (fallbackError) {
+        console.error(`[useFirebaseSync] Error crítico al sincronizar ${documentId}:`, fallbackError);
+      }
     }
   }, [collectionName, documentId]);
 
