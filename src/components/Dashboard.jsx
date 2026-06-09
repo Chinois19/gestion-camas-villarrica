@@ -222,9 +222,9 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
                   <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); onDischarge(room.roomId, bed.id); }}>
                     <LogOut size={12} /> Dar Alta
                   </button>
-                  {user?.role === 'superadmin' && bed.originalWaitingRequest && (
+                  {(user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'administrador') && (
                     <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '4px', width: '100%', display: 'flex', justifyContent: 'center', borderColor: 'rgba(245,158,11,0.4)', color: '#f59e0b' }} onClick={(e) => { e.stopPropagation(); onUndoAssignment(room.roomId, bed.id); }}>
-                      <RotateCcw size={12} /> Deshacer Ingreso
+                      <RotateCcw size={12} /> Revocar Acueste
                     </button>
                   )}
                 </>
@@ -613,8 +613,44 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       if (targetBed) break;
     }
     
-    if (targetBed && targetBed.originalWaitingRequest) {
-      setWaitingList(prev => [...prev, targetBed.originalWaitingRequest]);
+    if (targetBed) {
+      if (!window.confirm('¿Está seguro de que desea revocar el acueste de este paciente y devolverlo a la lista de espera?')) {
+        return;
+      }
+
+      const requestToRestore = targetBed.originalWaitingRequest || {
+        id: targetBed.rut ? `W-${targetBed.rut}` : `W-${Date.now()}`,
+        name: targetBed.patient || 'Paciente Sin Nombre',
+        age: parseInt(targetBed.age) || 0,
+        requestedAt: targetBed.assignedAt || new Date().toISOString(),
+        diagnosis: targetBed.diagnosis || 'Sin diagnóstico principal',
+        priority: targetBed.prioridad || 3,
+        origin: targetBed.servicioSol || 'Urgencia',
+        bedTypeRequired: targetBed.tag || targetBed.type || 'Cuidados Medios',
+        ticket: targetBed.ticket || `REQ-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900) + 100}`,
+        rut: targetBed.rut || '',
+        sexo: targetBed.sex || '',
+        prevision: targetBed.prevision || '',
+        comuna: targetBed.comuna || '',
+        medicoSol: targetBed.medicoSol || '',
+        especialidadMedico: targetBed.especialidadMedico || '',
+        especialidadTratante: targetBed.especialidadTratante || [],
+        requisitosUGP: targetBed.requisitosUGP || '',
+        reqEnfermeria: targetBed.reqEnfermeria || '',
+        procedimientosPendientes: targetBed.procedimientosPendientes || '',
+        aislamiento: targetBed.aislamiento || null,
+        evolutions: targetBed.evolutions || [
+          {
+            id: Date.now().toString(),
+            timestamp: new Date().toLocaleString('es-CL'),
+            user: user?.name || 'Sistema',
+            role: user?.role || 'Gestor',
+            note: '↩️ Acueste revocado - Paciente devuelto a la lista de espera'
+          }
+        ]
+      };
+
+      setWaitingList(prev => [...prev, requestToRestore]);
       updateBedState(roomId, bedId, {
         status: 'available',
         patient: null,
