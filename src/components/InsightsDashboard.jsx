@@ -138,6 +138,7 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
     });
 
     // Process the waiting list requirements
+    const waitingTotal = waitingList.length;
     let totalWaitHours = 0;
     let maxWaitHours = 0;
     let waitCount = 0;
