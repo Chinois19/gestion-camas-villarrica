@@ -370,58 +370,76 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     setPendingAssignment({ patient, roomId, bedId, serviceMismatch, bedType: targetBed?.tag || targetBed?.type });
   };
 
-  const confirmAssignment = (assignmentData) => {
+  const confirmAssignment = async (assignmentData) => {
     const { roomId, bedId, patient } = pendingAssignment;
-    const newBedsData = { ...bedsData };
     
-    for (const floor in newBedsData) {
-      for (const sector in newBedsData[floor]) {
-        newBedsData[floor][sector] = newBedsData[floor][sector].map(room => {
-          if (room.roomId === roomId) {
-            const updatedBeds = room.beds.map(bed => {
-              if (bed.id === bedId) {
-                return {
-                  ...bed,
-                  status: 'occupied',
-                  patient: assignmentData.patientName,
-                  rut: pendingAssignment.patient.rut || null,
-                  age: pendingAssignment.patient.age || pendingAssignment.patient.edad || null,
-                  sex: pendingAssignment.patient.sex || pendingAssignment.patient.sexo || null,
-                  prevision: pendingAssignment.patient.prevision || null,
-                  comuna: pendingAssignment.patient.comuna || null,
-                  medicoSol: pendingAssignment.patient.medicoSol || null,
-                  especialidadMedico: pendingAssignment.patient.especialidadMedico || null,
-                  requisitosUGP: pendingAssignment.patient.requisitosUGP || null,
-                  reqEnfermeria: pendingAssignment.patient.reqEnfermeria || null,
-                  procedimientosPendientes: pendingAssignment.patient.procedimientosPendientes || null,
-                  aislamiento: pendingAssignment.patient.aislamiento || null,
-                  servicioSol: pendingAssignment.patient.servicioSol || null,
-                  destino: pendingAssignment.patient.destino || null,
-                  prioridad: pendingAssignment.patient.prioridad || null,
-                  diagnosis: assignmentData.diagnosis,
-                  especialidadTratante: pendingAssignment.patient.especialidadTratante,
-                  grdId: assignmentData.grdId,
-                  grdName: assignmentData.grdName, // Se puede derivar
-                  severity: assignmentData.severity,
-                  projectedDays: assignmentData.projectedDays,
-                  assignedAt: assignmentData.assignedAt,
-                  projectedReleaseDate: assignmentData.projectedReleaseDate,
-                  waitMinutes: assignmentData.waitMinutes,
-                  info: `Ingreso desde ${assignmentData.origin}`,
-                  originalWaitingRequest: pendingAssignment.patient
-                };
-              }
-              return bed;
-            });
-            return { ...room, beds: updatedBeds };
-          }
-          return room;
-        });
+    // Capturar datos del paciente antes de cerrar el modal
+    const patientData = { ...pendingAssignment.patient };
+    const patientId = patient.id;
+
+    // Usar función updater con deep clone para que la transacción de Firebase
+    // pueda recalcular correctamente con datos frescos del servidor
+    const bedsUpdater = (prev) => {
+      const next = JSON.parse(JSON.stringify(prev));
+      for (const floor in next) {
+        if (typeof next[floor] !== 'object') continue;
+        for (const sector in next[floor]) {
+          if (!Array.isArray(next[floor][sector])) continue;
+          next[floor][sector] = next[floor][sector].map(room => {
+            if (room.roomId === roomId) {
+              const updatedBeds = room.beds.map(bed => {
+                if (bed.id === bedId) {
+                  return {
+                    ...bed,
+                    status: 'occupied',
+                    patient: assignmentData.patientName,
+                    rut: patientData.rut || null,
+                    age: patientData.age || patientData.edad || null,
+                    sex: patientData.sex || patientData.sexo || null,
+                    prevision: patientData.prevision || null,
+                    comuna: patientData.comuna || null,
+                    medicoSol: patientData.medicoSol || null,
+                    especialidadMedico: patientData.especialidadMedico || null,
+                    requisitosUGP: patientData.requisitosUGP || null,
+                    reqEnfermeria: patientData.reqEnfermeria || null,
+                    procedimientosPendientes: patientData.procedimientosPendientes || null,
+                    aislamiento: patientData.aislamiento || null,
+                    servicioSol: patientData.servicioSol || null,
+                    destino: patientData.destino || null,
+                    prioridad: patientData.prioridad || null,
+                    diagnosis: assignmentData.diagnosis,
+                    especialidadTratante: patientData.especialidadTratante,
+                    grdId: assignmentData.grdId,
+                    grdName: assignmentData.grdName,
+                    severity: assignmentData.severity,
+                    projectedDays: assignmentData.projectedDays,
+                    assignedAt: assignmentData.assignedAt,
+                    projectedReleaseDate: assignmentData.projectedReleaseDate,
+                    waitMinutes: assignmentData.waitMinutes,
+                    info: `Ingreso desde ${assignmentData.origin}`,
+                    originalWaitingRequest: patientData
+                  };
+                }
+                return bed;
+              });
+              return { ...room, beds: updatedBeds };
+            }
+            return room;
+          });
+        }
       }
+      return next;
+    };
+
+    // Primero escribir bedsData; solo si tiene éxito, remover de waitingList
+    const success = await setBedsData(bedsUpdater);
+    if (success !== false) {
+      // Solo remover de la lista de espera si la escritura de camas fue exitosa
+      setWaitingList(prev => prev.filter(p => p.id !== patientId));
+    } else {
+      console.error('[Dashboard] ❌ Asignación fallida: la escritura de bedsData fue bloqueada o falló. El paciente permanece en la lista de espera.');
+      alert('Error al asignar la cama. El paciente permanece en la lista de espera. Por favor intente nuevamente.');
     }
-    
-    setBedsData(newBedsData);
-    setWaitingList(prev => prev.filter(p => p.id !== patient.id));
     setPendingAssignment(null);
     setSelectedPatient(null);
   };
@@ -475,21 +493,26 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   };
 
   const updateBedState = (roomId, bedId, updates) => {
-    const newBedsData = { ...bedsData };
-    for (const floor in newBedsData) {
-      for (const sector in newBedsData[floor]) {
-        newBedsData[floor][sector] = newBedsData[floor][sector].map(room => {
-          if (room.roomId === roomId) {
-            return {
-              ...room,
-              beds: room.beds.map(bed => bed.id === bedId ? { ...bed, ...updates } : bed)
-            };
-          }
-          return room;
-        });
+    // Usar función updater con deep clone para sincronización correcta entre usuarios
+    setBedsData(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      for (const floor in next) {
+        if (typeof next[floor] !== 'object') continue;
+        for (const sector in next[floor]) {
+          if (!Array.isArray(next[floor][sector])) continue;
+          next[floor][sector] = next[floor][sector].map(room => {
+            if (room.roomId === roomId) {
+              return {
+                ...room,
+                beds: room.beds.map(bed => bed.id === bedId ? { ...bed, ...updates } : bed)
+              };
+            }
+            return room;
+          });
+        }
       }
-    }
-    setBedsData(newBedsData);
+      return next;
+    });
   };
 
   const handleDischarge = (roomId, bedId) => {
@@ -627,7 +650,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     }
   };
 
-  const handleUndoAssignment = (roomId, bedId) => {
+  const handleUndoAssignment = async (roomId, bedId) => {
     let targetBed = null;
     for (const floor in bedsData) {
       for (const sector in bedsData[floor]) {
@@ -677,8 +700,8 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         ]
       };
 
-      setWaitingList(prev => [...prev, requestToRestore]);
-      updateBedState(roomId, bedId, {
+      // Primero liberar la cama; solo si tiene éxito, agregar a waitingList
+      const clearUpdates = {
         status: 'available',
         patient: null,
         rut: null,
@@ -706,7 +729,34 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         info: null,
         especialidadTratante: null,
         originalWaitingRequest: null
+      };
+
+      const success = await setBedsData(prev => {
+        const next = JSON.parse(JSON.stringify(prev));
+        for (const f in next) {
+          if (typeof next[f] !== 'object') continue;
+          for (const s in next[f]) {
+            if (!Array.isArray(next[f][s])) continue;
+            next[f][s] = next[f][s].map(room => {
+              if (room.roomId === roomId) {
+                return {
+                  ...room,
+                  beds: room.beds.map(bed => bed.id === bedId ? { ...bed, ...clearUpdates } : bed)
+                };
+              }
+              return room;
+            });
+          }
+        }
+        return next;
       });
+
+      if (success !== false) {
+        setWaitingList(prev => [...prev, requestToRestore]);
+      } else {
+        console.error('[Dashboard] ❌ Revocación fallida: no se pudo liberar la cama.');
+        alert('Error al revocar el acueste. Por favor intente nuevamente.');
+      }
     }
   };
 
@@ -779,20 +829,19 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   const handleTransfer = (sourceRoomId, sourceBedId, targetRoomId, targetBedId, newGrdData, transferType = 'libre') => {
     let sourceBedInfo = null;
     let targetBedInfo = null;
-    let newBedsData = { ...bedsData };
     
-    // First pass: find source and target bed infos
-    for (const floor in newBedsData) {
-      for (const sector in newBedsData[floor]) {
-        const sourceRoom = newBedsData[floor][sector].find(r => r.roomId === sourceRoomId);
+    // First pass: find source and target bed infos (read-only from current state)
+    for (const floor in bedsData) {
+      for (const sector in bedsData[floor]) {
+        const sourceRoom = bedsData[floor][sector].find(r => r.roomId === sourceRoomId);
         if (sourceRoom) {
           const sBed = sourceRoom.beds.find(b => b.id === sourceBedId);
-          if (sBed) sourceBedInfo = { ...sBed };
+          if (sBed) sourceBedInfo = JSON.parse(JSON.stringify(sBed));
         }
-        const targetRoom = newBedsData[floor][sector].find(r => r.roomId === targetRoomId);
+        const targetRoom = bedsData[floor][sector].find(r => r.roomId === targetRoomId);
         if (targetRoom) {
           const tBed = targetRoom.beds.find(b => b.id === targetBedId);
-          if (tBed) targetBedInfo = { ...tBed };
+          if (tBed) targetBedInfo = JSON.parse(JSON.stringify(tBed));
         }
       }
     }
@@ -1072,70 +1121,60 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       onAddTransfers(newTransfersList);
     }
 
-    // Second pass: apply the swap or transfer
-    for (const floor in newBedsData) {
-      for (const sector in newBedsData[floor]) {
-        let sectorRooms = [...newBedsData[floor][sector]];
-        let sectorModified = false;
+    // Second pass: apply the swap or transfer using updater + deep clone
+    setBedsData(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      for (const floor in next) {
+        if (typeof next[floor] !== 'object') continue;
+        for (const sector in next[floor]) {
+          if (!Array.isArray(next[floor][sector])) continue;
+          let sectorRooms = next[floor][sector];
 
-        const sRoomIndex = sectorRooms.findIndex(r => r.roomId === sourceRoomId);
-        if (sRoomIndex !== -1) {
-          const room = sectorRooms[sRoomIndex];
-          const bIndex = room.beds.findIndex(b => b.id === sourceBedId);
-          if (bIndex !== -1) {
-            const newBeds = [...room.beds];
-            if (transferType === 'enroque') {
-              // Copy all properties from targetBedInfo, except the physical bed properties
-              const { id, type, tag, ...targetPatientData } = targetBedInfo;
-              newBeds[bIndex] = {
-                id: newBeds[bIndex].id,
-                type: newBeds[bIndex].type,
-                tag: newBeds[bIndex].tag,
-                ...targetPatientData,
+          const sRoomIndex = sectorRooms.findIndex(r => r.roomId === sourceRoomId);
+          if (sRoomIndex !== -1) {
+            const room = sectorRooms[sRoomIndex];
+            const bIndex = room.beds.findIndex(b => b.id === sourceBedId);
+            if (bIndex !== -1) {
+              if (transferType === 'enroque') {
+                const { id, type, tag, ...targetPatientData } = targetBedInfo;
+                room.beds[bIndex] = {
+                  id: room.beds[bIndex].id,
+                  type: room.beds[bIndex].type,
+                  tag: room.beds[bIndex].tag,
+                  ...targetPatientData,
+                  transferAt: new Date().toISOString()
+                };
+              } else {
+                room.beds[bIndex] = {
+                  id: room.beds[bIndex].id,
+                  type: room.beds[bIndex].type,
+                  tag: room.beds[bIndex].tag,
+                  status: 'cleaning'
+                };
+              }
+            }
+          }
+
+          const tRoomIndex = sectorRooms.findIndex(r => r.roomId === targetRoomId);
+          if (tRoomIndex !== -1) {
+            const room = sectorRooms[tRoomIndex];
+            const bIndex = room.beds.findIndex(b => b.id === targetBedId);
+            if (bIndex !== -1) {
+              const { id, type, tag, ...sourcePatientData } = sourceBedInfo;
+              room.beds[bIndex] = {
+                id: room.beds[bIndex].id,
+                type: room.beds[bIndex].type,
+                tag: room.beds[bIndex].tag,
+                ...sourcePatientData,
+                status: 'occupied',
                 transferAt: new Date().toISOString()
               };
-            } else {
-              // Cama Libre
-              newBeds[bIndex] = {
-                id: newBeds[bIndex].id,
-                type: newBeds[bIndex].type,
-                tag: newBeds[bIndex].tag,
-                status: 'cleaning'
-              };
             }
-            sectorRooms[sRoomIndex] = { ...room, beds: newBeds };
-            sectorModified = true;
           }
-        }
-
-        const tRoomIndex = sectorRooms.findIndex(r => r.roomId === targetRoomId);
-        if (tRoomIndex !== -1) {
-          const room = sectorRooms[tRoomIndex];
-          const bIndex = room.beds.findIndex(b => b.id === targetBedId);
-          if (bIndex !== -1) {
-            const newBeds = [...room.beds];
-            // Copy all properties from sourceBedInfo, except physical bed properties
-            const { id, type, tag, ...sourcePatientData } = sourceBedInfo;
-            newBeds[bIndex] = {
-              id: newBeds[bIndex].id,
-              type: newBeds[bIndex].type,
-              tag: newBeds[bIndex].tag,
-              ...sourcePatientData,
-              status: 'occupied',
-              transferAt: new Date().toISOString()
-            };
-            sectorRooms[tRoomIndex] = { ...room, beds: newBeds };
-            sectorModified = true;
-          }
-        }
-
-        if (sectorModified) {
-          newBedsData[floor][sector] = sectorRooms;
         }
       }
-    }
-
-    setBedsData(newBedsData);
+      return next;
+    });
     setEditingGrdBed(null);
   };
 

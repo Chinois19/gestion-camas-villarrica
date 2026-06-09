@@ -1,0 +1,1126 @@
+{
+  "bedsData": {
+    "piso2": {
+      "poniente": [
+        {
+          "roomType": "UPC",
+          "beds": [
+            {
+              "info": null,
+              "patient": null,
+              "status": "available",
+              "tag": "UCI",
+              "type": "UCI",
+              "id": "1"
+            },
+            {
+              "info": null,
+              "type": "UCI",
+              "id": "2",
+              "patient": null,
+              "status": "available",
+              "tag": "UCI"
+            },
+            {
+              "tag": "UCI",
+              "status": "available",
+              "patient": null,
+              "id": "3",
+              "type": "UCI",
+              "info": null
+            },
+            {
+              "type": "UCI",
+              "id": "4",
+              "status": "available",
+              "patient": null,
+              "tag": "UCI",
+              "info": null
+            },
+            {
+              "type": "UCI",
+              "id": "5",
+              "patient": null,
+              "status": "available",
+              "tag": "UCI",
+              "info": null
+            },
+            {
+              "type": "UTI",
+              "id": "6",
+              "status": "available",
+              "patient": null,
+              "tag": "UTI",
+              "info": null
+            },
+            {
+              "patient": null,
+              "status": "available",
+              "tag": "UTI",
+              "type": "UTI",
+              "id": "7",
+              "info": null
+            },
+            {
+              "info": null,
+              "tag": "UTI",
+              "status": "available",
+              "patient": null,
+              "id": "8",
+              "type": "UTI"
+            },
+            {
+              "id": "9",
+              "type": "UTI",
+              "tag": "UTI",
+              "patient": null,
+              "status": "available",
+              "info": null
+            },
+            {
+              "patient": null,
+              "status": "available",
+              "tag": "UTI",
+              "type": "UTI",
+              "id": "10",
+              "info": null
+            }
+          ],
+          "roomId": "201"
+        }
+      ],
+      "oriente": []
+    },
+    "piso4": {
+      "poniente": [
+        {
+          "roomId": "401",
+          "roomType": "Poniente",
+          "beds": [
+            {
+              "type": "Cuidados básicos",
+              "id": "1",
+              "status": "available",
+              "patient": null,
+              "tag": "Cuidados Básicos",
+              "info": null
+            },
+            {
+              "info": null,
+              "type": "Cuidados básicos",
+              "id": "2",
+              "status": "available",
+              "patient": null,
+              "tag": "Cuidados Básicos"
+            },
+            {
+              "id": "3",
+              "type": "Cuidados básicos",
+              "tag": "Cuidados Básicos",
+              "patient": null,
+              "status": "available",
+              "info": null
+            },
+            {
+              "type": "Cuidados básicos",
+              "id": "4",
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Básicos",
+              "info": null
+            }
+          ]
+        },
+        {
+          "roomId": "402",
+          "roomType": "Poniente",
+          "beds": [
+            {
+              "info": null,
+              "tag": "Infantil",
+              "patient": null,
+              "status": "available",
+              "id": "1",
+              "type": "Cuidados básicos"
+            },
+            {
+              "type": "Cuidados básicos",
+              "id": "2",
+              "status": "available",
+              "patient": null,
+              "tag": "Infantil",
+              "info": null
+            },
+            {
+              "type": "Cuidados básicos",
+              "id": "3",
+              "patient": null,
+              "status": "available",
+              "tag": "Infantil",
+              "info": null
+            },
+            {
+              "info": null,
+              "id": "4",
+              "type": "Cuidados básicos",
+              "tag": "Infantil",
+              "status": "available",
+              "patient": null
+            }
+          ]
+        },
+        {
+          "roomId": "403",
+          "roomType": "Poniente",
+          "beds": [
+            {
+              "info": null,
+              "id": "1",
+              "type": "Cuidados básicos",
+              "tag": "Cuidados Básicos",
+              "status": "available",
+              "patient": null
+            },
+            {
+              "tag": "Infantil",
+              "patient": null,
+              "status": "available",
+              "id": "2",
+              "type": "Cuidados básicos",
+              "info": null
+            },
+            {
+              "patient": null,
+              "status": "available",
+              "tag": "Infantil",
+              "type": "Cuidados básicos",
+              "id": "3",
+              "info": null
+            },
+            {
+              "type": "Cuidados básicos",
+              "id": "4",
+              "status": "available",
+              "patient": null,
+              "tag": "Infantil",
+              "info": null
+            }
+          ]
+        },
+        {
+          "roomId": "404",
+          "roomType": "Poniente",
+          "beds": [
+            {
+              "type": "Cuidados básicos",
+              "id": "1",
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Básicos",
+              "info": null
+            },
+            {
+              "info": null,
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Básicos",
+              "type": "Cuidados básicos",
+              "id": "2"
+            },
+            {
+              "info": null,
+              "tag": "Cuidados Básicos",
+              "status": "available",
+              "patient": null,
+              "id": "3",
+              "type": "Cuidados básicos"
+            },
+            {
+              "info": null,
+              "type": "Cuidados básicos",
+              "id": "4",
+              "status": "available",
+              "patient": null,
+              "tag": "Cuidados Básicos"
+            }
+          ]
+        },
+        {
+          "roomId": "405",
+          "roomType": "Poniente",
+          "beds": [
+            {
+              "tag": "Cuidados Medios",
+              "status": "available",
+              "patient": null,
+              "id": "1",
+              "type": "Cuidados medios",
+              "info": null
+            },
+            {
+              "info": null,
+              "id": "2",
+              "type": "Cuidados medios",
+              "tag": "Cuidados Medios",
+              "patient": null,
+              "status": "available"
+            },
+            {
+              "type": "Cuidados medios",
+              "id": "3",
+              "status": "available",
+              "patient": null,
+              "tag": "Cuidados Medios",
+              "info": null
+            },
+            {
+              "type": "Cuidados medios",
+              "id": "4",
+              "status": "available",
+              "patient": null,
+              "tag": "Cuidados Medios",
+              "info": null
+            }
+          ]
+        },
+        {
+          "roomId": "406",
+          "roomType": "Poniente",
+          "beds": [
+            {
+              "type": "Cuidados medios",
+              "id": "1",
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Medios",
+              "info": null
+            },
+            {
+              "info": null,
+              "id": "2",
+              "type": "Cuidados medios",
+              "tag": "Cuidados Medios",
+              "patient": null,
+              "status": "available"
+            },
+            {
+              "id": "3",
+              "type": "Cuidados medios",
+              "tag": "Cuidados Medios",
+              "status": "available",
+              "patient": null,
+              "info": null
+            },
+            {
+              "type": "Cuidados medios",
+              "id": "4",
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Medios",
+              "info": null
+            }
+          ]
+        },
+        {
+          "beds": [
+            {
+              "info": null,
+              "tag": "Cuidados Medios",
+              "status": "available",
+              "patient": null,
+              "id": "1",
+              "type": "Cuidados medios"
+            },
+            {
+              "info": null,
+              "id": "2",
+              "type": "Cuidados medios",
+              "tag": "Cuidados Medios",
+              "patient": null,
+              "status": "available"
+            },
+            {
+              "info": null,
+              "type": "Cuidados medios",
+              "id": "3",
+              "status": "available",
+              "patient": null,
+              "tag": "Cuidados Medios"
+            },
+            {
+              "info": null,
+              "type": "Cuidados medios",
+              "id": "4",
+              "status": "available",
+              "patient": null,
+              "tag": "Cuidados Medios"
+            }
+          ],
+          "roomType": "Poniente",
+          "roomId": "407"
+        },
+        {
+          "roomId": "408",
+          "roomType": "Poniente",
+          "beds": [
+            {
+              "info": null,
+              "type": "Cuidados medios",
+              "id": "1",
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Medios"
+            }
+          ]
+        },
+        {
+          "roomId": "409",
+          "beds": [
+            {
+              "status": "available",
+              "patient": null,
+              "tag": "Cuidados Medios",
+              "type": "Cuidados medios",
+              "id": "1",
+              "info": null
+            }
+          ],
+          "roomType": "Poniente"
+        },
+        {
+          "roomId": "410",
+          "beds": [
+            {
+              "id": "1",
+              "type": "Cuidados medios",
+              "tag": "Cuidados Medios",
+              "patient": null,
+              "status": "available",
+              "info": null
+            }
+          ],
+          "roomType": "Poniente"
+        }
+      ],
+      "oriente": []
+    },
+    "piso3": {
+      "poniente": [
+        {
+          "roomType": "Poniente",
+          "beds": [
+            {
+              "id": "1",
+              "type": "Maternidad",
+              "tag": "Maternidad",
+              "patient": null,
+              "status": "available",
+              "info": null
+            },
+            {
+              "tag": "Maternidad",
+              "status": "available",
+              "patient": null,
+              "id": "2",
+              "type": "Maternidad",
+              "info": null
+            },
+            {
+              "patient": null,
+              "blockedAt": null,
+              "blockedReason": null,
+              "blockedBy": null,
+              "blockedObs": null,
+              "novedades": [
+                {
+                  "fecha": "05/06/2026 10:31",
+                  "id": 1780669887089,
+                  "usuario": "Gonzalo Pérez Sanhueza",
+                  "rol": "superadmin",
+                  "contenido": "Desbloqueo de cama. Observación: ewgwegwegwegweg"
+                },
+                {
+                  "contenido": "Bloqueo de cama por: Recursos Humanos. Observación: dfbsbsdbsd",
+                  "id": 1780669866513,
+                  "rol": "superadmin",
+                  "usuario": "Gonzalo Pérez Sanhueza",
+                  "fecha": "05/06/2026 10:31"
+                }
+              ],
+              "tag": "Maternidad",
+              "status": "available",
+              "id": "3",
+              "type": "Maternidad",
+              "info": null
+            }
+          ],
+          "roomId": "301"
+        },
+        {
+          "roomId": "302",
+          "roomType": "Poniente",
+          "beds": [
+            {
+              "status": "available",
+              "patient": null,
+              "tag": "Maternidad",
+              "type": "Maternidad",
+              "id": "1",
+              "info": null
+            },
+            {
+              "status": "available",
+              "patient": null,
+              "tag": "Maternidad",
+              "type": "Maternidad",
+              "id": "2",
+              "info": null
+            },
+            {
+              "id": "3",
+              "type": "Maternidad",
+              "tag": "Maternidad",
+              "status": "available",
+              "patient": null,
+              "info": null
+            },
+            {
+              "type": "Maternidad",
+              "id": "4",
+              "status": "available",
+              "patient": null,
+              "tag": "Maternidad",
+              "info": null
+            }
+          ]
+        },
+        {
+          "roomType": "Poniente",
+          "beds": [
+            {
+              "type": "Maternidad",
+              "id": "1",
+              "status": "available",
+              "patient": null,
+              "tag": "Maternidad",
+              "info": null
+            },
+            {
+              "status": "available",
+              "patient": null,
+              "tag": "Maternidad",
+              "type": "Maternidad",
+              "id": "2",
+              "info": null
+            },
+            {
+              "info": null,
+              "tag": "Maternidad",
+              "status": "available",
+              "patient": null,
+              "id": "3",
+              "type": "Maternidad"
+            },
+            {
+              "patient": null,
+              "status": "available",
+              "tag": "Maternidad",
+              "type": "Maternidad",
+              "id": "4",
+              "info": null
+            }
+          ],
+          "roomId": "303"
+        },
+        {
+          "beds": [
+            {
+              "info": null,
+              "type": "Neonatología",
+              "id": "1",
+              "patient": null,
+              "status": "available",
+              "tag": "Infantil"
+            },
+            {
+              "status": "available",
+              "patient": null,
+              "tag": "Infantil",
+              "type": "Neonatología",
+              "id": "2",
+              "info": null
+            },
+            {
+              "info": null,
+              "id": "3",
+              "type": "Neonatología",
+              "tag": "Infantil",
+              "status": "available",
+              "patient": null
+            },
+            {
+              "type": "Neonatología",
+              "id": "4",
+              "patient": null,
+              "status": "available",
+              "tag": "Infantil",
+              "info": null
+            },
+            {
+              "id": "5",
+              "type": "Neonatología",
+              "tag": "Infantil",
+              "status": "available",
+              "patient": null,
+              "info": null
+            }
+          ],
+          "roomType": "Poniente",
+          "roomId": "304"
+        },
+        {
+          "roomType": "Poniente",
+          "beds": [
+            {
+              "info": null,
+              "tag": "Neonatología",
+              "patient": null,
+              "status": "available",
+              "id": "1",
+              "type": "Neonatología"
+            }
+          ],
+          "roomId": "305"
+        },
+        {
+          "roomId": "306",
+          "beds": [
+            {
+              "info": null,
+              "type": "Maternidad",
+              "id": "1",
+              "status": "available",
+              "patient": null,
+              "tag": "Maternidad"
+            }
+          ],
+          "roomType": "Poniente"
+        }
+      ],
+      "oriente": [
+        {
+          "roomType": "Oriente",
+          "beds": [
+            {
+              "info": null,
+              "status": "available",
+              "patient": null,
+              "tag": "Maternidad",
+              "type": "Maternidad",
+              "id": "1"
+            },
+            {
+              "info": null,
+              "status": "available",
+              "patient": null,
+              "tag": "Maternidad",
+              "type": "Maternidad",
+              "id": "2"
+            },
+            {
+              "info": null,
+              "id": "3",
+              "type": "Maternidad",
+              "tag": "Maternidad",
+              "status": "available",
+              "patient": null
+            },
+            {
+              "info": null,
+              "type": "Maternidad",
+              "id": "4",
+              "status": "available",
+              "patient": null,
+              "tag": "Maternidad"
+            }
+          ],
+          "roomId": "307"
+        },
+        {
+          "beds": [
+            {
+              "info": null,
+              "tag": "Maternidad",
+              "status": "available",
+              "patient": null,
+              "id": "1",
+              "type": "Maternidad"
+            },
+            {
+              "info": null,
+              "id": "2",
+              "type": "Maternidad",
+              "tag": "Maternidad",
+              "status": "available",
+              "patient": null
+            },
+            {
+              "info": null,
+              "status": "available",
+              "patient": null,
+              "tag": "Maternidad",
+              "type": "Maternidad",
+              "id": "3"
+            },
+            {
+              "id": "4",
+              "type": "Maternidad",
+              "tag": "Maternidad",
+              "patient": null,
+              "status": "available",
+              "info": null
+            }
+          ],
+          "roomType": "Oriente",
+          "roomId": "308"
+        },
+        {
+          "beds": [
+            {
+              "id": "1",
+              "type": "Infantil",
+              "tag": "Cuidados Medios",
+              "patient": null,
+              "status": "available",
+              "info": null
+            },
+            {
+              "tag": "Cuidados Medios",
+              "patient": null,
+              "status": "available",
+              "id": "2",
+              "type": "Infantil",
+              "info": null
+            },
+            {
+              "info": null,
+              "id": "3",
+              "type": "Infantil",
+              "tag": "Cuidados Medios",
+              "status": "available",
+              "patient": null
+            },
+            {
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Medios",
+              "type": "Infantil",
+              "id": "4",
+              "info": null
+            }
+          ],
+          "roomType": "Oriente",
+          "roomId": "309"
+        },
+        {
+          "beds": [
+            {
+              "type": "Infantil",
+              "id": "1",
+              "patient": null,
+              "status": "available",
+              "tag": "Infantil",
+              "info": null
+            },
+            {
+              "type": "Infantil",
+              "id": "2",
+              "status": "available",
+              "patient": null,
+              "tag": "Infantil",
+              "info": null
+            },
+            {
+              "info": null,
+              "id": "3",
+              "type": "Infantil",
+              "tag": "Infantil",
+              "status": "available",
+              "patient": null
+            },
+            {
+              "info": null,
+              "patient": null,
+              "status": "available",
+              "tag": "Infantil",
+              "type": "Infantil",
+              "id": "4"
+            }
+          ],
+          "roomType": "Oriente",
+          "roomId": "310"
+        },
+        {
+          "roomType": "Oriente",
+          "beds": [
+            {
+              "info": null,
+              "id": "1",
+              "type": "Cuidados medios",
+              "tag": "Cuidados Medios",
+              "patient": null,
+              "status": "available"
+            },
+            {
+              "info": null,
+              "type": "Cuidados medios",
+              "id": "2",
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Medios"
+            },
+            {
+              "info": null,
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Medios",
+              "type": "Cuidados medios",
+              "id": "3"
+            },
+            {
+              "type": "Cuidados medios",
+              "id": "4",
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Medios",
+              "info": null
+            }
+          ],
+          "roomId": "311"
+        },
+        {
+          "beds": [
+            {
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Medios",
+              "type": "Cuidados medios",
+              "id": "1",
+              "info": null
+            },
+            {
+              "info": null,
+              "type": "Cuidados medios",
+              "id": "2",
+              "status": "available",
+              "patient": null,
+              "tag": "Cuidados Medios"
+            },
+            {
+              "info": null,
+              "tag": "Cuidados Medios",
+              "patient": null,
+              "status": "available",
+              "id": "3",
+              "type": "Cuidados medios"
+            },
+            {
+              "info": null,
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Medios",
+              "type": "Cuidados medios",
+              "id": "4"
+            }
+          ],
+          "roomType": "Oriente",
+          "roomId": "312"
+        },
+        {
+          "beds": [
+            {
+              "type": "Cuidados medios",
+              "id": "1",
+              "status": "available",
+              "patient": null,
+              "tag": "Cuidados Medios",
+              "info": null
+            },
+            {
+              "info": null,
+              "tag": "Cuidados Medios",
+              "patient": null,
+              "status": "available",
+              "id": "2",
+              "type": "Cuidados medios"
+            },
+            {
+              "info": null,
+              "id": "3",
+              "type": "Cuidados medios",
+              "tag": "Cuidados Medios",
+              "patient": null,
+              "status": "available"
+            },
+            {
+              "id": "4",
+              "type": "Cuidados medios",
+              "tag": "Cuidados Medios",
+              "status": "available",
+              "patient": null,
+              "info": null
+            }
+          ],
+          "roomType": "Oriente",
+          "roomId": "313"
+        },
+        {
+          "beds": [
+            {
+              "id": "1",
+              "type": "Cuidados medios",
+              "tag": "Cuidados Medios",
+              "status": "available",
+              "patient": null,
+              "info": null
+            },
+            {
+              "info": null,
+              "id": "2",
+              "type": "Cuidados medios",
+              "tag": "Cuidados Medios",
+              "status": "available",
+              "patient": null
+            },
+            {
+              "type": "Cuidados medios",
+              "id": "3",
+              "status": "available",
+              "patient": null,
+              "tag": "Cuidados Medios",
+              "info": null
+            },
+            {
+              "info": null,
+              "type": "Cuidados medios",
+              "id": "4",
+              "patient": null,
+              "status": "available",
+              "tag": "Cuidados Medios"
+            }
+          ],
+          "roomType": "Oriente",
+          "roomId": "314"
+        }
+      ]
+    }
+  },
+  "waitingList": [],
+  "hodomRequests": [],
+  "users": [
+    {
+      "status": "active",
+      "email": "admin@hospitalvillarrica.cl",
+      "role": "superadmin",
+      "password": "admin",
+      "id": 1,
+      "name": "Super Administrador",
+      "username": "admin",
+      "roleName": "Super Administrador"
+    },
+    {
+      "roleName": "Visor Institucional",
+      "name": "Visor Institucional",
+      "username": "visor",
+      "id": 2,
+      "role": "visor",
+      "password": "visor",
+      "status": "active",
+      "email": "visor@hospitalvillarrica.cl"
+    },
+    {
+      "roleName": "Médico",
+      "username": "medico",
+      "name": "Médico General",
+      "role": "medico_general",
+      "password": "medico",
+      "id": 3,
+      "status": "active",
+      "email": "medico@hospitalvillarrica.cl"
+    },
+    {
+      "status": "active",
+      "email": "gestor@hospitalvillarrica.cl",
+      "role": "gestor_camas",
+      "password": "gestor",
+      "id": 4,
+      "name": "Gestor de Camas",
+      "username": "gestor",
+      "roleName": "Gestor de Camas"
+    },
+    {
+      "name": "Médico HODOM",
+      "username": "hodom",
+      "roleName": "Médico HODOM",
+      "status": "active",
+      "email": "hodom@hospitalvillarrica.cl",
+      "role": "medico_hodom",
+      "password": "hodom",
+      "id": 5
+    },
+    {
+      "email": "aseo@hospitalvillarrica.cl",
+      "status": "active",
+      "id": 6,
+      "password": "aseo",
+      "role": "personal_aseo",
+      "name": "Personal de Aseo",
+      "username": "aseo",
+      "roleName": "Personal de Aseo"
+    },
+    {
+      "username": "gperez",
+      "name": "Gonzalo Pérez Sanhueza",
+      "status": "active",
+      "email": "gonzalop14@gmail.com",
+      "password": "09pjrqbp",
+      "role": "superadmin",
+      "id": 7
+    },
+    {
+      "name": "Cristóbal Muñoz Vidal",
+      "username": "CMUVI",
+      "password": "d8k6scya",
+      "role": "superadmin",
+      "id": 8,
+      "status": "active",
+      "email": "cristobal.munoz@asur.cl"
+    },
+    {
+      "name": "Sofia Zuñiga Valenzuela",
+      "username": "SZUNIGAV",
+      "id": 9,
+      "role": "gestor_camas",
+      "password": "5i190jcl",
+      "email": "sofia.zuniga.v@redsalud.gob.cl",
+      "status": "active"
+    },
+    {
+      "username": "SROMU",
+      "name": "Sofia Roman Muñoz",
+      "email": "sofia.roman@asur.cl",
+      "status": "active",
+      "id": 10,
+      "role": "medico_general",
+      "password": "9w3hlx39"
+    },
+    {
+      "status": "active",
+      "email": "sofia.quinonez.l@redsalud.gob.cl",
+      "id": 11,
+      "password": "lx36woxj",
+      "role": "superadmin",
+      "username": "SQULU",
+      "name": "Sofia Quiñones Luengo"
+    },
+    {
+      "role": "gestor_camas",
+      "password": "ymg5cwyi",
+      "id": 12,
+      "status": "active",
+      "email": "javiera.rubilar8@gmail.com",
+      "username": "JRURI",
+      "name": "Javiera Rubilar Rivas"
+    },
+    {
+      "name": "Karla Neira Luck",
+      "username": "KNELU",
+      "email": "kneiraluck@gmail.com",
+      "status": "active",
+      "role": "gestor_camas",
+      "password": "6bji0jl5",
+      "id": 13
+    },
+    {
+      "status": "active",
+      "email": "avelloavello@gmail.com",
+      "id": 14,
+      "password": "xqjzrl1t",
+      "role": "gestor_camas",
+      "name": "Ximena Avello Avello",
+      "username": "XAVAV"
+    },
+    {
+      "name": "Luwig von Plessing Cea",
+      "username": "LVPCE",
+      "email": "ludwig.vonplessing@redsalud.gob.cl",
+      "status": "active",
+      "role": "medico_general",
+      "password": "l7t4xk18",
+      "id": 15
+    },
+    {
+      "password": "bhcaqp7d",
+      "role": "visor",
+      "id": 16,
+      "email": "javiera.sepulveda.a@redsalud.gob.cl",
+      "status": "active",
+      "name": "Javiera Sepúlveda Alamos",
+      "username": "JSAAL"
+    },
+    {
+      "role": "visor",
+      "password": "qxio41k6",
+      "id": 17,
+      "email": "carolina.sepulvedar@redsalud.gob.cl",
+      "status": "active",
+      "name": "Carolina Sepulveda Rojos",
+      "username": "CSERO"
+    },
+    {
+      "status": "active",
+      "email": "karet.escalona@redsalud.gob.cl",
+      "role": "visor",
+      "password": "20by63aq",
+      "id": 18,
+      "name": "Karet Escalona Martinez",
+      "username": "KESMA"
+    },
+    {
+      "status": "active",
+      "email": "christianebrunr@gmail.com",
+      "password": "li6ie7ks",
+      "role": "visor",
+      "id": 19,
+      "name": "Cristiane Brun Rilling",
+      "username": "CBRRI"
+    },
+    {
+      "password": "5uor229i",
+      "role": "medico_general",
+      "id": 20,
+      "email": "andresdelpino98@gmail.com",
+      "status": "active",
+      "username": "APICE",
+      "name": "Andres del Pino Cerda"
+    },
+    {
+      "username": "GBOCA",
+      "name": "Giorgianna Botello Carrasco",
+      "status": "active",
+      "email": "giorgianna.botello.c@redsalud.gob.cl",
+      "id": 21,
+      "password": "6i0q5wxr",
+      "role": "visor"
+    },
+    {
+      "username": "JHECO",
+      "name": "Javiera Hernández Correa",
+      "status": "active",
+      "email": "javierher.matrona22@gmail.com",
+      "id": 22,
+      "role": "visor",
+      "password": "iuv9r8yt"
+    }
+  ]
+}

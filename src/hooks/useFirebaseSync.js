@@ -88,7 +88,7 @@ export function useFirebaseSync(collectionName, documentId, initialData) {
           `[PROTECCIÓN] ❌ ESCRITURA BLOQUEADA: Se intentó eliminar TODOS los pacientes ` +
           `(${oldCount} → 0). Esta operación no está permitida.`
         );
-        return;
+        return false;
       }
 
       // Block if more than 50% of patients are lost in a single operation
@@ -98,7 +98,7 @@ export function useFirebaseSync(collectionName, documentId, initialData) {
           `(${oldCount} → ${newCount}, pérdida >${Math.round((1 - newCount/oldCount) * 100)}%). ` +
           `Posible corrupción de datos. Operación cancelada.`
         );
-        return;
+        return false;
       }
     }
 
@@ -149,13 +149,14 @@ export function useFirebaseSync(collectionName, documentId, initialData) {
         transaction.set(docRef, { data: finalNewData });
       });
       console.log(`[useFirebaseSync] Sincronización exitosa (transacción) para ${documentId}`);
+      return true;
     } catch (txError) {
       if (txError.message && txError.message.includes('PROTECCIÓN')) {
         console.error('[useFirebaseSync] Transacción cancelada por reglas de protección de datos:', txError);
         // Revert local state to the previous value before the edit
         setData(currentData);
         dataRef.current = currentData;
-        return;
+        return false;
       }
 
       // Fallback: If transaction fails (e.g. offline, permissions, timeout), fallback to setDoc
@@ -163,8 +164,13 @@ export function useFirebaseSync(collectionName, documentId, initialData) {
       try {
         await setDoc(docRef, { data: localNewData });
         console.log(`[useFirebaseSync] Sincronización exitosa (fallback setDoc) para ${documentId}`);
+        return true;
       } catch (fallbackError) {
         console.error(`[useFirebaseSync] Error crítico al sincronizar ${documentId}:`, fallbackError);
+        // Revert local state on critical failure
+        setData(currentData);
+        dataRef.current = currentData;
+        return false;
       }
     }
   }, [collectionName, documentId]);
