@@ -834,14 +834,14 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     // First pass: find source and target bed infos (read-only from current state)
     for (const floor in bedsData) {
       for (const sector in bedsData[floor]) {
-        const sourceRoom = bedsData[floor][sector].find(r => r.roomId === sourceRoomId);
+        const sourceRoom = bedsData[floor][sector].find(r => String(r.roomId) === String(sourceRoomId));
         if (sourceRoom) {
-          const sBed = sourceRoom.beds.find(b => b.id === sourceBedId);
+          const sBed = sourceRoom.beds.find(b => String(b.id) === String(sourceBedId));
           if (sBed) sourceBedInfo = JSON.parse(JSON.stringify(sBed));
         }
-        const targetRoom = bedsData[floor][sector].find(r => r.roomId === targetRoomId);
+        const targetRoom = bedsData[floor][sector].find(r => String(r.roomId) === String(targetRoomId));
         if (targetRoom) {
-          const tBed = targetRoom.beds.find(b => b.id === targetBedId);
+          const tBed = targetRoom.beds.find(b => String(b.id) === String(targetBedId));
           if (tBed) targetBedInfo = JSON.parse(JSON.stringify(tBed));
         }
       }
@@ -1131,10 +1131,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
           if (!Array.isArray(next[floor][sector])) continue;
           let sectorRooms = next[floor][sector];
 
-          const sRoomIndex = sectorRooms.findIndex(r => r.roomId === sourceRoomId);
+          const sRoomIndex = sectorRooms.findIndex(r => String(r.roomId) === String(sourceRoomId));
           if (sRoomIndex !== -1) {
             const room = sectorRooms[sRoomIndex];
-            const bIndex = room.beds.findIndex(b => b.id === sourceBedId);
+            const bIndex = room.beds.findIndex(b => String(b.id) === String(sourceBedId));
             if (bIndex !== -1) {
               if (transferType === 'enroque') {
                 const { id, type, tag, ...targetPatientData } = targetBedInfo;
@@ -1156,10 +1156,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             }
           }
 
-          const tRoomIndex = sectorRooms.findIndex(r => r.roomId === targetRoomId);
+          const tRoomIndex = sectorRooms.findIndex(r => String(r.roomId) === String(targetRoomId));
           if (tRoomIndex !== -1) {
             const room = sectorRooms[tRoomIndex];
-            const bIndex = room.beds.findIndex(b => b.id === targetBedId);
+            const bIndex = room.beds.findIndex(b => String(b.id) === String(targetBedId));
             if (bIndex !== -1) {
               const { id, type, tag, ...sourcePatientData } = sourceBedInfo;
               room.beds[bIndex] = {
