@@ -113,15 +113,15 @@ const UserManagement = ({ notify, activeUsers = {} }) => {
             Profesionales Conectados en Tiempo Real
           </h3>
           <span className="role-badge gestor_camas" style={{ fontSize: '0.68rem', padding: '2px 8px', marginLeft: 'auto', background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>
-            {Object.keys(activeUsers || {}).filter(username => activeUsers[username]?.role !== 'superadmin').length} Activos
+            {Object.entries(activeUsers || {}).filter(([username, data]) => data?.role !== 'superadmin' && Date.now() - new Date(data.lastSeen).getTime() < 45000).length} Activos
           </span>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-          {Object.keys(activeUsers || {}).filter(username => activeUsers[username]?.role !== 'superadmin').length === 0 ? (
+          {Object.entries(activeUsers || {}).filter(([username, data]) => data?.role !== 'superadmin' && Date.now() - new Date(data.lastSeen).getTime() < 45000).length === 0 ? (
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>No se registran otros usuarios activos en este momento.</span>
           ) : (
             Object.entries(activeUsers)
-              .filter(([_, data]) => data.role !== 'superadmin')
+              .filter(([_, data]) => data.role !== 'superadmin' && Date.now() - new Date(data.lastSeen).getTime() < 45000)
               .map(([username, data]) => (
                 <div key={username} style={{ 
                   display: 'flex', 

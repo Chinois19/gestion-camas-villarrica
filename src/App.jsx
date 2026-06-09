@@ -58,23 +58,25 @@ function App() {
 
     const interval = setInterval(() => {
       setActiveUsers(prev => {
-        const now = Date.now();
         const updated = { ...prev };
-
+        
         updated[currentUser.username] = {
           name: currentUser.name,
           role: currentUser.role,
           lastSeen: new Date().toISOString()
         };
 
-        // Clean up inactive users (older than 45 seconds)
+        // Only cleanup extremely stale sessions (e.g. > 24 hours) to avoid DB bloat,
+        // but avoid aggressive 45-second cleanup of OTHER users which causes flickering 
+        // due to local clock skews between different computers.
+        const now = Date.now();
         for (const username in updated) {
-          if (!updated[username] || !updated[username].lastSeen) {
-            delete updated[username];
-            continue;
-          }
+          if (username === currentUser.username) continue;
+          if (!updated[username] || !updated[username].lastSeen) continue;
+          
           const lastSeenTime = new Date(updated[username].lastSeen).getTime();
-          if (now - lastSeenTime > 45 * 1000) {
+          // 24 hours = 86400000 ms
+          if (now - lastSeenTime > 86400000) {
             delete updated[username];
           }
         }
@@ -85,7 +87,6 @@ function App() {
 
     // Update presence immediately on mount/login
     setActiveUsers(prev => {
-      const now = Date.now();
       const updated = { ...prev };
       
       updated[currentUser.username] = {
@@ -94,16 +95,6 @@ function App() {
         lastSeen: new Date().toISOString()
       };
 
-      for (const username in updated) {
-        if (!updated[username] || !updated[username].lastSeen) {
-          delete updated[username];
-          continue;
-        }
-        const lastSeenTime = new Date(updated[username].lastSeen).getTime();
-        if (now - lastSeenTime > 45 * 1000) {
-          delete updated[username];
-        }
-      }
       return updated;
     });
 
