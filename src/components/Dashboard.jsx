@@ -428,7 +428,8 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
           });
         }
       }
-      return next;
+      // Sanitizar para eliminar cualquier valor 'undefined' que Firebase rechazaría
+      return JSON.parse(JSON.stringify(next));
     };
 
     // Primero escribir bedsData; solo si tiene éxito, remover de waitingList
@@ -511,7 +512,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
           });
         }
       }
-      return next;
+      return JSON.parse(JSON.stringify(next));
     });
   };
 
@@ -748,7 +749,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             });
           }
         }
-        return next;
+        return JSON.parse(JSON.stringify(next));
       });
 
       if (success !== false) {
@@ -1173,7 +1174,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
           }
         }
       }
-      return next;
+      return JSON.parse(JSON.stringify(next));
     });
     setEditingGrdBed(null);
   };
