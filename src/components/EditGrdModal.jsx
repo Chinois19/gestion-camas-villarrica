@@ -501,7 +501,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                       >
                         <option value="">-- Mantener en cama actual --</option>
                         {allBeds
-                          .filter(b => b.id !== bed.id && b.roomId !== bed.roomId && (formData.transferType === 'libre' ? b.status === 'available' : b.status === 'occupied'))
+                          .filter(b => !(b.roomId === bed.roomId && b.id === bed.id) && (formData.transferType === 'libre' ? b.status === 'available' : b.status === 'occupied'))
                           .map(b => (
                           <option key={`${b.roomId}|${b.id}`} value={`${b.roomId}|${b.id}`}>
                             {b.floor ? `${b.floor} - ` : ''}Hab {b.roomId} - Cama {b.id} ({b.tag || b.type}) {formData.transferType === 'enroque' && b.patient ? `- ${b.patient}` : ''}
