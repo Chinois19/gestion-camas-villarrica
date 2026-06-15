@@ -528,3 +528,11 @@ const tdStyle = {
   verticalAlign: 'middle',
   color: 'var(--text-primary)',
 };
+
+const thRotated = {
+  padding: '4px 0',
+  textAlign: 'center',
+  width: 36,
+  minWidth: 36,
+  verticalAlign: 'bottom',
+};
