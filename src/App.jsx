@@ -15,6 +15,7 @@ import InsightsDashboard from './components/InsightsDashboard';
 import DatabasePanel from './components/DatabasePanel';
 import DischargesDatabasePanel from './components/DischargesDatabasePanel';
 import TransfersDatabasePanel from './components/TransfersDatabasePanel';
+import BlockedBedsReportPanel from './components/BlockedBedsReportPanel';
 import Navbar from './components/Navbar';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
 import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
@@ -48,6 +49,7 @@ function App() {
   const [activeUsers, setActiveUsers, activeUsersLoading] = useFirebaseSync('appState', 'activeUsers', {});
   const [transferHistory, setTransferHistory, transfersLoading] = useFirebaseSync('appState', 'transferHistory', MOCK_TRANSFERS);
   const [waitingListDischarges, setWaitingListDischarges, dischargesLoading] = useFirebaseSync('appState', 'waitingListDischarges', []);
+  const [blockLog, setBlockLog, blockLogLoading] = useFirebaseSync('appState', 'blockLog', []);
 
   useEffect(() => {
     document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
@@ -101,7 +103,7 @@ function App() {
     return () => clearInterval(interval);
   }, [currentUser, activeUsersLoading]);
 
-  const isLoading = bedsLoading || waitingLoading || hodomLoading || transfersLoading || dischargesLoading;
+  const isLoading = bedsLoading || waitingLoading || hodomLoading || transfersLoading || dischargesLoading || blockLogLoading;
 
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -343,20 +345,22 @@ function App() {
   const isAseo = currentUser.role === 'personal_aseo';
   const isVisor = currentUser.role === 'visor';
   const isHodom = currentUser.role === 'medico_hodom';
+  const isGestoraServicio = currentUser.role === 'gestora_servicio';
 
   const canViewAll = isSuperAdmin || isVisor;
 
   // Navbar permissions by role
   const navPermissions = {
-    canDashboard: canViewAll || isMedico || isGestor || isAseo,
-    canInsights: canViewAll || isGestor || isMedico,
+    canDashboard: canViewAll || isMedico || isGestor || isAseo || isGestoraServicio,
+    canInsights: canViewAll || isGestor || isMedico || isGestoraServicio,
     canDatabase: canViewAll || isGestor || isMedico,
     canIC: canViewAll || isMedico || isGestor,
-    canAseo: canViewAll || isAseo || isGestor,
+    canAseo: canViewAll || isAseo || isGestor || isGestoraServicio,
     canHodom: canViewAll || isHodom || isGestor,
     canSolicitud: isSuperAdmin || isGestor || isHodom,
     canUsuarios: isSuperAdmin,
     canInfra: isSuperAdmin,
+    canBlockedReport: isSuperAdmin || isGestor || isVisor,
   };
 
   return (
@@ -437,6 +441,7 @@ function App() {
           onAddTransfers={(newTransfers) => setTransferHistory(prev => [...newTransfers, ...(prev || [])])}
           user={currentUser}
           setWaitingListDischarges={setWaitingListDischarges}
+          setBlockLog={setBlockLog}
         />
       )}
       {currentView === 'solicitud' && (
@@ -534,6 +539,13 @@ function App() {
       )}
       {currentView === 'traslados_database' && (
         <TransfersDatabasePanel transferHistory={transferHistory || []} />
+      )}
+      {currentView === 'blocked_beds' && (
+        <BlockedBedsReportPanel
+          blockLog={blockLog || []}
+          setBlockLog={setBlockLog}
+          userRole={currentUser.role}
+        />
       )}
 
       {/* Global Footer */}

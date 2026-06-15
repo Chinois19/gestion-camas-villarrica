@@ -49,13 +49,7 @@ export default function MultiSearchableSelect({ options, value = [], onChange, p
         {value.map((v, i) => {
           const opt = options.find(o => o.value === v);
           return (
-            <div key={v} style={{
-              display: 'flex', alignItems: 'center', gap: '4px',
-              background: i === 0 ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)', // Highlight principal
-              color: i === 0 ? 'var(--accent-color)' : 'var(--text-primary)',
-              padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem',
-              border: i === 0 ? '1px solid rgba(0, 240, 255, 0.3)' : '1px solid transparent'
-            }}>
+            <div key={v} className={`select-chip ${i === 0 ? 'principal' : ''}`}>
               {i === 0 && <span style={{ fontSize: '0.7rem', opacity: 0.8, marginRight: '4px' }}>Principal:</span>}
               {opt ? opt.label : v}
               <X size={12} style={{ cursor: 'pointer', marginLeft: '4px' }} onClick={(e) => handleRemove(e, v)} />

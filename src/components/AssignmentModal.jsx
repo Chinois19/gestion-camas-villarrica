@@ -4,6 +4,7 @@ import { GRD_DATA, calculateProjectedDays, getGrdLimit } from '../data/grd';
 import SearchableSelect from './SearchableSelect';
 import MultiSearchableSelect from './MultiSearchableSelect';
 import { CIE10_OPTIONS } from '../data/cie10Options';
+import { formatAgeDetailed } from '../utils/age';
 
 function ReadOnlyField({ label, value, color }) {
   return (
@@ -17,9 +18,42 @@ function ReadOnlyField({ label, value, color }) {
 }
 
 export default function AssignmentModal({ patient, bed, user, onConfirm, onClose }) {
+  // Reconstruir diagnóstico CIE-10 priorizando los campos codificados del formulario de solicitud.
+  // patient.dxCie10 y patient.secondaryCodes son los campos guardados por SolicitudForm con los
+  // códigos reales. Solo usamos patient.diagnosis como fallback (puede ser texto libre como "ICC").
+  const buildDiagnosisCodes = () => {
+    const cie10Regex = /^[A-Z]\d{2}(\.\d+)?/; // detecta formato CIE-10 real
+    // Si existe dxCie10 en el paciente, reconstruir desde esos campos
+    if (patient.dxCie10) {
+      const codes = [patient.dxCie10 + (patient.dxCie10.includes(' - ') ? '' : '')];
+      // Buscar descripción completa desde CIE10_OPTIONS
+      const mainOption = CIE10_OPTIONS.find(o => o.value.startsWith(patient.dxCie10));
+      const mainCode = mainOption ? mainOption.value : patient.dxCie10;
+      const result = [mainCode];
+      if (Array.isArray(patient.secondaryCodes)) {
+        patient.secondaryCodes.forEach(sc => {
+          const opt = CIE10_OPTIONS.find(o => o.value.startsWith(sc));
+          result.push(opt ? opt.value : sc);
+        });
+      }
+      return result;
+    }
+    // Si diagnosis ya es un array, filtrar solo los que tengan formato CIE-10 real
+    if (Array.isArray(patient.diagnosis)) {
+      const cie10Entries = patient.diagnosis.filter(d => cie10Regex.test(d));
+      if (cie10Entries.length > 0) return cie10Entries;
+    }
+    // Si diagnosis es string con formato CIE-10, usarlo
+    if (typeof patient.diagnosis === 'string' && cie10Regex.test(patient.diagnosis)) {
+      return [patient.diagnosis];
+    }
+    // Fallback: devolver vacío para que el usuario lo complete en el modal
+    return [];
+  };
+
   const [formData, setFormData] = useState({
     patientName: patient.name || '',
-    diagnosis: Array.isArray(patient.diagnosis) ? patient.diagnosis : (patient.diagnosis ? [patient.diagnosis] : []),
+    diagnosis: buildDiagnosisCodes(),
     origin: patient.origin || '',
     bedTypeRequired: patient.bedTypeRequired || '',
     grdId: '',
@@ -117,19 +151,43 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
       <div className="glass-panel modal-content assignment-form" style={{ maxWidth: '1200px', width: 'min(98vw, 1200px)', height: 'min(95vh, 850px)', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
         
         {/* Header */}
-        <div className="modal-header" style={{ background: 'var(--panel-bg)', borderBottom: '1px solid var(--glass-border)', padding: '20px 24px', zIndex: 10 }}>
+        <div className="modal-header grd-modal-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '20px 24px', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div className="avatar" style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-color)' }}>
+            <div className="avatar" style={{ background: 'rgba(255, 255, 255, 0.18)', color: '#ffffff', border: '1px solid rgba(255, 255, 255, 0.25)' }}>
               <Activity size={20} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Asignación Clínica de Cama</h2>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', margin: 0, letterSpacing: '0.02em' }}>Asignación Clínica de Cama</h2>
+              <p style={{ fontSize: '0.78rem', color: 'rgba(255, 255, 255, 0.85)', marginTop: '3px', marginBottom: 0, fontWeight: 500 }}>
                 Validación de solicitud y clasificación GRD
               </p>
             </div>
           </div>
-          <button type="button" className="close-btn" onClick={onClose}><X size={20} /></button>
+          <button 
+            type="button" 
+            className="close-btn" 
+            onClick={onClose}
+            style={{
+              background: 'rgba(255, 255, 255, 0.12)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              color: '#ffffff',
+              transition: 'all 0.2s ease',
+              width: '36px',
+              height: '36px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
+              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.45)';
+              e.currentTarget.style.color = '#ffffff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+              e.currentTarget.style.color = '#ffffff';
+            }}
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Modal Form */}
@@ -255,7 +313,7 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
                     </div>
                     
                     <ReadOnlyField label="RUT" value={patient.rut} />
-                    <ReadOnlyField label="Edad / Sexo" value={`${patient.age || patient.edad || '—'} años · ${patient.sex || patient.sexo || '—'}`} />
+                    <ReadOnlyField label="Edad / Sexo" value={`${formatAgeDetailed(patient.fechaNacimiento, patient.age || patient.edad)} · ${patient.sex || patient.sexo || '—'}`} />
                     <ReadOnlyField label="Previsión" value={patient.prevision} />
                     <ReadOnlyField label="Comuna" value={patient.comuna} />
                     
@@ -336,22 +394,19 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
                         <div className="severity-selector" style={{ display: 'flex', gap: '8px' }}>
                           {[1, 2, 3].map(level => {
                             const isSelected = parseInt(formData.severity) === level;
-                            const colors = level === 1 
-                              ? { bg: 'rgba(34,197,94,0.15)', border: '#22c55e', text: '#22c55e' }
-                              : level === 2 
-                              ? { bg: 'rgba(245,158,11,0.15)', border: '#f59e0b', text: '#f59e0b' }
-                              : { bg: 'rgba(239,68,68,0.15)', border: '#ef4444', text: '#ef4444' };
                             return (
                               <button 
                                 key={level} 
                                 type="button" 
+                                className={`severity-btn ${isSelected ? `active s-${level}` : ''}`}
                                 style={{
-                                  flex: 1, padding: '8px 12px', fontSize: '0.75rem', fontWeight: 700, borderRadius: '8px',
-                                  border: `1px solid ${isSelected ? colors.border : 'var(--glass-border)'}`,
-                                  background: isSelected ? colors.bg : 'var(--inset-bg)',
-                                  color: isSelected ? colors.text : 'var(--text-secondary)',
-                                  cursor: 'pointer', transition: 'all 0.2s ease',
-                                  boxShadow: isSelected ? 'var(--shadow-glow)' : 'none'
+                                  flex: 1,
+                                  padding: '8px 12px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
                                 }}
                                 onClick={() => setFormData(prev => ({ ...prev, severity: level }))}
                               >
@@ -363,17 +418,17 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
                       </div>
                     </div>
                     
-                     <div className="projection-box glass-panel" style={{ margin: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', minHeight: '100px', border: '1px solid rgba(239, 68, 68, 0.4)', background: 'rgba(239, 68, 68, 0.08)', boxShadow: '0 0 12px rgba(239, 68, 68, 0.1)' }}>
-                       <div className="projection-main" style={{ marginBottom: '4px' }}>
-                         <AlertTriangle size={28} color="#f87171" />
-                         <div className="projection-details">
-                           <span className="label" style={{ fontSize: '0.68rem', color: '#f87171', fontWeight: 700, textTransform: 'uppercase' }}>Límite Outliers</span>
-                           <span className="value" style={{ fontSize: '1.8rem', color: '#f87171', fontWeight: 800 }}>{limitDays} Días</span>
+                     <div className="projection-box glass-panel outlier-warning" style={{ margin: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', minHeight: '100px' }}>
+                       <div className="projection-main" style={{ marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                         <AlertTriangle size={28} />
+                         <div className="projection-details" style={{ display: 'flex', flexDirection: 'column' }}>
+                           <span className="label" style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Límite Outliers</span>
+                           <span className="value" style={{ fontSize: '1.8rem', fontWeight: 800 }}>{limitDays} Días</span>
                          </div>
                        </div>
-                       <div className="projection-meta" style={{ marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '8px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                         <span style={{ fontSize: '0.62rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Promedio días de estada Hospital de Villarrica</span>
-                         <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{projectedDays} días <span style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--text-muted)' }}>(histórico)</span></span>
+                       <div className="projection-meta" style={{ marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '2px', opacity: 0.9 }}>
+                         <span style={{ fontSize: '0.62rem', textTransform: 'uppercase' }}>Promedio días de estada Hospital de Villarrica</span>
+                         <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{projectedDays} días <span style={{ fontSize: '0.7rem', fontWeight: 400 }}>(histórico)</span></span>
                        </div>
                      </div>
                   </div>

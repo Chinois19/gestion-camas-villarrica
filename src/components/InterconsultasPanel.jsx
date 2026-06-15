@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Stethoscope, Clock, Search, CheckCircle, XCircle, Trash2, Activity, AlertTriangle, Users } from 'lucide-react';
+import { Stethoscope, Clock, Search, CheckCircle, XCircle, Trash2, Activity, AlertTriangle, Users, Eye } from 'lucide-react';
 import { matchesSearch as matchUtils } from '../utils/search';
+import ViewInterconsultaModal from './ViewInterconsultaModal';
 
 export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDone, onDeleteIC, userRole }) {
   const isVisor = userRole === 'visor';
@@ -14,6 +15,7 @@ export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDon
   const [resolvingIC, setResolvingIC] = useState(null);
   const [resolvingState, setResolvingState] = useState('realizada'); // 'realizada', 'no_pertinente', 'eliminada'
   const [observaciones, setObservaciones] = useState('');
+  const [viewingIC, setViewingIC] = useState(null);
 
   useEffect(() => {
     const list = [];
@@ -340,22 +342,45 @@ export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDon
                           )}
                         </td>
                         <td style={{ padding: '10px 16px', textAlign: 'right' }}>
-                          {ic.estado === 'pendiente' && !isVisor && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
-                              <button 
-                                style={{ padding: '6px 16px', width: '140px', background: '#22c55e', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}
-                                onClick={() => openResolveModal(ic, 'realizada')}
-                              >
-                                Atención Realizada
-                              </button>
-                              <button 
-                                style={{ padding: '6px 16px', width: '140px', background: '#f97316', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}
-                                onClick={() => openResolveModal(ic, 'no_pertinente')}
-                              >
-                                Desestima
-                              </button>
-                            </div>
-                          )}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
+                            <button 
+                              style={{ 
+                                padding: '6px 16px', 
+                                width: '140px', 
+                                background: 'rgba(168, 85, 247, 0.15)', 
+                                border: '1px solid rgba(168, 85, 247, 0.4)', 
+                                color: '#d8b4fe', 
+                                borderRadius: '6px', 
+                                fontSize: '0.8rem', 
+                                fontWeight: 700, 
+                                cursor: 'pointer', 
+                                transition: 'background 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                              }}
+                              onClick={() => setViewingIC(ic)}
+                            >
+                              <Eye size={13} /> Ver Detalle
+                            </button>
+                            {ic.estado === 'pendiente' && !isVisor && (
+                              <>
+                                <button 
+                                  style={{ padding: '6px 16px', width: '140px', background: '#22c55e', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}
+                                  onClick={() => openResolveModal(ic, 'realizada')}
+                                >
+                                  Atención Realizada
+                                </button>
+                                <button 
+                                  style={{ padding: '6px 16px', width: '140px', background: '#f97316', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}
+                                  onClick={() => openResolveModal(ic, 'no_pertinente')}
+                                >
+                                  Desestima
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -410,6 +435,12 @@ export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDon
             </form>
           </div>
         </div>
+      )}
+      {viewingIC && (
+        <ViewInterconsultaModal 
+          ic={viewingIC} 
+          onClose={() => setViewingIC(null)} 
+        />
       )}
     </div>
   );

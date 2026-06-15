@@ -5,6 +5,7 @@ import MultiSearchableSelect from './MultiSearchableSelect';
 import { MEDICOS } from '../data/medicos';
 import { ESPECIALIDADES } from '../data/formData';
 import { matchesSearch } from '../utils/search';
+import { formatAgeDetailed } from '../utils/age';
 
 /* ── SearchableSelect ─────────────────────────────── */
 function SearchableSelect({ name, value, onChange, options, placeholder, allowFreeText }) {
@@ -107,7 +108,7 @@ export default function InterconsultaModal({ bed, currentUser, onConfirm, onClos
     // Pre-filled from patient data
     nombrePaciente: bed.patient || '',
     rut: bed.rut || '',
-    edad: bed.age || '',
+    edad: formatAgeDetailed(bed.fechaNacimiento, bed.age),
     profesionalDeriva: currentUser?.name || '',
     fecha: now.toLocaleDateString('es-CL'),
     hora: now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),

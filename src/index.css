@@ -100,114 +100,400 @@ body::before {
   pointer-events: none;
 }
 
-/* ── Theme Light Palette (Doctor Dashboard Match) ───────────────── */
+/* ── Theme Light Palette — Maximum Contrast ─────────────────── */
 body.theme-light {
-  --bg-void:        #00c2cb;
-  --bg-color:       #00c2cb;
+  --bg-void:        #b8cfe8;
+  --bg-color:       #b8cfe8;
 
-  /* Text inside Cyan areas (sidebar, header) */
-  --text-primary:   #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.85);
-  --text-muted:     rgba(255, 255, 255, 0.65);
+  --text-primary:   #06101f;
+  --text-secondary: #122747;
+  --text-muted:     #2e5080;
 
-  /* Glass layers on Cyan (Sidebar, Header) */
-  --glass-0:        transparent;
-  --glass-1:        transparent;
-  --glass-2:        rgba(255, 255, 255, 0.15);
-  --glass-3:        rgba(255, 255, 255, 0.25);
-  --glass-4:        rgba(255, 255, 255, 0.35);
+  --glass-0:        rgba(255, 255, 255, 0.70);
+  --glass-1:        #ffffff;
+  --glass-2:        #f4f8fd;
+  --glass-3:        #e8f1fa;
+  --glass-4:        #d5e6f5;
 
-  --border-subtle:  rgba(255, 255, 255, 0.2);
-  --border-light:   rgba(255, 255, 255, 0.3);
-  --border-glow:    rgba(255, 255, 255, 0.4);
+  --border-subtle:  rgba(18, 39, 71, 0.18);
+  --border-light:   rgba(18, 39, 71, 0.35);
+  --border-glow:    rgba(0, 119, 168, 0.5);
 
-  --shadow-float:   none;
-  --shadow-lift:    none;
-  --shadow-high:    none;
-  --shadow-inset:   none;
-  --shadow-glow:    none;
+  --shadow-float:   0 3px 14px rgba(6, 16, 31, 0.14), 0 1px 4px rgba(6, 16, 31, 0.09);
+  --shadow-lift:    0 10px 34px rgba(6, 16, 31, 0.18), 0 4px 10px rgba(6, 16, 31, 0.11);
+  --shadow-high:    0 20px 56px rgba(6, 16, 31, 0.22), 0 8px 18px rgba(6, 16, 31, 0.12);
+  --shadow-inset:   inset 0 2px 5px rgba(6, 16, 31, 0.10);
+  --shadow-glow:    0 0 18px rgba(0, 174, 182, 0.30);
 
-  --accent:         #ffffff;
-  --accent-dim:     rgba(255, 255, 255, 0.15);
-  --accent-border:  rgba(255, 255, 255, 0.3);
-  --accent-glow:    rgba(255, 255, 255, 0.2);
-  
-  --inset-bg:       rgba(0, 0, 0, 0.1);
+  --accent:         #005f8a;
+  --accent-dim:     rgba(0, 95, 138, 0.12);
+  --accent-border:  rgba(0, 95, 138, 0.40);
+  --accent-glow:    rgba(0, 174, 182, 0.28);
+
+  --inset-bg:       rgba(0, 0, 0, 0.05);
+  /* Form and panel backgrounds — override dark-mode rgba(0,0,0,X) values */
+  --panel-bg:       #ffffff;
+  --form-inset:     #f2f4f7;
+  --form-inset-alt: #e8eaed;
 }
 
 body.theme-light::before {
   background: none;
 }
 
-/* Fix Header to be Cyan */
+/* Premium Blue-Lagoon Gradient Header & Unified Light Mode Styles */
 body.theme-light header.glass-panel {
-  background: #00c2cb;
-  border-bottom: 1px solid rgba(255,255,255,0.2);
-  box-shadow: none;
+  background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 20px rgba(0, 131, 176, 0.12) !important;
 }
 
-/* Fix right-side main content to be a large white panel */
+body.theme-light header.glass-panel .text-gradient {
+  background: none !important;
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+}
+
+body.theme-light header.glass-panel .icon-logo {
+  color: #ffffff !important;
+}
+
+body.theme-light header.glass-panel .user-info span {
+  color: #ffffff !important;
+}
+
+body.theme-light header.glass-panel .avatar {
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+}
+
+body.theme-light header.glass-panel .glass-button {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-light header.glass-panel .glass-button:hover {
+  background: rgba(255, 255, 255, 0.28) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Page background: deep blue-slate */
+body.theme-light {
+  background: linear-gradient(160deg, #b8cfe8 0%, #9dbde0 100%) !important;
+}
+
+/* Central content area */
 body.theme-light .main-layout > main,
 body.theme-light .main-layout > div[style*="flex: 1"],
 body.theme-light .app-container > div[style*="maxWidth: 1350"] {
-  background: #ffffff;
-  border-radius: 40px;
-  padding: 30px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  background: #edf4fc;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(6, 16, 31, 0.16), 0 3px 10px rgba(6, 16, 31, 0.09);
+  border: 1.5px solid rgba(18, 39, 71, 0.13);
   margin-top: 10px;
-  
-  /* Overrides for text & panels inside the white area */
-  --text-primary:   #020617;
-  --text-secondary: #1e293b;
-  --text-muted:     #475569;
-  --glass-0:        #ffffff;
-  --glass-1:        #eef2f6;
-  --glass-2:        #e2e8f0;
-  --glass-3:        #cbd5e1;
-  --glass-4:        #94a3b8;
-  --border-subtle:  rgba(0, 0, 0, 0.22);
-  --border-light:   rgba(0, 0, 0, 0.40);
-  --shadow-float:   0 8px 24px rgba(0, 0, 0, 0.12);
-  --shadow-lift:    0 12px 32px rgba(0, 0, 0, 0.18);
-  --accent:         #00aeb6;
-  --accent-dim:     rgba(0, 194, 203, 0.18);
-  --accent-border:  rgba(0, 194, 203, 0.4);
-  --inset-bg:       rgba(0, 0, 0, 0.08);
-  color: var(--text-primary);
+
+  --text-primary:   #06101f;
+  --text-secondary: #122747;
+  --text-muted:     #2e5080;
+  --glass-0:        #edf4fc;
+  --glass-1:        #ffffff;
+  --glass-2:        #edf4fc;
+  --glass-3:        #daeaf8;
+  --glass-4:        #bdd6ef;
+  --border-subtle:  rgba(18, 39, 71, 0.16);
+  --border-light:   rgba(18, 39, 71, 0.32);
+  --shadow-float:   0 3px 14px rgba(6, 16, 31, 0.12), 0 1px 4px rgba(6, 16, 31, 0.08);
+  --shadow-lift:    0 10px 34px rgba(6, 16, 31, 0.17), 0 4px 10px rgba(6, 16, 31, 0.10);
+  --accent:         #005f8a;
+  --accent-dim:     rgba(0, 95, 138, 0.12);
+  --accent-border:  rgba(0, 95, 138, 0.40);
+  --inset-bg:       rgba(0, 0, 0, 0.05);
+  color: #06101f;
 }
 
 body.theme-light .modal-content {
   background: #ffffff !important;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.2) !important;
+  box-shadow: 0 28px 72px rgba(6,16,31,0.28) !important;
+  border: 2px solid rgba(18, 39, 71, 0.14) !important;
 }
 
-/* Fix specific bed card inner backgrounds */
+/* Modal header: distinct gradient bar */
+body.theme-light .modal-header {
+  background: linear-gradient(135deg, #edf4fc 0%, #daeaf8 100%) !important;
+  border-bottom: 2px solid rgba(18, 39, 71, 0.14) !important;
+}
+
+/* Modal body: slightly off-white for depth */
+body.theme-light .modal-body {
+  background: #f9fbfe !important;
+}
+
+/* form-section cards inside modals */
+body.theme-light .form-section {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(18, 39, 71, 0.3) !important;
+  box-shadow: 0 2px 10px rgba(6, 16, 31, 0.08) !important;
+}
+
+/* glass-panel used as sub-cards inside modals */
+body.theme-light .modal-content .glass-panel {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(18, 39, 71, 0.3) !important;
+  box-shadow: 0 3px 12px rgba(6, 16, 31, 0.09) !important;
+}
+
+/* Section titles inside modals */
+body.theme-light .section-title {
+  color: #06101f !important;
+  border-bottom-color: rgba(18, 39, 71, 0.18) !important;
+}
+
+/* All inputs in modals/forms */
+body.theme-light input.glass-input,
+body.theme-light textarea.glass-input {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(18, 39, 71, 0.45) !important;
+  color: #06101f !important;
+  font-weight: 500 !important;
+}
+body.theme-light input.glass-input::placeholder,
+body.theme-light textarea.glass-input::placeholder {
+  color: #2e5080 !important;
+}
+body.theme-light input.glass-input:focus,
+body.theme-light textarea.glass-input:focus {
+  border-color: #005f8a !important;
+  box-shadow: 0 0 0 3px rgba(0, 95, 138, 0.18) !important;
+}
+
+/* modal-actions divider */
+body.theme-light .modal-actions {
+  border-top-color: rgba(18, 39, 71, 0.16) !important;
+}
+
+/* ── High-Contrast Bed Cards ─────────────────────────────────── */
 body.theme-light .bed-card {
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,0.22);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  background: #ffffff !important;
+  border: 2px solid rgba(18, 39, 71, 0.18) !important;
+  box-shadow: 0 5px 18px rgba(6, 16, 31, 0.12), 0 2px 5px rgba(6, 16, 31, 0.08) !important;
+}
+body.theme-light .bed-card:hover {
+  box-shadow: 0 12px 36px rgba(6, 16, 31, 0.18), 0 4px 10px rgba(6, 16, 31, 0.10) !important;
+  transform: translateY(-5px) !important;
+  border-color: rgba(0, 95, 138, 0.38) !important;
+}
+body.theme-light .bed-card .patient-name {
+  color: #06101f !important;
+  font-weight: 700 !important;
+}
+body.theme-light .bed-card .patient-meta {
+  color: #122747 !important;
+}
+body.theme-light .bed-type-badge {
+  background: #d5e6f5 !important;
+  color: #06101f !important;
+  border-color: rgba(18, 39, 71, 0.30) !important;
+  font-weight: 700 !important;
 }
 
-body.theme-light .glass-input {
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,0.35);
-  color: #020617;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+/* ── Room Container ───────────────────────────────────────────── */
+body.theme-light .room-container {
+  background: #ffffff !important;
+  border: 2px solid rgba(18, 39, 71, 0.16) !important;
+  box-shadow: 0 6px 24px rgba(6, 16, 31, 0.12) !important;
+  border-radius: 16px !important;
 }
-body.theme-light .glass-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(0, 174, 182, 0.2);
+body.theme-light .room-header {
+  background: linear-gradient(90deg, #daeaf8 0%, #cde3f5 100%) !important;
+  border-bottom: 2px solid rgba(18, 39, 71, 0.16) !important;
+  border-radius: 16px 16px 0 0 !important;
 }
-body.theme-light select.glass-input option {
-  background: #ffffff;
-  color: #020617;
+body.theme-light .room-title {
+  color: #06101f !important;
+  font-weight: 800 !important;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+body.theme-light .sidebar .glass-panel,
+body.theme-light .sidebar-section {
+  background: #ffffff !important;
+  border: 2px solid rgba(18, 39, 71, 0.16) !important;
+  box-shadow: 0 8px 28px rgba(6, 16, 31, 0.14), 0 2px 7px rgba(6, 16, 31, 0.09) !important;
+  border-radius: 16px !important;
+}
+body.theme-light .sidebar-title {
+  color: #06101f !important;
+  font-weight: 800 !important;
+  font-size: 0.68rem !important;
+  letter-spacing: 0.12em !important;
+}
+/* ── Sidebar buttons: neutral grey scale, NOT blue ───────────── */
+body.theme-light .stack-btn {
+  background: #f0f2f5 !important;
+  border: 1.5px solid rgba(18, 39, 71, 0.18) !important;
+  color: #1a2b3c !important;
+  font-weight: 600 !important;
+}
+body.theme-light .stack-btn:hover {
+  background: #e2e5ea !important;
+  color: #06101f !important;
+  border-color: rgba(18, 39, 71, 0.28) !important;
+  box-shadow: 0 2px 8px rgba(6, 16, 31, 0.10) !important;
+}
+body.theme-light .stack-btn.active {
+  background: #005f8a !important;
+  border-color: #005f8a !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(0, 95, 138, 0.30) !important;
+}
+
+/* Toggle + status buttons: grey scale */
+body.theme-light .toggle-btn {
+  background: #f0f2f5 !important;
+  border: 1.5px solid rgba(18, 39, 71, 0.18) !important;
+  color: #1a2b3c !important;
+  font-weight: 600 !important;
+}
+body.theme-light .toggle-btn:hover {
+  background: #e2e5ea !important;
+  color: #06101f !important;
+}
+body.theme-light .toggle-btn.active {
+  background: #005f8a !important;
+  border-color: #005f8a !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 12px rgba(0, 95, 138, 0.32) !important;
+}
+body.theme-light .status-filter-btn,
+body.theme-light .bed-status-toggle {
+  background: #f0f2f5 !important;
+  border: 1.5px solid rgba(18, 39, 71, 0.18) !important;
+  color: #1a2b3c !important;
+  font-weight: 600 !important;
+}
+body.theme-light .status-filter-btn.active,
+body.theme-light .bed-status-toggle.active {
+  background: #005f8a !important;
+  color: #ffffff !important;
+  border-color: #005f8a !important;
+}
+
+/* ── Selects / Dropdowns: white + dark border, NOT heavy blue ── */
+body.theme-light .glass-input,
+body.theme-light select,
+body.theme-light select.glass-input {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(18, 39, 71, 0.45) !important;
+  color: #06101f !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 4px rgba(6, 16, 31, 0.06) !important;
+}
+body.theme-light .glass-input:focus,
+body.theme-light select.glass-input:focus {
+  border-color: #005f8a !important;
+  box-shadow: 0 0 0 3px rgba(0, 95, 138, 0.15) !important;
+  outline: none !important;
+}
+body.theme-light select.glass-input option,
+body.theme-light select option {
+  background: #ffffff !important;
+  color: #06101f !important;
+  font-weight: 500 !important;
 }
 body.theme-light select.glass-input {
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D'http%3A//www.w3.org/2000/svg' width%3D'12' height%3D'12'%3E%3Cpath fill%3D'rgba(0,0,0,0.6)' d%3D'M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D'http%3A//www.w3.org/2000/svg' width%3D'12' height%3D'12'%3E%3Cpath fill%3D'%2306101f' d%3D'M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+}
+
+/* ── SolicitudForm light mode — convert dark rgba to grey ──────── */
+/* Override --inset-bg so GInput / GTextarea look grey not white-on-white */
+body.theme-light {
+  --inset-bg: #f2f4f7;
+  --panel-bg: #ffffff;
+}
+/* SectionCard outer card */
+body.theme-light [style*="panel-bg"],
+body.theme-light [style*="rgba(10, 18, 30"],
+body.theme-light [style*="rgba(10,18,30"] {
+  background: #ffffff !important;
+  border-color: rgba(18, 39, 71, 0.16) !important;
+  box-shadow: 0 4px 16px rgba(6,16,31,0.10) !important;
+}
+/* Vital input boxes: dark grey in dark mode → light grey in light mode */
+body.theme-light [style*="rgba(0,0,0,0.2"],
+body.theme-light [style*="rgba(0, 0, 0, 0.2"] {
+  background: #f2f4f7 !important;
+  border-color: rgba(18, 39, 71, 0.18) !important;
+}
+body.theme-light [style*="rgba(0,0,0,0.35"],
+body.theme-light [style*="rgba(0, 0, 0, 0.35"] {
+  background: #ffffff !important;
+  border-color: rgba(18, 39, 71, 0.22) !important;
+  color: #06101f !important;
+}
+/* Form header bar */
+body.theme-light [style*="rgba(10, 18, 30, 0.4"],
+body.theme-light [style*="rgba(10,18,30,0.4"] {
+  background: linear-gradient(135deg, #1a3a5c 0%, #0d2340 100%) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+/* FieldLabel — make uppercase labels dark not washed */
+body.theme-light [style*="text-muted"] {
+  color: #2e4a6a !important;
+}
+/* Form section title spans */
+body.theme-light [style*="var(--text-secondary)"][style*="uppercase"] {
+  color: #06101f !important;
+  font-weight: 800 !important;
+}
+
+/* ── Waiting list: grey tones NOT blue ───────────────────────── */
+body.theme-light .waiting-list-section .glass-panel {
+  background: #ffffff !important;
+  border: 2px solid rgba(18, 39, 71, 0.15) !important;
+  box-shadow: 0 6px 24px rgba(6, 16, 31, 0.12) !important;
+  border-radius: 16px !important;
+}
+body.theme-light .waiting-card {
+  background: #f2f4f7 !important;
+  border: 1.5px solid rgba(18, 39, 71, 0.14) !important;
+  box-shadow: 0 2px 8px rgba(6, 16, 31, 0.07) !important;
+}
+body.theme-light .waiting-card:hover {
+  background: #e8eaed !important;
+  box-shadow: 0 6px 20px rgba(6, 16, 31, 0.12) !important;
+  transform: translateY(-2px) !important;
+}
+body.theme-light .summary-item {
+  background: #f2f4f7 !important;
+  border: 1.5px solid rgba(18, 39, 71, 0.13) !important;
+}
+body.theme-light .summary-item:hover,
+body.theme-light .summary-item.active-filter {
+  background: rgba(0, 95, 138, 0.09) !important;
+  border-color: rgba(0, 95, 138, 0.30) !important;
+}
+body.theme-light .summary-item .count {
+  color: #0c1526 !important;
+}
+body.theme-light .summary-item .label {
+  color: #1e3a5f !important;
+}
+
+/* ── Section/floor labels ────────────────────────────────────── */
+body.theme-light .floor-label,
+body.theme-light .sector-label {
+  color: #1e3a5f !important;
+  font-weight: 700 !important;
 }
 
 body.theme-light .text-gradient {
-  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  background: linear-gradient(135deg, #0c1526 0%, #1e3a5f 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -590,4 +876,412 @@ body.theme-light .text-gradient {
   letter-spacing: 0.06em;
   margin-bottom: 12px;
   padding-left: 4px;
+}
+
+/* ── Custom Grd Modal Header ───────────────────────────────── */
+body.theme-light .modal-header.grd-modal-header,
+body.theme-dark .modal-header.grd-modal-header,
+.grd-modal-header {
+  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%) !important;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* ── MultiSearchableSelect Chips ────────────────────────────── */
+.select-chip {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+.select-chip.principal {
+  background: rgba(0, 212, 255, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(0, 212, 255, 0.35);
+}
+
+body.theme-light .select-chip {
+  background: rgba(18, 39, 71, 0.08) !important;
+  color: #06101f !important;
+  border: 1px solid rgba(18, 39, 71, 0.2) !important;
+}
+body.theme-light .select-chip.principal {
+  background: rgba(0, 95, 138, 0.12) !important;
+  color: #005f8a !important;
+  border: 1px solid rgba(0, 95, 138, 0.35) !important;
+}
+
+/* ── Outlier Warning Banner ──────────────────────────────────── */
+.outlier-warning {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
+}
+
+body.theme-light .outlier-warning {
+  background: rgba(239, 68, 68, 0.08) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  color: #b91c1c !important;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.08) !important;
+}
+
+/* ── Severity Button Light Mode Overrides ───────────────────── */
+body.theme-light .severity-btn {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(18, 39, 71, 0.45) !important;
+  color: #122747 !important;
+}
+body.theme-light .severity-btn.active.s-1 {
+  background: rgba(34, 197, 94, 0.15) !important;
+  border-color: #15803d !important;
+  color: #15803d !important;
+}
+body.theme-light .severity-btn.active.s-2 {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border-color: #b45309 !important;
+  color: #b45309 !important;
+}
+body.theme-light .severity-btn.active.s-3 {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: #b91c1c !important;
+  color: #b91c1c !important;
+}
+
+/* ── Discharge Modal Header (Theme Specific) ───────────────── */
+body.theme-light .modal-header.discharge-modal-header {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+}
+body.theme-light .discharge-modal-header .header-title {
+  color: #ffffff !important;
+}
+body.theme-light .discharge-modal-header .header-subtitle {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+body.theme-light .discharge-modal-header .header-avatar {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+body.theme-light .discharge-modal-header .close-btn {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+body.theme-light .discharge-modal-header .close-btn:hover {
+  background: rgba(239, 68, 68, 0.25) !important;
+  border-color: rgba(239, 68, 68, 0.45) !important;
+  color: #ffffff !important;
+}
+
+body.theme-dark .modal-header.discharge-modal-header {
+  background: var(--panel-bg) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+}
+body.theme-dark .discharge-modal-header .header-title {
+  color: var(--text-primary) !important;
+}
+body.theme-dark .discharge-modal-header .header-subtitle {
+  color: var(--text-secondary) !important;
+}
+body.theme-dark .discharge-modal-header .header-avatar {
+  background: rgba(59, 130, 246, 0.1) !important;
+  color: var(--accent-color) !important;
+}
+
+/* ── View Interconsulta Modal ──────────────────────────────── */
+.ic-view-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.80);
+  backdrop-filter: blur(8px);
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.ic-view-card {
+  max-width: 850px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 20px;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  box-shadow: var(--shadow-high);
+  background: var(--panel-bg);
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+}
+
+.ic-view-header {
+  padding: 20px 24px;
+  background: rgba(168, 85, 247, 0.08);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+}
+
+.ic-view-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Light mode specific header title override */
+body.theme-light .ic-view-title {
+  color: #4c1d95 !important; /* El color más oscuro de los violetas */
+}
+
+.ic-view-badge-urgente {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+body.theme-light .ic-view-badge-urgente {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.ic-view-badge-normal {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+body.theme-light .ic-view-badge-normal {
+  background: rgba(168, 85, 247, 0.1);
+  color: #7c3aed;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.ic-view-icon-urgente {
+  background: rgba(239, 68, 68, 0.15);
+  padding: 10px;
+  border-radius: 50%;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.ic-view-icon-normal {
+  background: rgba(168, 85, 247, 0.15);
+  padding: 10px;
+  border-radius: 50%;
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+body.theme-light .ic-view-icon-normal {
+  color: #7c3aed;
+  background: rgba(168, 85, 247, 0.08);
+}
+
+.ic-view-close-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ic-view-close-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+body.theme-light .ic-view-close-btn {
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  color: #4c1d95;
+}
+
+body.theme-light .ic-view-close-btn:hover {
+  background: rgba(168, 85, 247, 0.15);
+}
+
+.ic-view-section-card {
+  background: var(--glass-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+body.theme-light .ic-view-section-card {
+  background: #f8fafc;
+  border: 1px solid rgba(18, 39, 71, 0.12);
+}
+
+.ic-view-section-title {
+  margin: 0 0 12px 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #a855f7;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+body.theme-light .ic-view-section-title {
+  color: #7c3aed;
+}
+
+.ic-view-label {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.ic-view-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.ic-view-value-subtle {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ic-view-cie10-item {
+  font-size: 0.78rem;
+  padding: 6px 10px;
+  background: var(--glass-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+body.theme-light .ic-view-cie10-item {
+  background: #ffffff;
+  border: 1px solid rgba(18, 39, 71, 0.12);
+}
+
+.ic-view-req-box {
+  background: rgba(168, 85, 247, 0.04);
+  border: 1px solid rgba(168, 85, 247, 0.15);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+body.theme-light .ic-view-req-box {
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.ic-view-req-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+body.theme-light .ic-view-req-title {
+  color: #4c1d95;
+}
+
+.ic-view-req-other {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  margin-top: 8px;
+  background: var(--form-inset);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border-left: 3px solid #a855f7;
+}
+
+body.theme-light .ic-view-req-other {
+  border-left: 3px solid #7c3aed;
+}
+
+.ic-view-text-block {
+  background: var(--form-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+  white-space: pre-line;
+  min-height: 60px;
+}
+
+body.theme-light .ic-view-text-block {
+  background: #f1f5f9;
+  border: 1px solid rgba(18, 39, 71, 0.12);
+}
+
+.ic-view-solicita-block {
+  background: rgba(168, 85, 247, 0.04);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+body.theme-light .ic-view-solicita-block {
+  background: rgba(139, 92, 246, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  color: #4c1d95;
+}
+
+.ic-view-footer {
+  padding: 16px 24px;
+  background: var(--form-inset);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: flex-end;
+}
+
+body.theme-light .ic-view-footer {
+  background: #f8fafc;
+  border-top: 1px solid rgba(18, 39, 71, 0.12);
 }

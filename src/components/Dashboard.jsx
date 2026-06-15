@@ -12,6 +12,7 @@ import BlockBedModal from './BlockBedModal';
 import UnblockBedModal from './UnblockBedModal';
 import { ESPECIALIDADES } from '../data/formData';
 import { matchesSearch } from '../utils/search';
+import { formatAgeDetailed } from '../utils/age';
 import { DndContext, useDroppable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 
 const checkCompatibility = (bed, patient) => {
@@ -278,9 +279,12 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
   );
 }
 
-export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, onMarkHodomDoneByBed, user, onEditPatient, onViewPatient, onAddTransfers, setWaitingListDischarges }) {
+export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, onMarkHodomDoneByBed, user, onEditPatient, onViewPatient, onAddTransfers, setWaitingListDischarges, setBlockLog }) {
   const userRole = user?.role || 'visor';
   const isVisor = userRole === 'visor';
+  const isGestoraServicio = userRole === 'gestora_servicio';
+  // gestora_servicio no puede asignar pacientes ni interactuar con la lista de espera
+  const canAssignPatients = !isVisor && !isGestoraServicio;
 
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [pendingAssignment, setPendingAssignment] = useState(null); // { patient, bedId, roomId, serviceMismatch, bedType }
@@ -342,7 +346,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   };
 
   const handleAssignPatientClick = (roomId, bedId, patient) => {
-    if (isVisor) return;
+    if (isVisor || isGestoraServicio) return;
     
     // Encontrar la cama para checkear servicio y estado
     let targetBed = null;
@@ -395,6 +399,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                     patient: assignmentData.patientName,
                     rut: patientData.rut || null,
                     age: patientData.age || patientData.edad || null,
+                    fechaNacimiento: patientData.fechaNacimiento || null,
                     sex: patientData.sex || patientData.sexo || null,
                     prevision: patientData.prevision || null,
                     comuna: patientData.comuna || null,
@@ -466,6 +471,25 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       blockedAt: formattedDate,
       novedades: [newNovedad, ...(blockingBed.bed.novedades || [])]
     });
+
+    // Register in block log for the Informe de Camas Bloqueadas report
+    if (setBlockLog) {
+      // Derive service from bed tag/type
+      const bedInfo = blockingBed.bed;
+      const servicio = bedInfo.tag || bedInfo.type || 'Sin servicio';
+      const logEntry = {
+        id: `block-${Date.now()}`,
+        causal: reason,
+        observation: observation || '',
+        cama: `Hab. ${blockingBed.roomId} — Cama ${bedInfo.id}`,
+        servicio,
+        blockedAt: now.toISOString(),
+        blockedBy: user?.name || 'Usuario',
+        unblockedAt: null,
+      };
+      setBlockLog(prev => [logEntry, ...(prev || [])]);
+    }
+
     setBlockingBed(null);
   };
 
@@ -490,6 +514,21 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       blockedAt: null,
       novedades: [newNovedad, ...(unblockingBed.bed.novedades || [])]
     });
+
+    // Update the matching open block log entry with unblockedAt
+    if (setBlockLog) {
+      const bedId = `Hab. ${unblockingBed.roomId} — Cama ${unblockingBed.bed.id}`;
+      setBlockLog(prev => {
+        const updated = [...(prev || [])];
+        // Find the latest open entry for this cama
+        const idx = updated.findIndex(r => r.cama === bedId && !r.unblockedAt);
+        if (idx !== -1) {
+          updated[idx] = { ...updated[idx], unblockedAt: now.toISOString() };
+        }
+        return updated;
+      });
+    }
+
     setUnblockingBed(null);
   };
 
@@ -574,6 +613,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             dischargeAt: new Date().toISOString(),
             destino: formData.destino || 'No definido',
             establecimientoRed: formData.establecimientoRed || '',
+            otroEstablecimientoDetalle: formData.otroEstablecimientoDetalle || '',
             redPrivadaDetalle: formData.redPrivadaDetalle || '',
             observaciones: formData.observaciones || '',
             isWaitingListDischarge: true
@@ -589,7 +629,15 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     if (formData.destino === 'Hospitalización domiciliaria') {
       updateBedState(roomId, bedId, { 
         status: 'pending_hodom',
-        previousPatient: bed
+        previousPatient: {
+          ...bed,
+          destino: formData.destino,
+          establecimientoRed: formData.establecimientoRed || '',
+          otroEstablecimientoDetalle: formData.otroEstablecimientoDetalle || '',
+          redPrivadaDetalle: formData.redPrivadaDetalle || '',
+          observaciones: formData.observaciones || '',
+          cleaningAt: new Date().toISOString()
+        }
       });
 
       if (onHodomSubmit && formData.hodomData) {
@@ -601,6 +649,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         patient: null, 
         rut: null,
         age: null,
+        fechaNacimiento: null,
         sex: null,
         prevision: null,
         comuna: null,
@@ -624,7 +673,15 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         especialidadTratante: null,
         severity: null,
         interconsultas: [],
-        previousPatient: bed,
+        previousPatient: {
+          ...bed,
+          destino: formData.destino,
+          establecimientoRed: formData.establecimientoRed || '',
+          otroEstablecimientoDetalle: formData.otroEstablecimientoDetalle || '',
+          redPrivadaDetalle: formData.redPrivadaDetalle || '',
+          observaciones: formData.observaciones || '',
+          cleaningAt: new Date().toISOString()
+        },
         originalWaitingRequest: null
       });
     }
@@ -673,6 +730,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         id: targetBed.rut ? `W-${targetBed.rut}` : `W-${Date.now()}`,
         name: targetBed.patient || 'Paciente Sin Nombre',
         age: parseInt(targetBed.age) || 0,
+        fechaNacimiento: targetBed.fechaNacimiento || '',
         requestedAt: targetBed.assignedAt || new Date().toISOString(),
         diagnosis: targetBed.diagnosis || 'Sin diagnóstico principal',
         priority: targetBed.prioridad || 3,
@@ -707,6 +765,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         patient: null,
         rut: null,
         age: null,
+        fechaNacimiento: null,
         sex: null,
         prevision: null,
         comuna: null,
@@ -993,7 +1052,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         fechaTraslado: new Date().toISOString(),
         nombre: sourceBedInfo.patient || 'Desconocido',
         run: sourceBedInfo.rut || '—',
-        edad: sourceBedInfo.age || sourceBedInfo.edad || '—',
+        edad: formatAgeDetailed(sourceBedInfo.fechaNacimiento, sourceBedInfo.age || sourceBedInfo.edad),
         comuna: sourceBedInfo.comuna || '—',
         prevision: sourceBedInfo.prevision || '—',
         servicioOrigen: sourceService,
@@ -1101,7 +1160,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
           fechaTraslado: new Date().toISOString(),
           nombre: targetBedInfo.patient || 'Desconocido',
           run: targetBedInfo.rut || '—',
-          edad: targetBedInfo.age || targetBedInfo.edad || '—',
+          edad: formatAgeDetailed(targetBedInfo.fechaNacimiento, targetBedInfo.age || targetBedInfo.edad),
           comuna: targetBedInfo.comuna || '—',
           prevision: targetBedInfo.prevision || '—',
           servicioOrigen: targetService,
@@ -1466,6 +1525,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
           })}
         </main>
 
+        {!isGestoraServicio && (
         <aside className="waiting-list-section">
           <div className="glass-panel sidebar-section">
             <WaitingList 
@@ -1480,6 +1540,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             />
           </div>
         </aside>
+        )}
 
         {pendingAssignment && (
           <AssignmentModal 

@@ -5,7 +5,8 @@ const ESTABLECIMIENTOS_RED = {
   'Alta Complejidad': ['Hospital Dr. Hernán Henríquez Aravena (Temuco)'],
   'Hospitales Nodos (Mediana Complejidad)': [
     'Hospital de Villarrica', 'Hospital de Pitrufquén',
-    'Hospital de Nueva Imperial', 'Hospital de Lautaro'
+    'Hospital de Nueva Imperial', 'Hospital de Lautaro',
+    'Complejo Asistencial de Padre las Casas'
   ],
   'Hospitales de Familia y Comunidad': [
     'Hospital de Loncoche', 'Hospital de Cunco', 'Hospital de Galvarino',
@@ -235,6 +236,7 @@ export default function DischargeModal({ bed, onConfirm, onHodomSubmit, onClose 
   const [formData, setFormData] = useState({
     destino: '',
     establecimientoRed: '',
+    otroEstablecimientoDetalle: '',
     redPrivadaDetalle: '',
     observaciones: '',
     hodomData: null,
@@ -278,16 +280,16 @@ export default function DischargeModal({ bed, onConfirm, onHodomSubmit, onClose 
         <div className="glass-panel modal-content" style={{ width: 'min(96vw, 920px)', maxHeight: '92vh', overflowY: 'auto', padding: 0 }}>
 
           {/* Header */}
-          <div className="modal-header" style={{ background: 'var(--panel-bg)', borderBottom: '1px solid var(--glass-border)', position: 'sticky', top: 0, zIndex: 10 }}>
+          <div className="modal-header discharge-modal-header" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div className="avatar" style={{ background: 'rgba(59,130,246,0.1)', color: 'var(--accent-color)' }}>
-                <LogOut size={20} />
+              <div className="avatar header-avatar">
+                <LogOut size={20} style={{ transform: 'rotate(180deg)' }} />
               </div>
               <div>
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                <h2 className="header-title" style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>
                   Alta Médica
                 </h2>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                <p className="header-subtitle" style={{ fontSize: '0.75rem', marginTop: '2px', marginBottom: 0 }}>
                   Finalización de hospitalización y destino del paciente
                 </p>
               </div>
@@ -414,15 +416,42 @@ export default function DischargeModal({ bed, onConfirm, onHodomSubmit, onClose 
                       </h3>
                       <div className="form-group" style={{ marginTop: '10px' }}>
                         <label>Seleccione Hospital de Destino *</label>
-                        <select className="glass-input" required value={formData.establecimientoRed} onChange={e => setFormData(prev => ({ ...prev, establecimientoRed: e.target.value }))}>
+                        <select 
+                          className="glass-input" 
+                          required 
+                          value={formData.establecimientoRed} 
+                          onChange={e => {
+                            const val = e.target.value;
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              establecimientoRed: val,
+                              otroEstablecimientoDetalle: val === 'Otro' ? prev.otroEstablecimientoDetalle : ''
+                            }));
+                          }}
+                        >
                           <option value="">-- Seleccione establecimiento --</option>
                           {Object.entries(ESTABLECIMIENTOS_RED).map(([cat, list]) => (
                             <optgroup key={cat} label={cat}>
                               {list.map(h => <option key={h} value={h}>{h}</option>)}
                             </optgroup>
                           ))}
+                          <option value="Otro">Otro establecimiento (Especificar)</option>
                         </select>
                       </div>
+
+                      {formData.establecimientoRed === 'Otro' && (
+                        <div className="form-group" style={{ marginTop: '12px' }}>
+                          <label>Especifique el Establecimiento *</label>
+                          <input 
+                            type="text" 
+                            className="glass-input" 
+                            placeholder="Ej: Hospital de Valdivia" 
+                            required 
+                            value={formData.otroEstablecimientoDetalle} 
+                            onChange={e => setFormData(prev => ({ ...prev, otroEstablecimientoDetalle: e.target.value }))} 
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
 

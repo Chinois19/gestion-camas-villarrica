@@ -1,20 +1,58 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Activity, ArrowRight, AlertTriangle, List, HeartPulse, User, LogOut, CheckCircle } from 'lucide-react';
+import { X, Save, Activity, ArrowRight, AlertTriangle, List, HeartPulse, User, LogOut, CheckCircle, Eye } from 'lucide-react';
 import { GRD_DATA, calculateProjectedDays, getGrdLimit } from '../data/grd';
 import SearchableSelect from './SearchableSelect';
 import MultiSearchableSelect from './MultiSearchableSelect';
 import { CIE10_OPTIONS } from '../data/cie10Options';
 import { ESPECIALIDADES } from '../data/formData';
+import { formatAgeDetailed } from '../utils/age';
+import ViewInterconsultaModal from './ViewInterconsultaModal';
 
 export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onFinishCleaning }) {
+  // Reconstruir diagnóstico CIE-10 priorizando los campos codificados.
+  // Puede venir de bed.dxCie10 + bed.secondaryCodes (si el paciente fue registrado con CIE-10)
+  // o desde bed.originalWaitingRequest que guarda la solicitud original.
+  const buildDiagnosisCodes = () => {
+    const cie10Regex = /^[A-Z]\d{2}(\.\d+)?/;
+    // Intentar desde los datos de la solicitud original guardada en la cama
+    const orig = bed.originalWaitingRequest;
+    const dxCie10 = bed.dxCie10 || orig?.dxCie10;
+    const secondaryCodes = bed.secondaryCodes || orig?.secondaryCodes;
+
+    if (dxCie10) {
+      const mainOption = CIE10_OPTIONS.find(o => o.value.startsWith(dxCie10));
+      const mainCode = mainOption ? mainOption.value : dxCie10;
+      const result = [mainCode];
+      if (Array.isArray(secondaryCodes)) {
+        secondaryCodes.forEach(sc => {
+          const opt = CIE10_OPTIONS.find(o => o.value.startsWith(sc));
+          result.push(opt ? opt.value : sc);
+        });
+      }
+      return result;
+    }
+    // Si bed.diagnosis ya es array con formato CIE-10 real, usarlo
+    if (Array.isArray(bed.diagnosis)) {
+      const cie10Entries = bed.diagnosis.filter(d => cie10Regex.test(d));
+      if (cie10Entries.length > 0) return cie10Entries;
+    }
+    // Si es string con formato CIE-10
+    if (typeof bed.diagnosis === 'string' && cie10Regex.test(bed.diagnosis)) {
+      return [bed.diagnosis];
+    }
+    // Texto libre (ej "ICC"): devolver vacío para que el usuario complete
+    return [];
+  };
+
   const [formData, setFormData] = useState({
     grdId: bed.grdId || '',
     severity: bed.severity || 1,
     projectedDays: bed.projectedDays || 0,
     targetBedId: '',
-    diagnosis: Array.isArray(bed.diagnosis) ? bed.diagnosis : (bed.diagnosis ? [bed.diagnosis] : []),
+    diagnosis: buildDiagnosisCodes(),
     rut: bed.rut || '13.477.908-2',
     age: bed.age || '58',
+    fechaNacimiento: bed.fechaNacimiento || '',
     sex: bed.sex || bed.sexo || 'Femenino',
     comuna: bed.comuna || 'Gorbea',
     prevision: bed.prevision || 'DIPRECA',
@@ -28,6 +66,10 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
 
   const [limitDays, setLimitDays] = useState(0);
   const [newNovedadText, setNewNovedadText] = useState('');
+  const [viewingIC, setViewingIC] = useState(null);
+
+  // Permisos del rol Gestora de Servicio Clínico
+  const isGestoraServicio = user?.role === 'gestora_servicio';
 
   const assignedDate = bed.assignedAt ? new Date(bed.assignedAt) : null;
   const daysOfStay = assignedDate ? Math.max(1, Math.ceil((new Date() - assignedDate) / (1000 * 60 * 60 * 24))) : 1;
@@ -83,6 +125,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
       transferTarget = { roomId, bedId, type: formData.transferType };
     }
 
+    // Gestora de Servicio sólo persiste novedades (no puede cambiar GRD ni otros campos clínicos)
     onConfirm({
       grdId: formData.grdId,
       grdName: grd ? grd.name : '',
@@ -90,6 +133,8 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
       projectedDays: parseInt(formData.projectedDays) || 0,
       diagnosis: formData.diagnosis,
       rut: formData.rut,
+      age: formData.age,
+      fechaNacimiento: formData.fechaNacimiento,
       comuna: formData.comuna,
       prevision: formData.prevision,
       especialidadTratante: formData.especialidadTratante,
@@ -104,35 +149,58 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
       <div className="glass-panel modal-content" style={{ maxWidth: '1100px', width: 'min(98vw, 1100px)', height: 'min(95vh, 850px)', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
         
         {/* Header */}
-        <div className="modal-header" style={{ background: 'var(--panel-bg)', borderBottom: '1px solid var(--glass-border)', padding: '20px 24px', zIndex: 10 }}>
+        <div className="modal-header grd-modal-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '20px 24px', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div className="avatar" style={{ background: 'rgba(59,130,246,0.1)', color: 'var(--accent-color)' }}>
+            <div className="avatar" style={{ background: 'rgba(255, 255, 255, 0.18)', color: '#ffffff', border: '1px solid rgba(255, 255, 255, 0.25)' }}>
               <Activity size={20} />
             </div>
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '24px' }}>
               <div>
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', margin: 0, letterSpacing: '0.02em' }}>
                   Gestión de Caso
                 </h2>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px', marginBottom: 0 }}>
+                <p style={{ fontSize: '0.78rem', color: 'rgba(255, 255, 255, 0.85)', marginTop: '3px', marginBottom: 0, fontWeight: 500 }}>
                   Hab — Cama {bed.id} · {bed.tag || bed.type}
                 </p>
               </div>
               {bed.assignedAt && (
                 <div style={{ 
-                  padding: '6px 16px', borderRadius: '12px', background: 'rgba(6, 182, 212, 0.05)', 
-                  color: '#06b6d4', fontSize: '0.85rem', fontWeight: 800, 
-                  border: '1px solid rgba(6, 182, 212, 0.2)',
-                  boxShadow: '0 4px 12px rgba(6, 182, 212, 0.1)',
+                  padding: '6px 16px', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.15)', 
+                  color: '#ffffff', fontSize: '0.85rem', fontWeight: 800, 
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px'
                 }}>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.05em', color: 'rgba(6, 182, 212, 0.8)', textTransform: 'uppercase' }}>Días de Estada</span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.85)', textTransform: 'uppercase' }}>Días de Estada</span>
                   <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>{daysOfStay}</span>
                 </div>
               )}
             </div>
           </div>
-          <button className="close-btn" onClick={onClose}><X size={20} /></button>
+          <button 
+            className="close-btn" 
+            onClick={onClose}
+            style={{
+              background: 'rgba(255, 255, 255, 0.12)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              color: '#ffffff',
+              transition: 'all 0.2s ease',
+              width: '36px',
+              height: '36px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
+              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.45)';
+              e.currentTarget.style.color = '#ffffff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+              e.currentTarget.style.color = '#ffffff';
+            }}
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Modal Form */}
@@ -169,8 +237,36 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                         />
                       </div>
                       <div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Edad / Sexo</div>
-                        <div style={{ fontWeight: 600, fontSize: '0.8rem', marginTop: '6px' }}>{formData.age} años · {formData.sex}</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Fecha de Nacimiento</div>
+                        <input 
+                          type="date" 
+                          className="glass-input" 
+                          style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%' }}
+                          value={formData.fechaNacimiento} 
+                          onChange={e => {
+                            const val = e.target.value;
+                            let computedAge = formData.age;
+                            if (val) {
+                              const birthDate = new Date(val);
+                              const today = new Date();
+                              let age = today.getFullYear() - birthDate.getFullYear();
+                              const m = today.getMonth() - birthDate.getMonth();
+                              if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                                age--;
+                              }
+                              computedAge = age >= 0 ? age : 0;
+                            }
+                            setFormData(prev => ({ ...prev, fechaNacimiento: val, age: computedAge }));
+                          }}
+                          readOnly={isGestoraServicio}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Edad (Calculada) / Sexo</div>
+                        <div style={{ fontWeight: 600, fontSize: '0.8rem', marginTop: '6px' }}>{formatAgeDetailed(formData.fechaNacimiento, formData.age)} · {formData.sex}</div>
                       </div>
                     </div>
 
@@ -182,7 +278,8 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                           className="glass-input" 
                           style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%' }}
                           value={formData.comuna} 
-                          onChange={e => setFormData(prev => ({ ...prev, comuna: e.target.value }))} 
+                          onChange={e => setFormData(prev => ({ ...prev, comuna: e.target.value }))}
+                          readOnly={isGestoraServicio}
                         />
                       </div>
                       <div>
@@ -192,28 +289,32 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                           className="glass-input" 
                           style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%' }}
                           value={formData.prevision} 
-                          onChange={e => setFormData(prev => ({ ...prev, prevision: e.target.value }))} 
+                          onChange={e => setFormData(prev => ({ ...prev, prevision: e.target.value }))}
+                          readOnly={isGestoraServicio}
                         />
                       </div>
                     </div>
 
-                    <div style={{ marginTop: '12px' }}>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>Destino (Unidad Requerida) / Serv. Acueste</div>
-                      <select 
-                        className="glass-input" 
-                        style={{ padding: '6px 10px', fontSize: '0.8rem', width: '100%', background: 'var(--inset-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}
-                        value={formData.destino} 
-                        onChange={e => setFormData(prev => ({ ...prev, destino: e.target.value }))}
-                      >
-                        {['UCI', 'UTI', 'Cuidados Medios', 'Maternidad', 'Neonatología', 'Infantil', 'Básico'].map(d => (
-                          <option key={d} value={d} style={{ background: '#1e1b4b', color: '#fff' }}>{d}</option>
-                        ))}
-                      </select>
-                    </div>
+                    {!isGestoraServicio && (
+                      <div style={{ marginTop: '12px' }}>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>Destino (Unidad Requerida) / Serv. Acueste</div>
+                        <select 
+                          className="glass-input" 
+                          style={{ padding: '6px 10px', fontSize: '0.8rem', width: '100%', background: 'var(--inset-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}
+                          value={formData.destino} 
+                          onChange={e => setFormData(prev => ({ ...prev, destino: e.target.value }))}
+                        >
+                          {['UCI', 'UTI', 'Cuidados Medios', 'Maternidad', 'Neonatología', 'Infantil', 'Básico'].map(d => (
+                            <option key={d} value={d} style={{ background: '#1e1b4b', color: '#fff' }}>{d}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* 2. ESPECIALIDAD TRATANTE ACTUAL */}
+                {/* 2. ESPECIALIDAD TRATANTE ACTUAL - oculto para gestora_servicio */}
+                {!isGestoraServicio && (
                 <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', zIndex: 30 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
                     <span style={{ fontSize: '1rem' }}>🩺</span>
@@ -227,8 +328,10 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     maxSelections={2} 
                   />
                 </div>
+                )}
 
-                {/* 3. AISLAMIENTO (PRECAUCIONES) */}
+                {/* 3. AISLAMIENTO (PRECAUCIONES) - oculto para gestora_servicio */}
+                {!isGestoraServicio && (
                 <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', zIndex: 20 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
                     <span style={{ fontSize: '1rem' }}>🛡️</span>
@@ -246,6 +349,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     placeholder="Seleccionar..."
                   />
                 </div>
+                )}
 
                 {/* 3.5 INTERCONSULTAS PENDIENTES */}
                 {(() => {
@@ -262,13 +366,44 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {pendingICs.map((ic, i) => (
                           <div key={i} style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
-                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e0f2fe', marginBottom: '4px' }}>{ic.especialidadDestino}</div>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>{ic.especialidadDestino}</div>
                             <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '2px' }}>
                               <span style={{ color: '#a855f7' }}>{ic.tipoRequerimiento}</span> {ic.priorizacion ? `· ${ic.priorizacion}` : ''}
                             </div>
                             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
                               Sol: {new Date(ic.solicitadaAt).toLocaleString('es-CL')}
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => setViewingIC({
+                                ...ic,
+                                patientName: bed.patient,
+                                patientRut: bed.rut,
+                                edad: formatAgeDetailed(bed.fechaNacimiento, bed.age),
+                                cama: `Hab. ${bed.roomId} — Cama ${bed.id}`
+                              })}
+                              style={{
+                                marginTop: '8px',
+                                width: '100%',
+                                padding: '6px 12px',
+                                background: 'rgba(168, 85, 247, 0.15)',
+                                border: '1px solid rgba(168, 85, 247, 0.4)',
+                                color: '#d8b4fe',
+                                borderRadius: '6px',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '4px',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(168, 85, 247, 0.25)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'rgba(168, 85, 247, 0.15)'}
+                            >
+                              <Eye size={12} /> Ver Interconsulta
+                            </button>
                             {(user?.role === 'administrador' || user?.role === 'Médico') && (
                                <div style={{ marginTop: '8px', fontSize: '0.7rem', color: '#f59e0b', fontStyle: 'italic', lineHeight: 1.2 }}>
                                  Para resolver o desestimar, diríjase al <b>Panel de Interconsultas</b>.
@@ -304,47 +439,52 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                       <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>➔</span>
                     </button>
 
-                    <button 
-                      type="button" 
-                      className="glass-button" 
-                      style={{ 
-                        justifyContent: 'space-between', 
-                        padding: '10px 12px', 
-                        fontSize: '0.78rem',
-                        borderColor: 'rgba(59,130,246,0.3)',
-                        background: 'rgba(59,130,246,0.03)'
-                      }}
-                      onClick={() => onRequestIC ? onRequestIC(bed) : null}
-                    >
-                      <span>📋 Interconsulta</span>
-                      <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>+</span>
-                    </button>
-                    
-                    {/* Botón para alternar traslado */}
-                    <button 
-                      type="button" 
-                      className="glass-button" 
-                      style={{ 
-                        justifyContent: 'space-between', 
-                        padding: '10px 12px', 
-                        fontSize: '0.78rem',
-                        borderColor: formData.showTransferPanel ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)',
-                        background: formData.showTransferPanel ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)'
-                      }}
-                      onClick={() => setFormData(prev => ({ ...prev, showTransferPanel: !prev.showTransferPanel }))}
-                    >
-                      <span>🔄 Traslado de Paciente</span>
-                      <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{formData.showTransferPanel ? '▼' : '▲'}</span>
-                    </button>
+                    {/* Interconsulta y Traslado: ocultos para gestora_servicio */}
+                    {!isGestoraServicio && (
+                      <>
+                        <button 
+                          type="button" 
+                          className="glass-button" 
+                          style={{ 
+                            justifyContent: 'space-between', 
+                            padding: '10px 12px', 
+                            fontSize: '0.78rem',
+                            borderColor: 'rgba(59,130,246,0.3)',
+                            background: 'rgba(59,130,246,0.03)'
+                          }}
+                          onClick={() => onRequestIC ? onRequestIC(bed) : null}
+                        >
+                          <span>📋 Interconsulta</span>
+                          <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>+</span>
+                        </button>
+                        
+                        <button 
+                          type="button" 
+                          className="glass-button" 
+                          style={{ 
+                            justifyContent: 'space-between', 
+                            padding: '10px 12px', 
+                            fontSize: '0.78rem',
+                            borderColor: formData.showTransferPanel ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)',
+                            background: formData.showTransferPanel ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)'
+                          }}
+                          onClick={() => setFormData(prev => ({ ...prev, showTransferPanel: !prev.showTransferPanel }))}
+                        >
+                          <span>🔄 Traslado de Paciente</span>
+                          <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{formData.showTransferPanel ? '▼' : '▲'}</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
               </div>
 
-              {/* Right Column (Clinical Data & GRD / Logs) */}
+              {/* Right Column - GRD oculto para gestora_servicio */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 
-                {/* A. GESTIÓN CLÍNICA (GRD) */}
+                {/* A. GESTIÓN CLÍNICA (GRD) - solo visible para roles con permisos clínicos */}
+                {!isGestoraServicio && (
                 <div className="glass-panel" style={{ padding: '20px', zIndex: 40 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
                     <span style={{ fontSize: '1.1rem' }}>📋</span>
@@ -384,28 +524,20 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                       <div className="severity-selector" style={{ display: 'flex', gap: '8px' }}>
                         {[1, 2, 3].map(level => {
                           const isSelected = parseInt(formData.severity) === level;
-                          const colors = level === 1 
-                            ? { bg: 'rgba(34,197,94,0.15)', border: '#22c55e', text: '#22c55e' }
-                            : level === 2 
-                            ? { bg: 'rgba(245,158,11,0.15)', border: '#f59e0b', text: '#f59e0b' }
-                            : { bg: 'rgba(239,68,68,0.15)', border: '#ef4444', text: '#ef4444' };
                           return (
                             <button 
                               key={level} 
                               type="button" 
+                              className={`severity-btn ${isSelected ? `active s-${level}` : ''}`}
                               style={{
                                 flex: 1,
                                 padding: '8px 12px',
                                 fontSize: '0.75rem',
                                 fontWeight: 700,
                                 borderRadius: '8px',
-                                border: `1px solid ${isSelected ? colors.border : 'var(--glass-border)'}`,
-                                background: isSelected ? colors.bg : 'var(--inset-bg)',
-                                color: isSelected ? colors.text : 'var(--text-secondary)',
                                 cursor: formData.grdId ? 'pointer' : 'not-allowed',
                                 opacity: formData.grdId ? 1 : 0.5,
-                                transition: 'all 0.2s ease',
-                                boxShadow: isSelected ? 'var(--shadow-glow)' : 'none'
+                                transition: 'all 0.2s ease'
                               }}
                               onClick={() => handleSeverityChange(level)}
                               disabled={!formData.grdId}
@@ -420,19 +552,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
                       {/* Límite Outliers (Most Prominent) */}
                       {limitDays > 0 && (
-                        <div style={{ 
-                          padding: '10px 14px', 
-                          borderRadius: '8px', 
-                          border: '1px solid rgba(239, 68, 68, 0.4)', 
-                          background: 'rgba(239, 68, 68, 0.12)',
-                          color: '#f87171',
-                          fontSize: '0.85rem',
-                          fontWeight: 700,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          boxShadow: '0 0 10px rgba(239, 68, 68, 0.1)'
-                        }}>
+                        <div className="outlier-warning">
                           🚨 Límite Outliers: {limitDays} días
                         </div>
                       )}
@@ -458,6 +578,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                   </div>
 
                 </div>
+                )} {/* fin !isGestoraServicio GRD */}
 
                 {/* B. SECCIÓN OPCIONAL: TRASLADO DE PACIENTE (COLLAPSIBLE) */}
                 {formData.showTransferPanel && (
@@ -613,6 +734,12 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
         </form>
 
       </div>
+      {viewingIC && (
+        <ViewInterconsultaModal 
+          ic={viewingIC} 
+          onClose={() => setViewingIC(null)} 
+        />
+      )}
     </div>
   );
 }

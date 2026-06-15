@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, BarChart2, Clock, Stethoscope, Sparkles, HeartPulse,
-  FileText, ShieldCheck, Users, Settings, ChevronDown, Database
+  FileText, ShieldCheck, Users, Settings, ChevronDown, Database, Lock
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -60,6 +60,12 @@ export default function Navbar({ currentView, onNavigate, navPermissions, badges
           label: 'Base de Datos de Altas',
           icon: <Database size={16} />,
           show: navPermissions.canDatabase,
+        },
+        {
+          id: 'blocked_beds',
+          label: 'Informe de Camas Bloqueadas',
+          icon: <Lock size={16} />,
+          show: navPermissions.canBlockedReport,
         }
       ]
     },

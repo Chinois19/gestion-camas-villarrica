@@ -6,6 +6,7 @@ import { SERVICIOS_SOLICITANTES, PREVISIONES, ESPECIALIDADES, COMUNAS_CHILE } fr
 import { MEDICOS } from '../data/medicos';
 import MultiSearchableSelect from './MultiSearchableSelect';
 import { matchesSearch } from '../utils/search';
+import { calculateAgeDetailed } from '../utils/age';
 
 const DESTINOS = ['UCI', 'UTI', 'Cuidados Medios', 'Maternidad', 'Neonatología', 'Infantil', 'Básico'];
 const SEXOS = ['—', 'Masculino', 'Femenino', 'Otro'];
@@ -294,6 +295,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   const [formData, setFormData] = useState(() => patientData ? {
     nombre: patientData.name || '', rut: patientData.rut || '',
     edad: patientData.age || '', sexo: patientData.sexo || '',
+    fechaNacimiento: patientData.fechaNacimiento || '',
     prevision: patientData.prevision || '', comuna: patientData.comuna || '',
     dxPrincipal: patientData.dxPrincipal || '',
     dxCie10: patientData.dxCie10 || '', dxGrupo: patientData.dxGrupo || '',
@@ -311,7 +313,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     temp: patientData.temp || '', satO2: patientData.satO2 || '',
     glicemia: patientData.glicemia || '', evaDolor: patientData.evaDolor || '',
   } : {
-    nombre: '', rut: '', edad: '', sexo: '', prevision: '', comuna: '',
+    nombre: '', rut: '', edad: '', sexo: '', fechaNacimiento: '', prevision: '', comuna: '',
     dxPrincipal: '', dxCie10: '', dxGrupo: '',
     servicioSol: '', medicoSol: '', especialidadMedico: '', especialidadTratante: [], destino: 'Cuidados Medios',
     requisitosUGP: '', reqEnfermeria: '', procedimientosPendientes: '',
@@ -339,7 +341,34 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   const handleChange = e => {
     if (isViewMode) return;
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    if (name === 'fechaNacimiento') {
+      let calculatedYears = '';
+      if (value) {
+        const parts = value.split('-');
+        if (parts.length === 3) {
+          const birthYear = parseInt(parts[0], 10);
+          const birthMonth = parseInt(parts[1], 10) - 1;
+          const birthDay = parseInt(parts[2], 10);
+          const birthDate = new Date(birthYear, birthMonth, birthDay);
+          if (!isNaN(birthDate.getTime())) {
+            const today = new Date();
+            let years = today.getFullYear() - birthDate.getFullYear();
+            let months = today.getMonth() - birthDate.getMonth();
+            let days = today.getDate() - birthDate.getDate();
+            if (days < 0) months -= 1;
+            if (months < 0) years -= 1;
+            calculatedYears = String(Math.max(0, years));
+          }
+        }
+      }
+      setFormData(prev => ({
+        ...prev,
+        fechaNacimiento: value,
+        edad: calculatedYears
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    }
   };
 
   const handleToggle = key => setFormData(prev => ({ ...prev, [key]: !prev[key] }));
@@ -426,12 +455,27 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
         note: '✏️ Datos de solicitud actualizados'
       }, ...evolutions];
 
+      const updatedDiagnosisCodes = (() => {
+        const codes = [];
+        if (formData.dxCie10) {
+          const desc = cie10Data.find(c => c.code === formData.dxCie10)?.desc || '';
+          codes.push(`${formData.dxCie10} - ${desc}`);
+        }
+        secondaryCodes.forEach(code => {
+          const desc = cie10Data.find(c => c.code === code)?.desc || '';
+          codes.push(`${code} - ${desc}`);
+        });
+        return codes.length > 0 ? codes : (formData.dxPrincipal ? [formData.dxPrincipal] : patientData.diagnosis || []);
+      })();
+
       onUpdatePatient({
         ...patientData, ...formData, secondaryCodes, evolutions: evolWithSave,
         name: formData.nombre, age: parseInt(formData.edad) || 0, origin: formData.servicioSol,
         bedTypeRequired: formData.destino, updatedAt: new Date().toISOString(),
         updatedBy: currentUser?.name || 'Usuario',
-        requestedAt: effectiveDate.toISOString()
+        requestedAt: effectiveDate.toISOString(),
+        diagnosis: updatedDiagnosisCodes,
+        fechaNacimiento: formData.fechaNacimiento
       });
       return;
     }
@@ -448,8 +492,20 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       id: `W-${Date.now()}`,
       name: formData.nombre || 'Paciente Sin Nombre',
       age: parseInt(formData.edad) || 0,
+      fechaNacimiento: formData.fechaNacimiento,
       requestedAt: effectiveDate.toISOString(),
-      diagnosis: formData.dxPrincipal || (formData.dxCie10 ? `${formData.dxCie10} - ${cie10Data.find(c => c.code === formData.dxCie10)?.desc || ''}` : 'Sin diagnóstico principal'),
+      diagnosis: (() => {
+        const codes = [];
+        if (formData.dxCie10) {
+          const desc = cie10Data.find(c => c.code === formData.dxCie10)?.desc || '';
+          codes.push(`${formData.dxCie10} - ${desc}`);
+        }
+        secondaryCodes.forEach(code => {
+          const desc = cie10Data.find(c => c.code === code)?.desc || '';
+          codes.push(`${code} - ${desc}`);
+        });
+        return codes.length > 0 ? codes : (formData.dxPrincipal ? [formData.dxPrincipal] : ['Sin diagnóstico principal']);
+      })(),
       priority: calculatedPriority,
       origin: formData.servicioSol || 'Urgencia',
       bedTypeRequired: formData.destino || 'Cuidados Medios',
@@ -530,7 +586,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center' }}>
             <button className="glass-button primary" onClick={() => {
               setFormData({
-                nombre: '', rut: '', edad: '', sexo: '', prevision: '', comuna: '',
+                nombre: '', rut: '', edad: '', sexo: '', fechaNacimiento: '', prevision: '', comuna: '',
                 dxPrincipal: '', dxCie10: '', dxGrupo: '',
                 servicioSol: '', medicoSol: '', especialidadMedico: '',
                 destino: 'Cuidados Medios', requisitosUGP: '', reqEnfermeria: '', procedimientosPendientes: '',
@@ -643,8 +699,9 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                     <ReadOnlyField label="Nombre Completo" value={formData.nombre} />
                     <ReadOnlyField label="RUT" value={formData.rut} />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <ReadOnlyField label="Edad" value={formData.edad ? `${formData.edad} años` : ''} />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 10, marginBottom: 10 }}>
+                    <ReadOnlyField label="Fecha de Nacimiento" value={formData.fechaNacimiento ? new Date(formData.fechaNacimiento).toLocaleDateString('es-CL', { timeZone: 'UTC' }) : '—'} />
+                    <ReadOnlyField label="Edad" value={calculateAgeDetailed(formData.fechaNacimiento) || (formData.edad ? `${formData.edad} años` : '—')} />
                     <ReadOnlyField label="Sexo" value={formData.sexo} />
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -658,9 +715,19 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                     <div><FieldLabel>Nombre Completo</FieldLabel><GInput name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Ej. Juan Pérez González" /></div>
                     <div><FieldLabel>RUT</FieldLabel><GInput name="rut" value={formData.rut} onChange={handleChange} placeholder="12.345.678-9" /></div>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <div><FieldLabel>Edad</FieldLabel><GInput name="edad" value={formData.edad} onChange={handleChange} type="number" placeholder="Años" /></div>
-                    <div><FieldLabel>Sexo</FieldLabel><GSelect name="sexo" value={formData.sexo} onChange={handleChange} options={SEXOS} /></div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 10, marginBottom: 10 }}>
+                    <div>
+                      <FieldLabel>Fecha de Nacimiento</FieldLabel>
+                      <GInput type="date" name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleChange} />
+                    </div>
+                    <div>
+                      <FieldLabel>Edad Calculada</FieldLabel>
+                      <GInput name="edadCalculada" value={calculateAgeDetailed(formData.fechaNacimiento) || (formData.edad ? `${formData.edad} años` : '')} readOnly placeholder="Se calcula desde F. Nacimiento" />
+                    </div>
+                    <div>
+                      <FieldLabel>Sexo</FieldLabel>
+                      <GSelect name="sexo" value={formData.sexo} onChange={handleChange} options={SEXOS} />
+                    </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                     <div><FieldLabel>Previsión del Paciente</FieldLabel><SearchableSelect name="prevision" value={formData.prevision} onChange={handleChange} options={PREVISIONES} placeholder="Buscar previsión..." /></div>

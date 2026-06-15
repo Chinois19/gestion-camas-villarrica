@@ -1,4 +1,5 @@
 import { X, Clock, User, Activity, FileText, AlertTriangle, Info, Heart } from 'lucide-react';
+import { formatAgeDetailed } from '../utils/age';
 
 export default function PatientDetailModal({ patient, onClose }) {
   const requestTime = new Date(patient.requestedAt || new Date());
@@ -108,7 +109,7 @@ export default function PatientDetailModal({ patient, onClose }) {
                 </div>
                 <div>
                   <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '2px' }}>EDAD / SEXO</div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>{patient.age || patient.edad || '-'}a / {patient.sexo || '-'}</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>{formatAgeDetailed(patient.fechaNacimiento, patient.age || patient.edad)} / {patient.sexo || '-'}</div>
                 </div>
               </div>
               <div style={{ marginBottom: '16px' }}>

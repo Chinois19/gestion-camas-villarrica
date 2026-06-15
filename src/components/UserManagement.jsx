@@ -135,7 +135,7 @@ const UserManagement = ({ notify, activeUsers = {} }) => {
                   <span className="status-indicator active" style={{ margin: 0, width: '6px', height: '6px' }}></span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                     <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)' }}>{data.name}</span>
-                    <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>@{username} • {data.role === 'superadmin' ? 'Super Admin' : data.role === 'gestor_camas' ? 'Gestor de Camas' : data.role === 'medico_general' ? 'Médico' : data.role}</span>
+                    <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>@{username} • {data.role === 'superadmin' ? 'Super Admin' : data.role === 'gestor_camas' ? 'Gestor de Camas' : data.role === 'medico_general' ? 'Médico' : data.role === 'gestora_servicio' ? 'Gestora Servicio Clínico' : data.role}</span>
                   </div>
                 </div>
               ))
@@ -197,6 +197,7 @@ const UserManagement = ({ notify, activeUsers = {} }) => {
                     {user.role === 'personal_aseo' && 'Personal de Aseo'}
                     {user.role === 'visor' && 'Visor'}
                     {user.role === 'medico_hodom' && 'Médico HODOM'}
+                    {user.role === 'gestora_servicio' && 'Gestora Servicio Clínico'}
                   </span>
                 </td>
                 <td>
@@ -267,6 +268,7 @@ const UserManagement = ({ notify, activeUsers = {} }) => {
                   <option value="medico_general">Médico</option>
                   <option value="personal_aseo">Personal de Aseo</option>
                   <option value="medico_hodom">Médico HODOM</option>
+                  <option value="gestora_servicio">Gestora de Servicio Clínico</option>
                 </select>
               </div>
               <div className="modal-actions">

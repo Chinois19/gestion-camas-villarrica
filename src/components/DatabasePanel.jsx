@@ -3,6 +3,7 @@ import { Database, Search, Download, Filter, Printer } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
 import { matchesSearch } from '../utils/search';
+import { formatAgeDetailed } from '../utils/age';
 
 const formatDateToDDMMYYYY = (dateVal) => {
   if (!dateVal) return '—';
@@ -184,7 +185,7 @@ export default function DatabasePanel({ bedsData }) {
                 precauciones: precStr,
                 nombre: p.patient,
                 run: p.rut || '—',
-                edad: p.age || '—',
+                edad: formatAgeDetailed(p.fechaNacimiento, p.age || p.edad),
                 diagnosticos: uniqueDx || 'No registrado',
                 especialidades: uniqueSpecs || 'No asignada',
                 actualizacion: updates,

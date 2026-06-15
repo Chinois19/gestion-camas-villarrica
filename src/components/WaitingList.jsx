@@ -4,6 +4,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { SERVICIOS_SOLICITANTES, ESPECIALIDADES } from '../data/formData';
 import cie10Data from '../data/cie10.json';
 import { matchesSearch } from '../utils/search';
+import { formatAgeDetailed } from '../utils/age';
 
 const calculateWaitTime = (requestedAt) => {
   const diff = Date.now() - new Date(requestedAt).getTime();
@@ -73,7 +74,7 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
           </div>
           <div className="patient-info-mini">
             <span className="p-name" style={{ marginRight: '4px' }}>{patient.name}</span>
-            <span className="p-age">{patient.age} años • {patient.origin}</span>
+            <span className="p-age">{formatAgeDetailed(patient.fechaNacimiento, patient.age)} • {patient.origin}</span>
           </div>
         </div>
 

@@ -3,6 +3,7 @@ import { Database, Search, Download, Filter, Printer, Calendar, Edit2, RotateCcw
 import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
 import { matchesSearch } from '../utils/search';
+import { formatAgeDetailed } from '../utils/age';
 
 const formatDateToDDMMYYYY = (dateVal) => {
   if (!dateVal) return '—';
@@ -42,7 +43,8 @@ const ESTABLECIMIENTOS_RED = {
   'Alta Complejidad': ['Hospital Dr. Hernán Henríquez Aravena (Temuco)'],
   'Hospitales Nodos (Mediana Complejidad)': [
     'Hospital de Villarrica', 'Hospital de Pitrufquén',
-    'Hospital de Nueva Imperial', 'Hospital de Lautaro'
+    'Hospital de Nueva Imperial', 'Hospital de Lautaro',
+    'Complejo Asistencial de Padre las Casas'
   ],
   'Hospitales de Familia y Comunidad': [
     'Hospital de Loncoche', 'Hospital de Cunco', 'Hospital de Galvarino',
@@ -69,6 +71,7 @@ const EditAltaModal = ({ row, onClose, onSave }) => {
     diagnosticos: Array.isArray(p.diagnosis) ? p.diagnosis.join(' | ') : (p.diagnosis || row.diagnosticos || ''),
     destino: p.destino || '',
     establecimientoRed: p.establecimientoRed || '',
+    otroEstablecimientoDetalle: p.otroEstablecimientoDetalle || '',
     redPrivadaDetalle: p.redPrivadaDetalle || '',
     observaciones: p.observaciones || ''
   });
@@ -106,14 +109,35 @@ const EditAltaModal = ({ row, onClose, onSave }) => {
           {formData.destino === 'Otro establecimiento' && (
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Establecimiento en Red</label>
-              <select className="glass-input" name="establecimientoRed" value={formData.establecimientoRed} onChange={handleChange} style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }}>
+              <select 
+                className="glass-input" 
+                name="establecimientoRed" 
+                value={formData.establecimientoRed} 
+                onChange={e => {
+                  const val = e.target.value;
+                  setFormData(prev => ({
+                    ...prev,
+                    establecimientoRed: val,
+                    otroEstablecimientoDetalle: val === 'Otro' ? prev.otroEstablecimientoDetalle : ''
+                  }));
+                }} 
+                style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }}
+              >
                 <option value="">-- Seleccione establecimiento --</option>
                 {Object.entries(ESTABLECIMIENTOS_RED).map(([cat, list]) => (
                   <optgroup key={cat} label={cat}>
                     {list.map(h => <option key={h} value={h}>{h}</option>)}
                   </optgroup>
                 ))}
+                <option value="Otro">Otro establecimiento (Especificar)</option>
               </select>
+            </div>
+          )}
+
+          {formData.destino === 'Otro establecimiento' && formData.establecimientoRed === 'Otro' && (
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Especifique el Establecimiento</label>
+              <input className="glass-input" name="otroEstablecimientoDetalle" value={formData.otroEstablecimientoDetalle} onChange={handleChange} placeholder="Ej: Hospital de Valdivia" style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }} />
             </div>
           )}
 
@@ -288,7 +312,13 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
               }
 
               // Servicio de acueste is destination unit requested/saved (bed.destino) falling back to bed tag/type
-              const servicioAcueste = p.destino || bed.destino || bed.tag || bed.type || 'No definido';
+              let servicioAcueste = p.destino || bed.destino || bed.tag || bed.type || 'No definido';
+              if (p.destino === 'Otro establecimiento') {
+                const hosp = p.establecimientoRed === 'Otro' ? (p.otroEstablecimientoDetalle || 'Otro') : p.establecimientoRed;
+                servicioAcueste = `Traslado: ${hosp || 'Otro establecimiento'}`;
+              } else if (p.destino === 'Red Privada' && p.redPrivadaDetalle) {
+                servicioAcueste = `Privado: ${p.redPrivadaDetalle}`;
+              }
 
               data.push({
                 rawBedData: p,
@@ -302,7 +332,7 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
                 precauciones: precStr,
                 nombre: p.patient || p.patientName || p.nombre || 'Desconocido',
                 run: p.rut || '—',
-                edad: p.age || p.edad || '—',
+                edad: formatAgeDetailed(p.fechaNacimiento, p.age || p.edad),
                 diagnosticos: uniqueDx || 'No registrado',
                 especialidades: uniqueSpecs || 'No asignada',
                 actualizacion: updates,
@@ -341,10 +371,22 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
         const dischargeDateObj = p.dischargeAt ? new Date(p.dischargeAt) : new Date();
         const fechaAlta = formatDateTime(p.dischargeAt);
 
+        let servicioDischarge = 'Lista de Espera';
+        if (p.destino) {
+          if (p.destino === 'Otro establecimiento') {
+            const hosp = p.establecimientoRed === 'Otro' ? (p.otroEstablecimientoDetalle || 'Otro') : p.establecimientoRed;
+            servicioDischarge = `Traslado: ${hosp || 'Otro establecimiento'}`;
+          } else if (p.destino === 'Red Privada' && p.redPrivadaDetalle) {
+            servicioDischarge = `Privado: ${p.redPrivadaDetalle}`;
+          } else {
+            servicioDischarge = p.destino;
+          }
+        }
+
         data.push({
           rawBedData: p,
           rawDischargeDate: dischargeDateObj,
-          servicio: 'Lista de Espera',
+          servicio: servicioDischarge,
           estada: 'Alta previa a asignación',
           sala: 'Espera',
           cama: '—',
@@ -353,7 +395,7 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
           precauciones: 'Ninguna',
           nombre: p.patient || p.patientName || p.nombre || 'Desconocido',
           run: p.rut || '—',
-          edad: p.age || p.edad || '—',
+          edad: formatAgeDetailed(p.fechaNacimiento, p.age || p.edad),
           diagnosticos: uniqueDx || 'No registrado',
           especialidades: 'No asignada',
           actualizacion: [
