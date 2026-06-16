@@ -69,6 +69,7 @@
 .occupied-color { background: linear-gradient(135deg, #fde047 0%, #eab308 100%); }
 .cleaning-color { background: linear-gradient(135deg, #fca5a5 0%, #ef4444 100%); }
 .available-color { background: linear-gradient(135deg, #86efac 0%, #22c55e 100%); }
+.blocked-color { background: linear-gradient(135deg, #94a3b8 0%, #475569 100%); }
 
 .general-status-content {
   padding: 8px;

@@ -9,6 +9,8 @@ export default function GeneralBedStatusPanel({ bedsData }) {
       case 'occupied': return 'occupied-color';
       case 'cleaning': return 'cleaning-color';
       case 'available': return 'available-color';
+      case 'blocked': return 'blocked-color';
+      case 'inhabilitada': return 'blocked-color';
       default: return ''; 
     }
   };
@@ -39,6 +41,10 @@ export default function GeneralBedStatusPanel({ bedsData }) {
           <div className="legend-item">
             <span className="legend-color available-color"></span>
             <span>Disponible "Verde"</span>
+          </div>
+          <div className="legend-item">
+            <span className="legend-color blocked-color"></span>
+            <span>Bloqueada "Gris"</span>
           </div>
         </div>
       </div>
@@ -87,7 +93,7 @@ export default function GeneralBedStatusPanel({ bedsData }) {
                                       <div className="bed-number-label">{bed.id}</div>
                                       <div 
                                         className={`bed-square ${getBedColorClass(bed.status)}`}
-                                        title={`Cama ${bed.id} - ${bed.status === 'occupied' ? 'Ocupada' : bed.status === 'cleaning' ? 'En Aseo' : 'Disponible'}`}
+                                        title={`Cama ${bed.id} - ${bed.status === 'occupied' ? 'Ocupada' : bed.status === 'cleaning' ? 'En Aseo' : bed.status === 'blocked' || bed.status === 'inhabilitada' ? 'Bloqueada' : 'Disponible'}`}
                                       >
                                         <Bed size={20} color="rgba(255,255,255,0.9)" className="bed-vector" />
                                       </div>
