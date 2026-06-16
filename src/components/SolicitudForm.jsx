@@ -144,11 +144,11 @@ function FieldLabel({ children }) {
   return <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 4 }}>{children}</div>;
 }
 
-function GInput({ placeholder, value, onChange, name, type = 'text', readOnly, style }) {
+function GInput({ placeholder, value, onChange, name, type = 'text', readOnly, style, required }) {
   return (
     <input
       type={type} name={name} value={value} onChange={onChange} readOnly={readOnly}
-      placeholder={placeholder}
+      placeholder={placeholder} required={required}
       style={{
         width: '100%', background: 'var(--inset-bg)', border: '1px solid var(--border-subtle)',
         borderRadius: 8, padding: '7px 11px', color: 'var(--text-primary)',
@@ -283,9 +283,53 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     const pad = (num) => String(num).padStart(2, '0');
     setCustomDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
     setCustomTime(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+
+    if (patientData) {
+      setAislamiento(patientData.aislamiento !== undefined ? patientData.aislamiento : null);
+      setSecondaryCodes(patientData.secondaryCodes || []);
+      setEvolutions(patientData.evolutions || []);
+      setFormData({
+        nombre: patientData.name || '', rut: patientData.rut || '',
+        edad: patientData.age || '', sexo: patientData.sexo || '',
+        fechaNacimiento: patientData.fechaNacimiento || '',
+        prevision: patientData.prevision || '', comuna: patientData.comuna || '',
+        dxPrincipal: patientData.dxPrincipal || '',
+        dxCie10: patientData.dxCie10 || '', dxGrupo: patientData.dxGrupo || '',
+        servicioSol: patientData.origin || '', medicoSol: patientData.medicoSol || '',
+        especialidadMedico: patientData.especialidadMedico || '',
+        especialidadTratante: Array.isArray(patientData.especialidadTratante) ? patientData.especialidadTratante : (patientData.especialidadTratante ? [patientData.especialidadTratante] : []),
+        destino: patientData.bedTypeRequired || 'Cuidados Medios',
+        requisitosUGP: patientData.requisitosUGP || '',
+        reqEnfermeria: patientData.reqEnfermeria || '',
+        procedimientosPendientes: patientData.procedimientosPendientes || '',
+        hodom: patientData.hodom || false, trr: patientData.trr || false,
+        hfc: patientData.hfc || false, ugcc: patientData.ugcc || false,
+        paSist: patientData.paSist || '', paDiast: patientData.paDiast || '',
+        frecCard: patientData.frecCard || '', frecResp: patientData.frecResp || '',
+        temp: patientData.temp || '', satO2: patientData.satO2 || '',
+        glicemia: patientData.glicemia || '', evaDolor: patientData.evaDolor || '',
+      });
+    } else {
+      setAislamiento(null);
+      setSecondaryCodes([]);
+      setEvolutions([]);
+      setFormData({
+        nombre: '', rut: '', edad: '', sexo: '', fechaNacimiento: '', prevision: '', comuna: '',
+        dxPrincipal: '', dxCie10: '', dxGrupo: '',
+        servicioSol: '', medicoSol: '', especialidadMedico: '', especialidadTratante: [], destino: 'Cuidados Medios',
+        requisitosUGP: '', reqEnfermeria: '', procedimientosPendientes: '',
+        hodom: false, trr: false, hfc: false, ugcc: false,
+        paSist: '', paDiast: '', frecCard: '', frecResp: '', temp: '', satO2: '', glicemia: '', evaDolor: '',
+      });
+    }
   }, [patientData?.id]);
   const [ticketNumber, setTicketNumber] = useState('');
-  const [aislamiento, setAislamiento] = useState(null); // null | true | false
+  const [aislamiento, setAislamiento] = useState(() => {
+    if (patientData && patientData.aislamiento !== undefined) {
+      return patientData.aislamiento;
+    }
+    return null;
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
@@ -427,6 +471,11 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     e.preventDefault();
     if (isViewMode) return;
 
+    if (!formData.nombre?.trim() || !formData.rut?.trim()) {
+      alert('Nombre Completo y RUT son campos obligatorios.');
+      return;
+    }
+
     // Helper para parsear la fecha de forma segura y evitar RangeError
     const getParsedEffectiveDate = () => {
       if (!canEditDateTime) {
@@ -475,7 +524,8 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
         updatedBy: currentUser?.name || 'Usuario',
         requestedAt: effectiveDate.toISOString(),
         diagnosis: updatedDiagnosisCodes,
-        fechaNacimiento: formData.fechaNacimiento
+        fechaNacimiento: formData.fechaNacimiento,
+        aislamiento: aislamiento
       });
       return;
     }
@@ -535,6 +585,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       secondaryCodes: secondaryCodes,
       dxCie10: formData.dxCie10,
       dxGrupo: formData.dxGrupo,
+      aislamiento: aislamiento,
       evolutions: [
         {
           id: Date.now().toString(),
@@ -712,8 +763,8 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
               ) : (
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr', gap: 10, marginBottom: 10 }}>
-                    <div><FieldLabel>Nombre Completo</FieldLabel><GInput name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Ej. Juan Pérez González" /></div>
-                    <div><FieldLabel>RUT</FieldLabel><GInput name="rut" value={formData.rut} onChange={handleChange} placeholder="12.345.678-9" /></div>
+                    <div><FieldLabel>Nombre Completo <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Ej. Juan Pérez González" required /></div>
+                    <div><FieldLabel>RUT <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="rut" value={formData.rut} onChange={handleChange} placeholder="12.345.678-9" required /></div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 10, marginBottom: 10 }}>
                     <div>

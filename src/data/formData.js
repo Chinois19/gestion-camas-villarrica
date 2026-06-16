@@ -8,7 +8,8 @@ export const SERVICIOS_SOLICITANTES = [
   'Pabellón Quirúrgico y Recuperación',
   'CECOSAM',
   'UGCC',
-  'Hospitalización Domiciliaria (HODOM)'
+  'Hospitalización Domiciliaria (HODOM)',
+  'Sala de Atención Integral de Parto (SAIP)'
 ];
 
 export const PREVISIONES = [

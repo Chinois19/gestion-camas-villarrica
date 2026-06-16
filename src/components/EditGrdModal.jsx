@@ -57,7 +57,21 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
     comuna: bed.comuna || 'Gorbea',
     prevision: bed.prevision || 'DIPRECA',
     especialidadTratante: Array.isArray(bed.especialidadTratante) ? bed.especialidadTratante : (bed.especialidadTratante ? [bed.especialidadTratante] : []),
-    aislamiento: Array.isArray(bed.aislamiento) ? bed.aislamiento : (bed.aislamiento ? [bed.aislamiento] : ['Precauciones de Contacto']),
+    aislamiento: (() => {
+      if (Array.isArray(bed.aislamiento)) {
+        return bed.aislamiento;
+      }
+      if (bed.aislamiento === true) {
+        return ['Precauciones de Contacto'];
+      }
+      if (bed.aislamiento === false || bed.aislamiento === 'Sin Precauciones') {
+        return ['Sin Precauciones'];
+      }
+      if (typeof bed.aislamiento === 'string') {
+        return [bed.aislamiento];
+      }
+      return ['Sin Precauciones'];
+    })(),
     novedades: bed.novedades || [],
     destino: bed.destino || 'Cuidados Medios',
     showTransferPanel: false,

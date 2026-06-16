@@ -351,7 +351,19 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
                     <ReadOnlyField label="Requisitos UGP" value={patient.requisitosUGP} />
                     <ReadOnlyField label="Req. Enfermería" value={patient.reqEnfermeria} />
                     <ReadOnlyField label="Procedimientos Pendientes" value={patient.procedimientosPendientes} />
-                    <ReadOnlyField label="Aislamiento" value={Array.isArray(patient.aislamiento) ? patient.aislamiento.join(', ') : patient.aislamiento} color={patient.aislamiento ? '#ef4444' : ''} />
+                    <ReadOnlyField 
+                      label="Aislamiento" 
+                      value={
+                        Array.isArray(patient.aislamiento) 
+                          ? patient.aislamiento.join(', ') 
+                          : patient.aislamiento === true 
+                            ? 'Sí (Precauciones de Contacto) ⚠️' 
+                            : patient.aislamiento === false 
+                              ? 'No ✅' 
+                              : 'No especificado'
+                      } 
+                      color={patient.aislamiento === true || (Array.isArray(patient.aislamiento) && patient.aislamiento.some(a => a !== 'Sin Precauciones')) ? '#ef4444' : ''} 
+                    />
                   </div>
                   
                   {vitalSigns.length > 0 && (
