@@ -97,7 +97,7 @@ export default function GeneralBedStatusPanel({ bedsData }) {
                                       >
                                         <Bed size={20} color="rgba(255,255,255,0.9)" className="bed-vector" />
                                         {(bed.status === 'blocked' || bed.status === 'inhabilitada') && (
-                                          <Ban size={16} color="rgba(255,255,255,0.8)" className="blocked-vector-overlay" />
+                                          <Ban size={20} color="#ef4444" className="blocked-vector-overlay" />
                                         )}
                                       </div>
                                     </div>
