@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bed } from 'lucide-react';
+import { Bed, Ban } from 'lucide-react';
 import './GeneralBedStatusPanel.css';
 
 export default function GeneralBedStatusPanel({ bedsData }) {
@@ -96,6 +96,9 @@ export default function GeneralBedStatusPanel({ bedsData }) {
                                         title={`Cama ${bed.id} - ${bed.status === 'occupied' ? 'Ocupada' : bed.status === 'cleaning' ? 'En Aseo' : bed.status === 'blocked' || bed.status === 'inhabilitada' ? 'Bloqueada' : 'Disponible'}`}
                                       >
                                         <Bed size={20} color="rgba(255,255,255,0.9)" className="bed-vector" />
+                                        {(bed.status === 'blocked' || bed.status === 'inhabilitada') && (
+                                          <Ban size={16} color="rgba(255,255,255,0.8)" className="blocked-vector-overlay" />
+                                        )}
                                       </div>
                                     </div>
                                   ))}
