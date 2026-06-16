@@ -44,6 +44,12 @@ export default function Navbar({ currentView, onNavigate, navPermissions, badges
           show: navPermissions.canInsights,
         },
         {
+          id: 'general_status',
+          label: 'Estado General de Camas',
+          icon: <LayoutDashboard size={16} />,
+          show: navPermissions.canInsights,
+        },
+        {
           id: 'database',
           label: 'Base de Datos Entrega Turnos',
           icon: <Database size={16} />,

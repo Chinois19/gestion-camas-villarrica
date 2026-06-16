@@ -16,6 +16,7 @@ import DatabasePanel from './components/DatabasePanel';
 import DischargesDatabasePanel from './components/DischargesDatabasePanel';
 import TransfersDatabasePanel from './components/TransfersDatabasePanel';
 import BlockedBedsReportPanel from './components/BlockedBedsReportPanel';
+import GeneralBedStatusPanel from './components/GeneralBedStatusPanel';
 import Navbar from './components/Navbar';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
 import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
@@ -523,6 +524,9 @@ function App() {
       )}
       {currentView === 'insights' && (
         <InsightsDashboard bedsData={bedsData} waitingList={waitingList} transferHistory={transferHistory} />
+      )}
+      {currentView === 'general_status' && (
+        <GeneralBedStatusPanel bedsData={bedsData} />
       )}
       {currentView === 'database' && (
         <DatabasePanel bedsData={bedsData} />
