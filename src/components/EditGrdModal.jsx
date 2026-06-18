@@ -62,7 +62,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
         return bed.aislamiento;
       }
       if (bed.aislamiento === true) {
-        return ['Precauciones de Contacto'];
+        return ['Requiere Aislamiento'];
       }
       if (bed.aislamiento === false || bed.aislamiento === 'Sin Precauciones') {
         return ['Sin Precauciones'];
@@ -356,7 +356,9 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                       { value: 'Sin Precauciones', label: 'Sin Precauciones' },
                       { value: 'Precauciones de Contacto', label: 'Precauciones de Contacto' },
                       { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
-                      { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' }
+                      { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' },
+                      { value: 'Requiere Aislamiento', label: 'Requiere Aislamiento' },
+                      { value: 'Neutropénico', label: 'Neutropénico' }
                     ]}
                     value={formData.aislamiento}
                     onChange={(val) => setFormData(prev => ({ ...prev, aislamiento: val }))}

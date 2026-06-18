@@ -33,7 +33,14 @@ function App() {
   // Auth state
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('villarrica_session');
-    return saved ? JSON.parse(saved) : null;
+    if (saved) {
+      const user = JSON.parse(saved);
+      if (user && user.role === 'admin') {
+        user.role = 'superadmin';
+      }
+      return user;
+    }
+    return null;
   });
 
   const [currentView, setCurrentView] = useState('dashboard');
@@ -42,6 +49,9 @@ function App() {
   const [requestingWaitingIC, setRequestingWaitingIC] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [theme, setTheme] = useState('dark');
+  const [isPublicRoute] = useState(() => {
+    return window.location.hash.includes('#solicitud-publica') || window.location.search.includes('public=solicitud');
+  });
 
   // Clinical state — persisted in Firebase
   const [bedsData, setBedsData, bedsLoading] = useFirebaseSync('appState', 'bedsData', initialBedsData);
@@ -107,6 +117,9 @@ function App() {
   const isLoading = bedsLoading || waitingLoading || hodomLoading || transfersLoading || dischargesLoading || blockLogLoading;
 
   const handleLogin = (user) => {
+    if (user && user.role === 'admin') {
+      user.role = 'superadmin';
+    }
     setCurrentUser(user);
     localStorage.setItem('villarrica_session', JSON.stringify(user));
     setCurrentView('dashboard');
@@ -322,6 +335,30 @@ function App() {
     });
     return count;
   })();
+
+  // ── PUBLIC ROUTE ───────────────────────────────────────────────────────────
+  if (isPublicRoute) {
+    if (waitingLoading) {
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column', gap: '16px' }}>
+          <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.1)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+          <p style={{ color: 'var(--text-secondary)' }}>Cargando formulario...</p>
+          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="app-container" style={{ padding: '24px 0', minHeight: '100vh', overflowY: 'auto' }}>
+        <SolicitudForm
+          onSubmit={(newPatient) => {
+            setWaitingList(prev => [newPatient, ...prev]);
+          }}
+          currentUser={{ name: "Usuario Remoto (Web)", role: "public", username: "public" }}
+        />
+      </div>
+    );
+  }
 
   // ── LOGIN GATE ─────────────────────────────────────────────────────────────
   if (!currentUser) {

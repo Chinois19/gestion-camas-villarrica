@@ -148,6 +148,91 @@ const CAUSAL_COLS = CAUSALES.map((c, i) => ({
   label: c,
 }));
 
+/* ─── Breakdown helper ─────────────────────────────────────────── */
+const breakdownRecordByDay = (record) => {
+  const start = parseDate(record.blockedAt);
+  if (!start) return [];
+
+  // If unblockedAt is present, use it. Otherwise, use "now" as the end date for calculation.
+  const end = record.unblockedAt ? parseDate(record.unblockedAt) : new Date();
+
+  const dailyItems = [];
+
+  // Normalize start and end to get the calendar days range
+  const currentDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+  // Loop day-by-day
+  while (currentDate <= endDate) {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const date = currentDate.getDate();
+
+    // Start and end of this calendar day
+    const calStart = new Date(year, month, date, 0, 0, 0, 0);
+    const calEnd = new Date(year, month, date, 23, 59, 59, 999);
+
+    // Intersection
+    const intersectStart = new Date(Math.max(start.getTime(), calStart.getTime()));
+    const intersectEnd = new Date(Math.min(end.getTime(), calEnd.getTime()));
+
+    if (intersectStart < intersectEnd) {
+      const durationMs = intersectEnd.getTime() - intersectStart.getTime();
+      const durationMin = Math.round(durationMs / 60000);
+
+      // A block is CENSO if it spans the whole day.
+      // We check if block started at or before 00:01, and ends at or after 23:59.
+      // Or if start is before this day and end is after this day.
+      const isStartOfCalDay = intersectStart.getHours() === 0 && intersectStart.getMinutes() <= 1;
+      const isEndOfCalDay = (intersectEnd.getHours() === 23 && intersectEnd.getMinutes() >= 59) || (end.getTime() > calEnd.getTime());
+      
+      const isCenso = isStartOfCalDay && isEndOfCalDay;
+
+      const formattedDate = currentDate.toLocaleDateString('es-CL', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+
+      // Format duration text
+      let durationText = '';
+      if (isCenso) {
+        durationText = '24h (Día Completo)';
+      } else {
+        const hrs = Math.floor(durationMin / 60);
+        const mins = durationMin % 60;
+        durationText = `${hrs}h ${mins}m`;
+      }
+
+      // Format time range within the day
+      const formatTime = (d) => {
+        return d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+      };
+      const timeRangeText = `${formatTime(intersectStart)} - ${formatTime(intersectEnd)}`;
+
+      dailyItems.push({
+        ...record,
+        dayId: `${record.id}-${formattedDate}`,
+        dateStr: formattedDate,
+        currentDate: new Date(currentDate),
+        intersectStart,
+        intersectEnd,
+        durationMin,
+        durationText,
+        timeRangeText,
+        type: isCenso ? 'CENSO' : 'PARCIAL',
+        isCenso,
+        originalRecord: record // keep reference
+      });
+    }
+
+    // Next day
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return dailyItems;
+};
+
 /* ─── Main Component ────────────────────────────────────────────── */
 export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole }) {
   const [search, setSearch] = useState('');
@@ -160,44 +245,57 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
 
   /* ── Filter & sort data ── */
   const rows = useMemo(() => {
-    // Only from June 2025 onwards
     const june2025 = new Date('2025-06-01T00:00:00');
-    let data = (blockLog || []).filter(r => {
+    
+    // 1. Expand all raw blockLog records into daily snapshot records
+    const allDailySnapshots = [];
+    (blockLog || []).forEach(r => {
       const d = parseDate(r.blockedAt);
-      return d && d >= june2025;
+      if (d && d >= june2025) {
+        const dailyItems = breakdownRecordByDay(r);
+        allDailySnapshots.push(...dailyItems);
+      }
     });
 
+    // 2. Filter the daily snapshots
+    let filtered = allDailySnapshots;
+
     if (filterCausal !== 'all') {
-      data = data.filter(r => r.causal === filterCausal);
+      filtered = filtered.filter(item => item.causal === filterCausal);
     }
+
     if (filterMonth) {
-      data = data.filter(r => {
-        const d = parseDate(r.blockedAt);
-        if (!d) return false;
+      filtered = filtered.filter(item => {
+        const d = item.currentDate;
         const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         return ym === filterMonth;
       });
     }
+
     if (search.trim()) {
       const s = search.toLowerCase();
-      data = data.filter(r =>
-        (r.cama || '').toLowerCase().includes(s) ||
-        (r.servicio || '').toLowerCase().includes(s) ||
-        (r.causal || '').toLowerCase().includes(s) ||
-        (r.observation || '').toLowerCase().includes(s)
+      filtered = filtered.filter(item =>
+        (item.cama || '').toLowerCase().includes(s) ||
+        (item.servicio || '').toLowerCase().includes(s) ||
+        (item.causal || '').toLowerCase().includes(s) ||
+        (item.observation || '').toLowerCase().includes(s)
       );
     }
 
-    return [...data].sort((a, b) => {
-      const da = parseDate(a.blockedAt);
-      const db = parseDate(b.blockedAt);
-      return (db || 0) - (da || 0);
+    // 3. Sort by snapshot date descending, then by bed/room id
+    return filtered.sort((a, b) => {
+      // Sort by currentDate descending
+      if (b.currentDate.getTime() !== a.currentDate.getTime()) {
+        return b.currentDate.getTime() - a.currentDate.getTime();
+      }
+      // Then by bed name
+      return (a.cama || '').localeCompare(b.cama || '');
     });
   }, [blockLog, search, filterCausal, filterMonth]);
 
   /* ── Handle manual save ── */
   const handleSave = (updated) => {
-    setBlockLog(prev => prev.map(r => r.id === editingRow.id ? { ...r, ...updated, _manualEdit: true, _editedAt: new Date().toISOString() } : r));
+    setBlockLog(prev => prev.map(r => r.id === editingRow.originalRecord.id ? { ...r, ...updated, _manualEdit: true, _editedAt: new Date().toISOString() } : r));
     setEditingRow(null);
     setSavedToast(true);
     setTimeout(() => setSavedToast(false), 5000);
@@ -205,32 +303,58 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
 
   /* ── Export XLSX ── */
   const handleExport = () => {
-    const headers = ['Fecha Bloqueo', 'Fecha Desbloqueo', 'Cama', 'Servicio', ...CAUSALES, 'Observación', 'Bloqueado por', 'Estado'];
+    const headers = [
+      'Día de Registro', 
+      'Cama', 
+      'Servicio', 
+      'Tipo de Bloqueo', 
+      'Duración Día', 
+      'Horario Día', 
+      'Causal del Bloqueo', 
+      'Observación', 
+      'Fecha Inicio Original', 
+      'Fecha Término Original', 
+      'Bloqueado por'
+    ];
+    
     const sheetData = [headers, ...rows.map(r => [
-      fmtFull(r.blockedAt),
-      fmtFull(r.unblockedAt) !== '—' ? fmtFull(r.unblockedAt) : '',
+      r.dateStr,
       r.cama || '',
       r.servicio || '',
-      ...CAUSALES.map(c => c === r.causal ? '✓' : ''),
+      r.type === 'CENSO' ? 'CENSO' : 'PARCIAL',
+      r.durationText,
+      r.timeRangeText,
+      r.causal || '',
       r.observation || '',
-      r.blockedBy || '',
-      r.unblockedAt ? 'Desbloqueada' : 'Bloqueada'
+      fmtFull(r.originalRecord.blockedAt),
+      r.originalRecord.unblockedAt ? fmtFull(r.originalRecord.unblockedAt) : 'En curso',
+      r.blockedBy || ''
     ])];
+    
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Camas Bloqueadas');
-    XLSX.writeFile(wb, `informe_camas_bloqueadas_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'Camas Bloqueadas Diarias');
+    XLSX.writeFile(wb, `informe_camas_bloqueadas_diarias_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   /* ── Stats summary ── */
   const stats = useMemo(() => {
-    const total = rows.length;
-    const activos = rows.filter(r => !r.unblockedAt).length;
+    const total = rows.length; // total daily block snapshots shown in the table
+    // Count currently active blocks: count the raw blockLog entries that have no unblockedAt date
+    const activos = (blockLog || []).filter(r => !r.unblockedAt).length;
+    
+    // Count census blocks and partial blocks in the current filtered rows
+    const censoCount = rows.filter(r => r.type === 'CENSO').length;
+    const parcialCount = rows.filter(r => r.type === 'PARCIAL').length;
+
     const byReason = {};
     CAUSALES.forEach(c => { byReason[c] = 0; });
-    rows.forEach(r => { if (r.causal) byReason[r.causal] = (byReason[r.causal] || 0) + 1; });
-    return { total, activos, byReason };
-  }, [rows]);
+    rows.forEach(r => { 
+      if (r.causal) byReason[r.causal] = (byReason[r.causal] || 0) + 1; 
+    });
+    
+    return { total, activos, censoCount, parcialCount, byReason };
+  }, [rows, blockLog]);
 
   const freezeTS = getFreezeTimestamp();
 
@@ -266,7 +390,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
               Informe de Camas Bloqueadas
             </h2>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
-              Registro histórico desde Junio 2025 · Congela datos a las 17:00 del día anterior
+              Fotografía diaria de bloqueos · Junio 2025 en adelante · Corte 17:00 del día anterior
             </p>
           </div>
         </div>
@@ -288,23 +412,25 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
       {/* ── STATS CARDS ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
         <div className="glass-panel" style={{ padding: '18px 20px' }}>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Registros</div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Días-Bloqueo Totales</div>
           <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2, marginTop: 4 }}>{stats.total}</div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4 }}>desde jun 2025</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4 }}>días registrados en periodo</div>
         </div>
         <div className="glass-panel" style={{ padding: '18px 20px' }}>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actualmente Bloqueadas</div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Camas Bloqueadas Activas</div>
           <div style={{ fontSize: '2rem', fontWeight: 800, color: '#ef4444', lineHeight: 1.2, marginTop: 4 }}>{stats.activos}</div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4 }}>sin fecha de desbloqueo</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4 }}>en tiempo real (sin liberar)</div>
         </div>
-        {Object.entries(stats.byReason).slice(0, 3).map(([reason, count]) => (
-          <div key={reason} className="glass-panel" style={{ padding: '18px 20px' }}>
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1.3 }}>
-              {reason}
-            </div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f97316', lineHeight: 1.2, marginTop: 4 }}>{count}</div>
-          </div>
-        ))}
+        <div className="glass-panel" style={{ padding: '18px 20px' }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bloqueos CENSO (24h)</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#c084fc', lineHeight: 1.2, marginTop: 4 }}>{stats.censoCount}</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4 }}>días completos bloqueados</div>
+        </div>
+        <div className="glass-panel" style={{ padding: '18px 20px' }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bloqueos Parciales (&lt;24h)</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#fbbf24', lineHeight: 1.2, marginTop: 4 }}>{stats.parcialCount}</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4 }}>uso de horas del día</div>
+        </div>
       </div>
 
       {/* ── FILTERS ── */}
@@ -348,13 +474,13 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
                   <th colSpan={CAUSALES.length} style={{ ...thGroupStyle, background: 'rgba(168,85,247,0.12)', color: '#c084fc', borderRight: '2px solid rgba(168,85,247,0.3)' }}>
                     🔒 Causal del Bloqueo
                   </th>
-                  <th colSpan={canEdit ? 4 : 3} style={{ ...thGroupStyle, background: 'rgba(14,165,233,0.08)', color: '#38bdf8' }}>
-                    📊 Estado y Gestión
+                  <th colSpan={canEdit ? 7 : 6} style={{ ...thGroupStyle, background: 'rgba(14,165,233,0.08)', color: '#38bdf8' }}>
+                    📊 Estado y Censo
                   </th>
                 </tr>
                 {/* Column header row */}
                 <tr style={{ background: 'rgba(0,0,0,0.25)', borderBottom: '2px solid rgba(239,68,68,0.25)' }}>
-                  <th style={thFixed}>Fecha Bloqueo</th>
+                  <th style={thFixed}>Día de Registro</th>
                   <th style={thFixed}>Cama</th>
                   <th style={{ ...thFixed, borderRight: '2px solid rgba(239,68,68,0.25)' }}>Servicio</th>
                   {CAUSALES.map((c, i) => (
@@ -379,19 +505,21 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
                       </div>
                     </th>
                   ))}
+                  <th style={thFixed}>Tipo Bloqueo</th>
+                  <th style={thFixed}>Duración Día</th>
+                  <th style={thFixed}>Horario Día</th>
                   <th style={thFixed}>Observación</th>
+                  <th style={thFixed}>Rango Original</th>
                   <th style={thFixed}>Bloqueado por</th>
-                  <th style={thFixed}>Desbloqueo</th>
-                  <th style={thFixed}>Estado</th>
                   {canEdit && <th style={thFixed}>Acc.</th>}
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r, idx) => {
-                  const frozen = isFrozen(r);
-                  const isActive = !r.unblockedAt;
+                  const frozen = isFrozen(r.originalRecord);
+                  const isCenso = r.type === 'CENSO';
                   return (
-                    <tr key={r.id || idx} style={{
+                    <tr key={r.dayId || idx} style={{
                       borderBottom: '1px solid var(--border-subtle)',
                       background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.013)',
                       transition: 'background 0.15s'
@@ -401,9 +529,9 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
                     >
                       <td style={tdStyle}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                          <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.8rem' }}>{fmtFull(r.blockedAt)}</span>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.8rem' }}>{r.dateStr}</span>
                           <div style={{ display: 'flex', gap: 4 }}>
-                            {r._manualEdit && (
+                            {r.originalRecord._manualEdit && (
                               <span style={{ fontSize: '0.6rem', padding: '1px 5px', borderRadius: 4, background: 'rgba(249,115,22,0.15)', color: '#fb923c', border: '1px solid rgba(249,115,22,0.3)', fontWeight: 700 }}>EDITADO</span>
                             )}
                             {!frozen && (
@@ -432,20 +560,34 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
                           )}
                         </td>
                       ))}
+                      
+                      <td style={{ ...tdStyle }}>
+                        {isCenso ? (
+                          <span style={{ fontSize: '0.7rem', padding: '3px 9px', borderRadius: 6, fontWeight: 700, background: 'rgba(124, 58, 237, 0.15)', color: '#c084fc', border: '1px solid rgba(124, 58, 237, 0.4)', whiteSpace: 'nowrap' }}>📊 Bloqueo CENSO</span>
+                        ) : (
+                          <span style={{ fontSize: '0.7rem', padding: '3px 9px', borderRadius: 6, fontWeight: 700, background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.4)', whiteSpace: 'nowrap' }}>⏳ Bloqueo Parcial</span>
+                        )}
+                      </td>
+                      
+                      <td style={{ ...tdStyle, fontWeight: 700, color: isCenso ? '#c084fc' : '#fbbf24' }}>
+                        {r.durationText}
+                      </td>
+                      
+                      <td style={{ ...tdStyle, fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                        {r.timeRangeText}
+                      </td>
+
                       <td style={{ ...tdStyle, maxWidth: 180, fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: r.observation ? 'normal' : 'italic' }}>
                         {r.observation || 'Sin observación'}
                       </td>
+                      
+                      <td style={{ ...tdStyle, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+                        <div style={{ fontWeight: 600 }}>Inic: {fmtFull(r.originalRecord.blockedAt)}</div>
+                        <div>Térm: {r.originalRecord.unblockedAt ? fmtFull(r.originalRecord.unblockedAt) : <span style={{ fontStyle: 'italic', color: '#22c55e' }}>En curso</span>}</div>
+                      </td>
+
                       <td style={{ ...tdStyle, fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{r.blockedBy || '—'}</td>
-                      <td style={{ ...tdStyle, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                        {r.unblockedAt ? fmtFull(r.unblockedAt) : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Sin desbloqueo</span>}
-                      </td>
-                      <td style={{ ...tdStyle }}>
-                        {isActive ? (
-                          <span style={{ fontSize: '0.7rem', padding: '3px 9px', borderRadius: 6, fontWeight: 700, background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', whiteSpace: 'nowrap' }}>🔒 Bloqueada</span>
-                        ) : (
-                          <span style={{ fontSize: '0.7rem', padding: '3px 9px', borderRadius: 6, fontWeight: 700, background: 'rgba(34,197,94,0.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)', whiteSpace: 'nowrap' }}>✓ Libre</span>
-                        )}
-                      </td>
+
                       {canEdit && (
                         <td style={{ ...tdStyle, textAlign: 'center' }}>
                           <button
@@ -456,7 +598,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
                               display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', fontWeight: 700,
                               transition: 'all 0.2s'
                             }}
-                            title="Editar registro"
+                            title="Editar registro original"
                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(249,115,22,0.2)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'rgba(249,115,22,0.1)'}
                           >
@@ -491,7 +633,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
       {/* Edit modal */}
       {editingRow && (
         <EditBlockModal
-          record={editingRow}
+          record={editingRow.originalRecord}
           onClose={() => setEditingRow(null)}
           onSave={handleSave}
         />

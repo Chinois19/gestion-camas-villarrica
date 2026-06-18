@@ -326,9 +326,12 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   const [ticketNumber, setTicketNumber] = useState('');
   const [aislamiento, setAislamiento] = useState(() => {
     if (patientData && patientData.aislamiento !== undefined) {
+      if (typeof patientData.aislamiento === 'boolean') {
+        return patientData.aislamiento ? ['Requiere Aislamiento'] : ['Sin Precauciones'];
+      }
       return patientData.aislamiento;
     }
-    return null;
+    return [];
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -768,8 +771,8 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 10, marginBottom: 10 }}>
                     <div>
-                      <FieldLabel>Fecha de Nacimiento</FieldLabel>
-                      <GInput type="date" name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleChange} />
+                      <FieldLabel>Fecha de Nacimiento <span style={{ color: '#ef4444' }}>*</span></FieldLabel>
+                      <GInput type="date" name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleChange} required />
                     </div>
                     <div>
                       <FieldLabel>Edad Calculada</FieldLabel>
@@ -915,51 +918,8 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
           {/* Columna Derecha: Signos Vitales, Requerimientos Clínicos, Evoluciones Clínicas */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-            {/* 4. SIGNOS VITALES — oculto si es Urgencia */}
-            {formData.servicioSol !== 'Servicio de Atención de Urgencia' && (
-              <SectionCard icon={Heart} title="4. Signos Vitales al Momento de la Indicación Médica" color="#ef4444" zIndex={45}>
-                {isViewMode ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                    {[
-                      { icon: Heart, label: 'PA Sistólica', val: formData.paSist, unit: 'mmHg', color: '#ef4444' },
-                      { icon: Heart, label: 'PA Diastólica', val: formData.paDiast, unit: 'mmHg', color: '#ef4444' },
-                      { icon: Activity, label: 'Frec. Cardíaca', val: formData.frecCard, unit: 'lpm', color: '#f97316' },
-                      { icon: Wind, label: 'Frec. Respiratoria', val: formData.frecResp, unit: 'rpm', color: '#38bdf8' },
-                      { icon: Thermometer, label: 'Temperatura', val: formData.temp, unit: '°C', color: '#a855f7' },
-                      { icon: Eye, label: 'Saturación O₂', val: formData.satO2, unit: '%', color: '#10b981' },
-                      { icon: Droplets, label: 'Glicemia', val: formData.glicemia, unit: 'mg/dL', color: '#f59e0b' },
-                      { icon: BarChart2, label: 'EVA Dolor', val: formData.evaDolor, unit: '0–10', color: '#e879f9' },
-                    ].map(({ icon: Icon, label, val, unit, color }) => (
-                      <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: 'rgba(0,0,0,0.2)', borderRadius: 8, border: '1px solid var(--border-subtle)' }}>
-                        <div style={{ width: 26, height: 26, borderRadius: '50%', background: `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Icon size={12} color={color} />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '0.58rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>{label}</div>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: 1 }}>
-                            {val || '—'} <span style={{ fontSize: '0.65rem', fontWeight: 400, color }}>{unit}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    <VitalInput icon={Heart} label="PA Sistólica" unit="mmHg" name="paSist" value={formData.paSist} onChange={handleChange} color="#ef4444" />
-                    <VitalInput icon={Heart} label="PA Diastólica" unit="mmHg" name="paDiast" value={formData.paDiast} onChange={handleChange} color="#ef4444" />
-                    <VitalInput icon={Activity} label="Frec. Cardíaca" unit="lpm" name="frecCard" value={formData.frecCard} onChange={handleChange} color="#f97316" />
-                    <VitalInput icon={Wind} label="Frec. Respiratoria" unit="rpm" name="frecResp" value={formData.frecResp} onChange={handleChange} color="#38bdf8" />
-                    <VitalInput icon={Heart} label="Temperatura" unit="°C" name="temp" value={formData.temp} onChange={handleChange} color="#a855f7" />
-                    <VitalInput icon={Eye} label="Saturación O₂" unit="%" name="satO2" value={formData.satO2} onChange={handleChange} color="#10b981" />
-                    <VitalInput icon={Droplets} label="Glicemia" unit="mg/dL" name="glicemia" value={formData.glicemia} onChange={handleChange} color="#f59e0b" />
-                    <VitalInput icon={BarChart2} label="EVA Dolor" unit="0–10" name="evaDolor" value={formData.evaDolor} onChange={handleChange} color="#e879f9" />
-                  </div>
-                )}
-              </SectionCard>
-            )}
-
-            {/* 5. REQUERIMIENTOS CLÍNICOS */}
-            <SectionCard icon={Activity} title="5. Requerimientos Clínicos" color="#10b981" zIndex={35}>
+            {/* 4. REQUERIMIENTOS CLÍNICOS */}
+            <SectionCard icon={Activity} title="4. Requerimientos Clínicos" color="#10b981" zIndex={35}>
               {isViewMode ? (
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
@@ -968,15 +928,17 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 10, alignItems: 'start' }}>
                     <div>
-                      <FieldLabel>Aislamiento</FieldLabel>
+                      <FieldLabel>Aislamiento / Precauciones</FieldLabel>
                       <div style={{
                         padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border-subtle)',
-                        background: aislamiento ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)',
-                        color: aislamiento ? '#ef4444' : '#10b981',
+                        background: (Array.isArray(aislamiento) && aislamiento.some(a => a !== 'Sin Precauciones')) || aislamiento === true ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)',
+                        color: (Array.isArray(aislamiento) && aislamiento.some(a => a !== 'Sin Precauciones')) || aislamiento === true ? '#ef4444' : '#10b981',
                         fontWeight: 700, fontSize: '0.8rem', width: 'fit-content',
-                        borderColor: aislamiento ? '#ef4444' : '#10b981',
+                        borderColor: (Array.isArray(aislamiento) && aislamiento.some(a => a !== 'Sin Precauciones')) || aislamiento === true ? '#ef4444' : '#10b981',
                       }}>
-                        {aislamiento === true ? 'REQUIERE AISLAMIENTO ⚠️' : aislamiento === false ? 'SIN AISLAMIENTO ✅' : 'No Especificado'}
+                        {Array.isArray(aislamiento) && aislamiento.length > 0 
+                          ? aislamiento.join(', ') 
+                          : aislamiento === true ? 'REQUIERE AISLAMIENTO ⚠️' : aislamiento === false ? 'SIN AISLAMIENTO ✅' : 'No Especificado'}
                       </div>
                     </div>
                     <div>
@@ -1004,18 +966,20 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 10, alignItems: 'start' }}>
                     <div>
-                      <FieldLabel>Aislamiento</FieldLabel>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {[{ label: 'SÍ', val: true }, { label: 'NO', val: false }].map(({ label, val }) => (
-                          <button key={label} type="button" onClick={() => setAislamiento(val)}
-                            style={{
-                              padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border-subtle)',
-                              background: aislamiento === val ? (val ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)') : 'var(--inset-bg)',
-                              color: aislamiento === val ? (val ? '#ef4444' : '#10b981') : 'var(--text-secondary)',
-                              fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
-                              borderColor: aislamiento === val ? (val ? '#ef4444' : '#10b981') : 'var(--border-subtle)',
-                            }}>{label}</button>
-                        ))}
+                      <FieldLabel>Aislamiento / Precauciones</FieldLabel>
+                      <div style={{ zIndex: 50, position: 'relative' }}>
+                        <MultiSearchableSelect 
+                          options={[
+                            { value: 'Sin Precauciones', label: 'Sin Precauciones' },
+                            { value: 'Precauciones de Contacto', label: 'Precauciones de Contacto' },
+                            { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
+                            { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' },
+                            { value: 'Neutropénico', label: 'Neutropénico' }
+                          ]}
+                          value={Array.isArray(aislamiento) ? aislamiento : (aislamiento === true ? ['Requiere Aislamiento'] : (aislamiento === false ? ['Sin Precauciones'] : []))}
+                          onChange={(val) => setAislamiento(val)}
+                          placeholder="Seleccionar precauciones..."
+                        />
                       </div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
@@ -1029,9 +993,9 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
               )}
             </SectionCard>
 
-            {/* 6. REGISTRO DE EVOLUCIONES CLÍNICAS */}
+            {/* 5. REGISTRO DE EVOLUCIONES CLÍNICAS */}
             {patientData && (
-              <SectionCard icon={Activity} title="6. Registro de Evolución Clínica" color="#a855f7" zIndex={25}>
+              <SectionCard icon={Activity} title="5. Registro de Evolución Clínica" color="#a855f7" zIndex={25}>
                 {!isViewMode && (
                   <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
                     <textarea value={evolNote} onChange={e => setEvolNote(e.target.value)}

@@ -355,9 +355,9 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
                       label="Aislamiento" 
                       value={
                         Array.isArray(patient.aislamiento) 
-                          ? patient.aislamiento.join(', ') 
+                          ? (patient.aislamiento.length > 0 ? patient.aislamiento.join(', ') : 'No especificado')
                           : patient.aislamiento === true 
-                            ? 'Sí (Precauciones de Contacto) ⚠️' 
+                            ? 'Sí (Requiere Aislamiento) ⚠️' 
                             : patient.aislamiento === false 
                               ? 'No ✅' 
                               : 'No especificado'

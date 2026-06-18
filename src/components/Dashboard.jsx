@@ -408,7 +408,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                     requisitosUGP: patientData.requisitosUGP || null,
                     reqEnfermeria: patientData.reqEnfermeria || null,
                     procedimientosPendientes: patientData.procedimientosPendientes || null,
-                    aislamiento: patientData.aislamiento || null,
+                    aislamiento: patientData.aislamiento !== undefined ? patientData.aislamiento : null,
                     servicioSol: patientData.servicioSol || null,
                     destino: patientData.destino || null,
                     prioridad: patientData.prioridad || null,
