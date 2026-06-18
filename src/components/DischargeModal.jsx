@@ -27,16 +27,7 @@ const DESTINOS = [
 
 // Terapia requirements only (removed "Paciente" and "Previsión" — those come from patient data)
 const HODOM_TERAPIA = [
-  { n: 1, requisito: 'Cuidador', condicion: 'Disponible y presente' },
-  { n: 2, requisito: 'Servicios Básicos (Agua, Red eléctrica, Alcantarillado)', condicion: 'Disponibles en domicilio' },
-  { n: 3, requisito: 'Consentimiento', condicion: 'Aprobado por pcte y cuidador' },
-  { n: 4, requisito: 'Manejo terapéutico en caso de deterioro', condicion: 'Definido alcance previo al ingreso' },
-  { n: 5, requisito: 'Antibióticos Endovenosos', condicion: 'Cada 24 o 12 hrs' },
-  { n: 6, requisito: 'Infusión Sueros', condicion: 'BIC 24 hrs disponible' },
-  { n: 7, requisito: 'Manejo de invasivos (CUP, SNG, GTT, SNY, TQT)', condicion: 'Sin restricción a lo disponible en HV (Sin Bomba Alimentación SNY)' },
-  { n: 8, requisito: 'Oxigenoterapia', condicion: 'Hasta 3 litros por naricera (concentrador O2)' },
-  { n: 9, requisito: 'Curaciones', condicion: 'Simples y avanzadas, uso de VAC inclusive' },
-  { n: 10, requisito: 'Kinesioterapia', condicion: 'Motora, Respiratoria, Rehabilitación Neurológica' },
+  { n: 1, requisito: 'Criterios de Ingreso', condicion: 'El paciente cumple con criterios de ingreso HODOM por ubicación y acompañamiento 24/7' }
 ];
 
 function HodomModal({ bed, onConfirm, onClose }) {
