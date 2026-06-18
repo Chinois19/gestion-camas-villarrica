@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Lock, Download, Edit2, AlertTriangle, Filter, Search, RefreshCw, X, Save, CheckCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
@@ -149,12 +149,17 @@ const CAUSAL_COLS = CAUSALES.map((c, i) => ({
 }));
 
 /* ─── Breakdown helper ─────────────────────────────────────────── */
-const breakdownRecordByDay = (record) => {
+const breakdownRecordByDay = (record, currentTime) => {
   const start = parseDate(record.blockedAt);
   if (!start) return [];
 
-  // If unblockedAt is present, use it. Otherwise, use "now" as the end date for calculation.
-  const end = record.unblockedAt ? parseDate(record.unblockedAt) : new Date();
+  const end = record.unblockedAt ? parseDate(record.unblockedAt) : new Date(currentTime);
+
+  const totalDurationMs = end.getTime() - start.getTime();
+  const totalDurationMin = Math.max(0, Math.round(totalDurationMs / 60000));
+  const totalHrs = Math.floor(totalDurationMin / 60);
+  const totalMins = totalDurationMin % 60;
+  const totalDurationText = `${totalHrs}h ${totalMins}m`;
 
   const dailyItems = [];
 
@@ -222,6 +227,7 @@ const breakdownRecordByDay = (record) => {
         timeRangeText,
         type: isCenso ? 'CENSO' : 'PARCIAL',
         isCenso,
+        totalDurationText,
         originalRecord: record // keep reference
       });
     }
@@ -240,6 +246,12 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
   const [filterMonth, setFilterMonth] = useState('');
   const [editingRow, setEditingRow] = useState(null);
   const [savedToast, setSavedToast] = useState(false);
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 60000); // refresh every minute
+    return () => clearInterval(timer);
+  }, []);
 
   const canEdit = userRole === 'superadmin' || userRole === 'gestor_camas';
 
@@ -252,7 +264,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
     (blockLog || []).forEach(r => {
       const d = parseDate(r.blockedAt);
       if (d && d >= june2025) {
-        const dailyItems = breakdownRecordByDay(r);
+        const dailyItems = breakdownRecordByDay(r, currentTime);
         allDailySnapshots.push(...dailyItems);
       }
     });
@@ -291,7 +303,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
       // Then by bed name
       return (a.cama || '').localeCompare(b.cama || '');
     });
-  }, [blockLog, search, filterCausal, filterMonth]);
+  }, [blockLog, search, filterCausal, filterMonth, currentTime]);
 
   /* ── Handle manual save ── */
   const handleSave = (updated) => {
@@ -314,6 +326,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
       'Observación', 
       'Fecha Inicio Original', 
       'Fecha Término Original', 
+      'Tiempo Total Bloqueo',
       'Bloqueado por'
     ];
     
@@ -328,6 +341,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
       r.observation || '',
       fmtFull(r.originalRecord.blockedAt),
       r.originalRecord.unblockedAt ? fmtFull(r.originalRecord.unblockedAt) : 'En curso',
+      r.totalDurationText,
       r.blockedBy || ''
     ])];
     
@@ -584,6 +598,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
                       <td style={{ ...tdStyle, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
                         <div style={{ fontWeight: 600 }}>Inic: {fmtFull(r.originalRecord.blockedAt)}</div>
                         <div>Térm: {r.originalRecord.unblockedAt ? fmtFull(r.originalRecord.unblockedAt) : <span style={{ fontStyle: 'italic', color: '#22c55e' }}>En curso</span>}</div>
+                        <div style={{ color: '#fbbf24', marginTop: 3, fontWeight: 700 }}>Total: {r.totalDurationText}</div>
                       </td>
 
                       <td style={{ ...tdStyle, fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{r.blockedBy || '—'}</td>
