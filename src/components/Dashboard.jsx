@@ -171,6 +171,14 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
                 Dx: {Array.isArray(bed.diagnosis) ? bed.diagnosis.join(' • ') : bed.diagnosis}
               </div>
             )}
+            {bed.aislamiento && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '2px 6px', marginTop: '4px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '0.8rem' }}>⚠️</span>
+                <span style={{ fontSize: '0.65rem', color: '#ef4444', fontWeight: 800, textTransform: 'uppercase' }}>
+                  Aislamiento: {Array.isArray(bed.aislamiento) ? bed.aislamiento.join(', ') : bed.aislamiento}
+                </span>
+              </div>
+            )}
             <div className="patient-meta" style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: isVisor ? 'default' : 'pointer' }} onClick={() => !isVisor && onEditGrd(room.roomId, bed)}>
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: bed.status === 'pending_hodom' ? '#22c55e' : 'var(--status-occupied)' }}></span>
               {bed.grdName ? `GRD: ${bed.grdName}` : (bed.status === 'pending_hodom' ? 'Pendiente HODOM' : 'Ocupada')}
@@ -199,12 +207,17 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
                 <button 
                   className="glass-button primary" 
                   style={{ 
-                    padding: '4px 8px', 
-                    fontSize: '0.7rem', 
+                    padding: '6px 8px', 
+                    fontSize: '0.65rem', 
                     marginTop: '8px', 
                     width: '100%', 
                     display: 'flex', 
+                    alignItems: 'center',
                     justifyContent: 'center',
+                    gap: '4px',
+                    textAlign: 'center',
+                    lineHeight: '1.2',
+                    whiteSpace: 'normal',
                     background: 'linear-gradient(135deg,#22c55e,#16a34a)',
                     borderColor: '#22c55e',
                     color: '#fff'
@@ -214,7 +227,8 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
                     onMarkHodomDoneByBed(room.roomId, bed.id);
                   }}
                 >
-                  <CheckCircle size={12} /> Confirmación de ingreso a HODOM
+                  <CheckCircle size={14} style={{ flexShrink: 0 }} />
+                  <span>Confirmación de ingreso a HODOM</span>
                 </button>
               )
             ) : (
@@ -1576,7 +1590,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
 
         {dischargingPatient && (
           <DischargeModal
-            bed={dischargingPatient.bed}
+            bed={{ ...dischargingPatient.bed, roomId: dischargingPatient.roomId }}
             onConfirm={handleDischargeConfirm}
             onHodomSubmit={onHodomSubmit}
             onClose={() => setDischargingPatient(null)}

@@ -170,7 +170,14 @@ function App() {
     setHodomRequests(prev => prev.map(r =>
       r.id === hodomId ? { ...r, estado: 'aprobado', aprobadoAt: new Date().toISOString() } : r
     ));
+  };
 
+  const handleHodomMarkDoneByBed = (roomId, bedId) => {
+    const req = hodomRequests.find(r => r.roomId === roomId && r.bedId == bedId && r.estado === 'pendiente');
+    if (req) {
+      handleHodomMarkDone(req.id);
+    }
+    
     // Liberar cama → cleaning
     setBedsData(prev => {
       const next = JSON.parse(JSON.stringify(prev));
@@ -178,11 +185,11 @@ function App() {
         if (!next[f]) continue;
         for (const s in next[f]) {
           next[f][s] = next[f][s].map(room => {
-            if (room.roomId === req.roomId) {
+            if (room.roomId === roomId) {
               return {
                 ...room,
                 beds: room.beds.map(bed => {
-                  if (bed.id == req.bedId) {
+                  if (bed.id == bedId) {
                     return { ...bed, status: 'cleaning', cleaningAt: new Date().toISOString(), patient: null, diagnosis: null, grdId: null, grdName: null, severity: null, projectedDays: null, assignedAt: null, interconsultas: [] };
                   }
                   return bed;
@@ -195,15 +202,6 @@ function App() {
       }
       return next;
     });
-  };
-
-  const handleHodomMarkDoneByBed = (roomId, bedId) => {
-    const req = hodomRequests.find(r => r.roomId === roomId && r.bedId == bedId && r.estado === 'pendiente');
-    if (req) {
-      handleHodomMarkDone(req.id);
-    } else {
-      handleFinishCleaning(roomId, bedId);
-    }
   };
 
   const handleHodomDelete = (hodomId) => {

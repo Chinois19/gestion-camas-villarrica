@@ -236,8 +236,6 @@ export default function DischargeModal({ bed, onConfirm, onHodomSubmit, onClose 
 
   const handleHodomConfirm = (hodomData) => {
     setFormData(prev => ({ ...prev, destino: 'Hospitalización domiciliaria', hodomData }));
-    // Submit HODOM request to the global panel
-    if (onHodomSubmit) onHodomSubmit(hodomData);
     setShowHodom(false);
   };
 

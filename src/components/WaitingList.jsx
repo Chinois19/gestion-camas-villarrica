@@ -96,6 +96,15 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
           </div>
         )}
 
+        {patient.aislamiento && (
+          <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '2px 6px', marginTop: '4px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ fontSize: '0.8rem' }}>⚠️</span>
+            <span style={{ fontSize: '0.65rem', color: '#ef4444', fontWeight: 800, textTransform: 'uppercase' }}>
+              Aislamiento: {Array.isArray(patient.aislamiento) ? patient.aislamiento.join(', ') : patient.aislamiento}
+            </span>
+          </div>
+        )}
+
         <div className="requirement-footer">
           <div className="bed-req">
             <span className="label">Requerido:</span>
