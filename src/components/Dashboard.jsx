@@ -26,7 +26,7 @@ const checkServiceMatch = (bed, patient) => {
   const bType = (bed.tag || bed.type).toLowerCase();
   if (pType.includes('uci') || pType.includes('uti') || pType === 'upc') return bType.includes('uci') || bType.includes('uti') || bType === 'upc';
   if (pType.includes('infantil') || pType.includes('neonatolog')) return bType.includes('infantil') || bType.includes('neonatolog');
-  const adultServices = ['cuidados medios', 'cuidados básicos', 'maternidad', 'medios', 'basicos'];
+  const adultServices = ['cuidados medios', 'cuidados básicos', 'gine/puerperio', 'medios', 'basicos'];
   if (adultServices.some(s => pType.includes(s))) return adultServices.some(s => bType.includes(s));
   return false;
 };
@@ -1345,7 +1345,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
               <select className="glass-input" style={{ width: '100%' }} value={serviceFilter} onChange={(e) => setServiceFilter(e.target.value)}>
                 <option value="todos">Todos los Servicios</option>
                 <option value="upc">UPC (UCI/UTI)</option>
-                <option value="maternidad">Maternidad</option>
+                <option value="gine/puerperio">GINE/PUERPERIO</option>
                 <option value="infantil">Infantil / Neo</option>
                 <option value="medios">Cuidados Medios</option>
                 <option value="basicos">Cuidados Básicos</option>
@@ -1435,7 +1435,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                     const type = (bed.tag || bed.type || '').toLowerCase();
                     if (serviceFilter === 'upc' && !type.includes('uci') && !type.includes('uti') && type !== 'upc') matchService = false;
                     else if (serviceFilter === 'infantil' && !type.includes('infantil') && !type.includes('neonatolog')) matchService = false;
-                    else if (serviceFilter === 'maternidad' && !type.includes('maternidad')) matchService = false;
+                    else if (serviceFilter === 'gine/puerperio' && !type.includes('gine/puerperio')) matchService = false;
                     else if (serviceFilter === 'medios' && !type.includes('medios') && type !== 'cuidados medios') matchService = false;
                     else if (serviceFilter === 'basicos' && !type.includes('basico') && !type.includes('básicos')) matchService = false;
                   }

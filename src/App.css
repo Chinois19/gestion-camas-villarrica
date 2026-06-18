@@ -352,7 +352,7 @@ header.glass-panel {
 /* Service color bars via ::after */
 .bed-card.type-uci::after         { background: linear-gradient(90deg, #00d4ff, rgba(0,212,255,0.3)); box-shadow: 0 0 12px rgba(0,212,255,0.4); }
 .bed-card.type-uti::after         { background: linear-gradient(90deg, #f59e0b, rgba(245,158,11,0.3)); box-shadow: 0 0 12px rgba(245,158,11,0.4); }
-.bed-card.type-maternidad::after  { background: linear-gradient(90deg, #ec4899, rgba(236,72,153,0.3)); box-shadow: 0 0 12px rgba(236,72,153,0.4); }
+.bed-card.type-gine-puerperio::after  { background: linear-gradient(90deg, #ec4899, rgba(236,72,153,0.3)); box-shadow: 0 0 12px rgba(236,72,153,0.4); }
 .bed-card.type-neonatologia::after,
 .bed-card.type-infantil::after    { background: linear-gradient(90deg, #a855f7, rgba(168,85,247,0.3)); box-shadow: 0 0 12px rgba(168,85,247,0.4); }
 .bed-card.type-cuidados-medios::after   { background: linear-gradient(90deg, #f97316, rgba(249,115,22,0.3)); box-shadow: 0 0 12px rgba(249,115,22,0.4); }

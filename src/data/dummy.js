@@ -25,27 +25,27 @@ const RAW_DUMMY_DATA = {
       {
         roomId: '301', roomType: 'Poniente',
         beds: [
-          { id: '1', type: 'Maternidad', status: 'available', tag: 'Maternidad', patient: null },
-          { id: '2', type: 'Maternidad', status: 'available', tag: 'Maternidad', patient: null },
-          { id: '3', type: 'Maternidad', status: 'available', tag: 'Maternidad', patient: null },
+          { id: '1', type: 'GINE/PUERPERIO', status: 'available', tag: 'GINE/PUERPERIO', patient: null },
+          { id: '2', type: 'GINE/PUERPERIO', status: 'available', tag: 'GINE/PUERPERIO', patient: null },
+          { id: '3', type: 'GINE/PUERPERIO', status: 'available', tag: 'GINE/PUERPERIO', patient: null },
         ]
       },
       {
         roomId: '302', roomType: 'Poniente',
         beds: [
-          { id: '1', type: 'Maternidad', status: 'occupied', tag: 'Maternidad', patient: 'Javiera Sandoval Alcapan' },
-          { id: '2', type: 'Maternidad', status: 'occupied', tag: 'Maternidad', patient: 'Catalina Ordonez Vega' },
-          { id: '3', type: 'Maternidad', status: 'occupied', tag: 'Maternidad', patient: 'Denisee Coñoepan Carinao' },
-          { id: '4', type: 'Maternidad', status: 'available', tag: 'Maternidad', patient: null },
+          { id: '1', type: 'GINE/PUERPERIO', status: 'occupied', tag: 'GINE/PUERPERIO', patient: 'Javiera Sandoval Alcapan' },
+          { id: '2', type: 'GINE/PUERPERIO', status: 'occupied', tag: 'GINE/PUERPERIO', patient: 'Catalina Ordonez Vega' },
+          { id: '3', type: 'GINE/PUERPERIO', status: 'occupied', tag: 'GINE/PUERPERIO', patient: 'Denisee Coñoepan Carinao' },
+          { id: '4', type: 'GINE/PUERPERIO', status: 'available', tag: 'GINE/PUERPERIO', patient: null },
         ]
       },
       {
         roomId: '303', roomType: 'Poniente',
         beds: [
-          { id: '1', type: 'Maternidad', status: 'occupied', tag: 'Maternidad', patient: 'Nohemmy Gonzalez Yañez' },
-          { id: '2', type: 'Maternidad', status: 'occupied', tag: 'Maternidad', patient: 'Javiera Pezoa Diaz' },
-          { id: '3', type: 'Maternidad', status: 'occupied', tag: 'Maternidad', patient: 'Rocio Huilipan Caniulef' },
-          { id: '4', type: 'Maternidad', status: 'occupied', tag: 'Maternidad', patient: 'Claudia Barrales Silva' },
+          { id: '1', type: 'GINE/PUERPERIO', status: 'occupied', tag: 'GINE/PUERPERIO', patient: 'Nohemmy Gonzalez Yañez' },
+          { id: '2', type: 'GINE/PUERPERIO', status: 'occupied', tag: 'GINE/PUERPERIO', patient: 'Javiera Pezoa Diaz' },
+          { id: '3', type: 'GINE/PUERPERIO', status: 'occupied', tag: 'GINE/PUERPERIO', patient: 'Rocio Huilipan Caniulef' },
+          { id: '4', type: 'GINE/PUERPERIO', status: 'occupied', tag: 'GINE/PUERPERIO', patient: 'Claudia Barrales Silva' },
         ]
       },
       {
@@ -67,7 +67,7 @@ const RAW_DUMMY_DATA = {
       {
         roomId: '306', roomType: 'Poniente',
         beds: [
-          { id: '1', type: 'Maternidad', status: 'available', tag: 'Maternidad', patient: null },
+          { id: '1', type: 'GINE/PUERPERIO', status: 'available', tag: 'GINE/PUERPERIO', patient: null },
         ]
       }
     ],
@@ -75,19 +75,19 @@ const RAW_DUMMY_DATA = {
       {
         roomId: '307', roomType: 'Oriente',
         beds: [
-          { id: '1', type: 'Maternidad', status: 'occupied', tag: 'Maternidad', patient: 'Miriam Quintrileo Valenzuela' },
-          { id: '2', type: 'Maternidad', status: 'available', tag: 'Maternidad', patient: null },
-          { id: '3', type: 'Maternidad', status: 'occupied', tag: 'Maternidad', patient: 'Isabel Carinao Castro' },
-          { id: '4', type: 'Maternidad', status: 'occupied', tag: 'Maternidad', patient: 'Ana Doris Gallegos Tello' },
+          { id: '1', type: 'GINE/PUERPERIO', status: 'occupied', tag: 'GINE/PUERPERIO', patient: 'Miriam Quintrileo Valenzuela' },
+          { id: '2', type: 'GINE/PUERPERIO', status: 'available', tag: 'GINE/PUERPERIO', patient: null },
+          { id: '3', type: 'GINE/PUERPERIO', status: 'occupied', tag: 'GINE/PUERPERIO', patient: 'Isabel Carinao Castro' },
+          { id: '4', type: 'GINE/PUERPERIO', status: 'occupied', tag: 'GINE/PUERPERIO', patient: 'Ana Doris Gallegos Tello' },
         ]
       },
       {
         roomId: '308', roomType: 'Oriente',
         beds: [
-          { id: '1', type: 'Maternidad', status: 'occupied', tag: 'Maternidad', patient: 'Maria Arriagada Cid' },
-          { id: '2', type: 'Maternidad', status: 'available', tag: 'Maternidad', patient: null },
-          { id: '3', type: 'Maternidad', status: 'occupied', tag: 'Maternidad', patient: 'Karen Sanchez Sanchez' },
-          { id: '4', type: 'Maternidad', status: 'available', tag: 'Maternidad', patient: null },
+          { id: '1', type: 'GINE/PUERPERIO', status: 'occupied', tag: 'GINE/PUERPERIO', patient: 'Maria Arriagada Cid' },
+          { id: '2', type: 'GINE/PUERPERIO', status: 'available', tag: 'GINE/PUERPERIO', patient: null },
+          { id: '3', type: 'GINE/PUERPERIO', status: 'occupied', tag: 'GINE/PUERPERIO', patient: 'Karen Sanchez Sanchez' },
+          { id: '4', type: 'GINE/PUERPERIO', status: 'available', tag: 'GINE/PUERPERIO', patient: null },
         ]
       },
       {
@@ -259,14 +259,14 @@ export const DUMMY_DATA = clearData(RAW_DUMMY_DATA);
 export const WAITING_LIST = [];
 
 export const getBedTypeClass = (type) => {
-  return 'type-' + type.toLowerCase().replace(' ', '-').replace('á', 'a').replace('í', 'i').replace('ó', 'o');
+  return 'type-' + type.toLowerCase().replace(/ /g, '-').replace(/\//g, '-').replace('á', 'a').replace('í', 'i').replace('ó', 'o');
 };
 
 export const getIconColor = (type) => {
   const t = getBedTypeClass(type);
   if (t.includes('uci')) return '#00f0ff';
   if (t.includes('uti')) return '#f59e0b';
-  if (t.includes('maternidad')) return '#ec4899';
+  if (t.includes('GINE/PUERPERIO')) return '#ec4899';
   if (t.includes('neonatologia') || t.includes('infantil')) return '#a855f7';
   if (t.includes('cuidados-medios')) return '#f97316';
   if (t.includes('cuidados-basicos')) return '#ef4444'; // Red for Cuidados Básicos
@@ -278,7 +278,7 @@ export const getHospitalStats = () => {
   
   const breakdown = {
     'UPC (UCI/UTI)': { available: 0, occupied: 0, cleaning: 0, inhabilitadas: 0 },
-    'Maternidad': { available: 0, occupied: 0, cleaning: 0, inhabilitadas: 0 },
+    'GINE/PUERPERIO': { available: 0, occupied: 0, cleaning: 0, inhabilitadas: 0 },
     'Neonatología / Infantil': { available: 0, occupied: 0, cleaning: 0, inhabilitadas: 0 },
     'Cuidados Medios': { available: 0, occupied: 0, cleaning: 0, inhabilitadas: 0 },
     'Cuidados Básicos': { available: 0, occupied: 0, cleaning: 0, inhabilitadas: 0 },
@@ -298,7 +298,7 @@ export const getHospitalStats = () => {
           const target = (bed.tag || bed.type).toLowerCase();
           
           if (target.includes('uci') || target.includes('uti') || target === 'upc') cat = 'UPC (UCI/UTI)';
-          else if (target.includes('maternidad')) cat = 'Maternidad';
+          else if (target.includes('GINE/PUERPERIO')) cat = 'GINE/PUERPERIO';
           else if (target.includes('neonatolog') || target.includes('infantil')) cat = 'Neonatología / Infantil';
           else if (target.includes('cuidados medios') || target === 'medios') cat = 'Cuidados Medios';
           else if (target.includes('cuidados basicos') || target.includes('cuidados básicos')) cat = 'Cuidados Básicos';

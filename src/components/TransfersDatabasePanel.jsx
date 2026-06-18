@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
 import { matchesSearch } from '../utils/search';
 
-const SERVICES = ['UCI', 'UTI', 'Cuidados Medios', 'Maternidad', 'Neonatología', 'Infantil', 'Básico'];
+const SERVICES = ['UCI', 'UTI', 'Cuidados Medios', 'GINE/PUERPERIO', 'Neonatología', 'Infantil', 'Básico'];
 
 export default function TransfersDatabasePanel({ transferHistory = [] }) {
   const [searchTerm, setSearchTerm] = useState('');

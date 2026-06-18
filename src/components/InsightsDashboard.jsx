@@ -24,7 +24,7 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
       upc: { id: 'upc', name: 'Camas Críticas (UPC)', total: 0, available: 0, occupied: 0, cleaning: 0, blocked: 0, required: 0 },
       medios: { id: 'medios', name: 'Cuidados Medios', total: 0, available: 0, occupied: 0, cleaning: 0, blocked: 0, required: 0 },
       basicos: { id: 'basicos', name: 'Cuidados Básicos', total: 0, available: 0, occupied: 0, cleaning: 0, blocked: 0, required: 0 },
-      maternidad: { id: 'maternidad', name: 'Maternidad', total: 0, available: 0, occupied: 0, cleaning: 0, blocked: 0, required: 0 },
+      gine_puerperio: { id: 'gine_puerperio', name: 'GINE/PUERPERIO', total: 0, available: 0, occupied: 0, cleaning: 0, blocked: 0, required: 0 },
       infantil: { id: 'infantil', name: 'Infantil / Neo', total: 0, available: 0, occupied: 0, cleaning: 0, blocked: 0, required: 0 },
     };
 
@@ -46,7 +46,7 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
       if (type.includes('uci') || type.includes('uti') || type.includes('upc') || type.includes('crítica') || type.includes('critica')) return 'upc';
       if (type.includes('medio') || type.includes('medios')) return 'medios';
       if (type.includes('basico') || type.includes('básico') || type.includes('básicos')) return 'basicos';
-      if (type.includes('maternidad')) return 'maternidad';
+      if (type.includes('gine') || type.includes('puerperio')) return 'gine_puerperio';
       if (type.includes('infantil') || type.includes('neonatolog') || type.includes('neo')) return 'infantil';
       return 'basicos';
     };

@@ -8,7 +8,7 @@ import MultiSearchableSelect from './MultiSearchableSelect';
 import { matchesSearch } from '../utils/search';
 import { calculateAgeDetailed } from '../utils/age';
 
-const DESTINOS = ['UCI', 'UTI', 'Cuidados Medios', 'Maternidad', 'Neonatología', 'Infantil', 'Básico'];
+const DESTINOS = ['UCI', 'UTI', 'Cuidados Medios', 'GINE/PUERPERIO', 'Neonatología', 'Infantil', 'Básico'];
 const SEXOS = ['—', 'Masculino', 'Femenino', 'Otro'];
 
 /* ── SearchableSelect ─────────────────────────────── */

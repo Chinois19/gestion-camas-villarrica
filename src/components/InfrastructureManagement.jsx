@@ -18,7 +18,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
   const [isAddingBed, setIsAddingBed] = useState(false);
   const [editingBed, setEditingBed] = useState(null);
 
-  const bedTypes = ['UCI', 'UTI', 'Cuidados Medios', 'Cuidados Básicos', 'Maternidad', 'Neonatología', 'Infantil'];
+  const bedTypes = ['UCI', 'UTI', 'Cuidados Medios', 'Cuidados Básicos', 'GINE/PUERPERIO', 'Neonatología', 'Infantil'];
 
   // --- Actions ---
 

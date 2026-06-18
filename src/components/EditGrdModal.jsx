@@ -318,7 +318,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                           value={formData.destino} 
                           onChange={e => setFormData(prev => ({ ...prev, destino: e.target.value }))}
                         >
-                          {['UCI', 'UTI', 'Cuidados Medios', 'Maternidad', 'Neonatología', 'Infantil', 'Básico'].map(d => (
+                          {['UCI', 'UTI', 'Cuidados Medios', 'GINE/PUERPERIO', 'Neonatología', 'Infantil', 'Básico'].map(d => (
                             <option key={d} value={d} style={{ background: '#1e1b4b', color: '#fff' }}>{d}</option>
                           ))}
                         </select>
