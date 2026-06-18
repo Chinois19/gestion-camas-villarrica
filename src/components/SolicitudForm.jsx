@@ -740,11 +740,10 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start', marginBottom: 12 }}>
-
-          {/* Columna Izquierda: Datos del Paciente, Diagnóstico Clínico, Gestión de la Derivación */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 12 }}>
+          {/* Fila 1: 1. Datos del Paciente | 3. Gestión de la Derivación */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {/* 1. DATOS DEL PACIENTE */}
             <SectionCard icon={User} title="1. Datos del Paciente" color="#06b6d4" zIndex={50}>
               {isViewMode ? (
@@ -791,6 +790,61 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
               )}
             </SectionCard>
 
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* 3. GESTIÓN DE LA DERIVACIÓN */}
+            <SectionCard icon={ArrowRightLeft} title="3. Gestión de la Derivación" color="#f59e0b" zIndex={30}>
+              {isViewMode ? (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
+                    <ReadOnlyField label="Servicio Solicitante" value={formData.servicioSol} />
+                    <ReadOnlyField label="Destino (Unidad Requerida)" value={formData.destino} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
+                    <ReadOnlyField label="Médico Solicitante / Tratante" value={formData.medicoSol} />
+                    <ReadOnlyField label="Especialidad del Médico" value={formData.especialidadMedico} />
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    <ReadOnlyField label="Requisitos de UGP (Texto libre para gestión)" value={formData.requisitosUGP} />
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    <ReadOnlyField label="Especialidad Tratante" value={formData.especialidadTratante?.length > 0 ? formData.especialidadTratante.join(', ') : 'No especificada'} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
+                    <div><FieldLabel>Servicio Solicitante</FieldLabel><SearchableSelect name="servicioSol" value={formData.servicioSol} onChange={handleChange} options={SERVICIOS_SOLICITANTES} placeholder="Buscar servicio..." /></div>
+                    <div><FieldLabel>Destino (Unidad Requerida)</FieldLabel><GSelect name="destino" value={formData.destino} onChange={handleChange} options={DESTINOS} /></div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
+                    <div><FieldLabel>Médico Solicitante / Tratante</FieldLabel><SearchableSelect name="medicoSol" value={formData.medicoSol} onChange={handleChange} options={MEDICOS} placeholder="Nombre Dr. / Dra." allowFreeText={true} /></div>
+                    <div><FieldLabel>Especialidad del Médico</FieldLabel><SearchableSelect name="especialidadMedico" value={formData.especialidadMedico} onChange={handleChange} options={ESPECIALIDADES} placeholder="Buscar especialidad..." /></div>
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    <FieldLabel>Requisitos de UGP (Texto libre para gestión)</FieldLabel>
+                    <GTextarea name="requisitosUGP" value={formData.requisitosUGP} onChange={handleChange} placeholder="Ingrese requerimientos específicos de la unidad de gestión de camas..." rows={2} />
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    <FieldLabel>Especialidad Tratante (Hasta 2)</FieldLabel>
+                    <MultiSearchableSelect
+                      options={ESPECIALIDADES.map(e => ({ value: e, label: e }))}
+                      value={formData.especialidadTratante}
+                      onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))}
+                      placeholder="Buscar especialidad..."
+                      maxSelections={2}
+                    />
+                  </div>
+                </>
+              )}
+            </SectionCard>
+
+            </div>
+          </div>
+
+          {/* Fila 2: 2. Diagnóstico Clínico | 4. Requerimientos Clínicos */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {/* 2. DIAGNÓSTICO CLÍNICO */}
             <SectionCard icon={Stethoscope} title="2. Diagnóstico Clínico" color="#3b82f6" zIndex={40}>
               <div style={{ marginBottom: 10 }}>
@@ -866,58 +920,8 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
               </div>
             </SectionCard>
 
-            {/* 3. GESTIÓN DE LA DERIVACIÓN */}
-            <SectionCard icon={ArrowRightLeft} title="3. Gestión de la Derivación" color="#f59e0b" zIndex={30}>
-              {isViewMode ? (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <ReadOnlyField label="Servicio Solicitante" value={formData.servicioSol} />
-                    <ReadOnlyField label="Destino (Unidad Requerida)" value={formData.destino} />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <ReadOnlyField label="Médico Solicitante / Tratante" value={formData.medicoSol} />
-                    <ReadOnlyField label="Especialidad del Médico" value={formData.especialidadMedico} />
-                  </div>
-                  <div style={{ marginTop: 10 }}>
-                    <ReadOnlyField label="Requisitos de UGP (Texto libre para gestión)" value={formData.requisitosUGP} />
-                  </div>
-                  <div style={{ marginTop: 10 }}>
-                    <ReadOnlyField label="Especialidad Tratante" value={formData.especialidadTratante?.length > 0 ? formData.especialidadTratante.join(', ') : 'No especificada'} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <div><FieldLabel>Servicio Solicitante</FieldLabel><SearchableSelect name="servicioSol" value={formData.servicioSol} onChange={handleChange} options={SERVICIOS_SOLICITANTES} placeholder="Buscar servicio..." /></div>
-                    <div><FieldLabel>Destino (Unidad Requerida)</FieldLabel><GSelect name="destino" value={formData.destino} onChange={handleChange} options={DESTINOS} /></div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <div><FieldLabel>Médico Solicitante / Tratante</FieldLabel><SearchableSelect name="medicoSol" value={formData.medicoSol} onChange={handleChange} options={MEDICOS} placeholder="Nombre Dr. / Dra." allowFreeText={true} /></div>
-                    <div><FieldLabel>Especialidad del Médico</FieldLabel><SearchableSelect name="especialidadMedico" value={formData.especialidadMedico} onChange={handleChange} options={ESPECIALIDADES} placeholder="Buscar especialidad..." /></div>
-                  </div>
-                  <div style={{ marginTop: 10 }}>
-                    <FieldLabel>Requisitos de UGP (Texto libre para gestión)</FieldLabel>
-                    <GTextarea name="requisitosUGP" value={formData.requisitosUGP} onChange={handleChange} placeholder="Ingrese requerimientos específicos de la unidad de gestión de camas..." rows={2} />
-                  </div>
-                  <div style={{ marginTop: 10 }}>
-                    <FieldLabel>Especialidad Tratante (Hasta 2)</FieldLabel>
-                    <MultiSearchableSelect
-                      options={ESPECIALIDADES.map(e => ({ value: e, label: e }))}
-                      value={formData.especialidadTratante}
-                      onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))}
-                      placeholder="Buscar especialidad..."
-                      maxSelections={2}
-                    />
-                  </div>
-                </>
-              )}
-            </SectionCard>
-
-          </div>
-
-          {/* Columna Derecha: Signos Vitales, Requerimientos Clínicos, Evoluciones Clínicas */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {/* 4. REQUERIMIENTOS CLÍNICOS */}
             <SectionCard icon={Activity} title="4. Requerimientos Clínicos" color="#10b981" zIndex={35}>
               {isViewMode ? (
@@ -993,6 +997,11 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
               )}
             </SectionCard>
 
+            </div>
+          </div>
+
+          {/* Fila 3: 5. Evolución Clínica */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {/* 5. REGISTRO DE EVOLUCIONES CLÍNICAS */}
             {patientData && (
               <SectionCard icon={Activity} title="5. Registro de Evolución Clínica" color="#a855f7" zIndex={25}>
@@ -1026,7 +1035,6 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
             )}
 
           </div>
-
         </div>
 
         {/* Footer */}
