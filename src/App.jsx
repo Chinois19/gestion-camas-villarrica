@@ -522,6 +522,12 @@ function App() {
                }
                return p;
              }));
+             if (editingPatient && editingPatient.id === requestingWaitingIC.id) {
+               setEditingPatient(prev => ({ ...prev, interconsultas: [...(prev.interconsultas || []), formData] }));
+             }
+             if (viewingPatient && viewingPatient.id === requestingWaitingIC.id) {
+               setViewingPatient(prev => ({ ...prev, interconsultas: [...(prev.interconsultas || []), formData] }));
+             }
              setRequestingWaitingIC(null);
           }}
           onClose={() => setRequestingWaitingIC(null)}
