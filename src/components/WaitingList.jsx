@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, TrendingUp, User, ArrowRight, AlertCircle, CheckCircle, Filter, LogOut } from 'lucide-react';
+import { Clock, TrendingUp, User, ArrowRight, AlertCircle, CheckCircle, Filter, LogOut, Stethoscope } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { SERVICIOS_SOLICITANTES, ESPECIALIDADES } from '../data/formData';
 import cie10Data from '../data/cie10.json';
@@ -23,7 +23,7 @@ const getTierClass = (totalHours) => {
   return 'tier-standard';
 };
 
-function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewDetails, onEditPatient, onDischargeWaiting, isVisor }) {
+function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewDetails, onEditPatient, onDischargeWaiting, onRequestIC, isVisor }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `patient-${patient.id}`,
     data: { patient },
@@ -96,14 +96,21 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
           </div>
         )}
 
-        {patient.aislamiento && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '2px 6px', marginTop: '4px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ fontSize: '0.8rem' }}>⚠️</span>
-            <span style={{ fontSize: '0.65rem', color: '#ef4444', fontWeight: 800, textTransform: 'uppercase' }}>
-              Aislamiento: {Array.isArray(patient.aislamiento) ? patient.aislamiento.join(', ') : patient.aislamiento}
-            </span>
-          </div>
-        )}
+        {(() => {
+          // Solo mostrar badge si hay precauciones REALES (excluye 'Sin Precauciones' y arrays vacíos)
+          const aislamientos = Array.isArray(patient.aislamiento)
+            ? patient.aislamiento.filter(a => a && a !== 'Sin Precauciones')
+            : (patient.aislamiento && patient.aislamiento !== 'Sin Precauciones' ? [patient.aislamiento] : []);
+          if (aislamientos.length === 0) return null;
+          return (
+            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '2px 6px', marginTop: '4px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '0.8rem' }}>⚠️</span>
+              <span style={{ fontSize: '0.65rem', color: '#ef4444', fontWeight: 800, textTransform: 'uppercase' }}>
+                Aislamiento: {aislamientos.join(', ')}
+              </span>
+            </div>
+          );
+        })()}
 
         <div className="requirement-footer">
           <div className="bed-req">
@@ -122,7 +129,16 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
               </button>
               <button 
                 className="glass-button primary" 
-                style={{ padding: '4px 8px', fontSize: '0.75rem', position: 'relative', zIndex: 10, background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', border: '1px solid rgba(168, 85, 247, 0.4)' }} 
+                style={{ padding: '4px 8px', fontSize: '0.75rem', position: 'relative', zIndex: 10, background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', border: '1px solid rgba(168, 85, 247, 0.4)', display: 'flex', alignItems: 'center', gap: '4px' }} 
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); if (onRequestIC) onRequestIC(patient); }}
+                title="Interconsulta"
+              >
+                <Stethoscope size={12} /> IC
+              </button>
+              <button 
+                className="glass-button primary" 
+                style={{ padding: '4px 8px', fontSize: '0.75rem', position: 'relative', zIndex: 10, background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.4)' }} 
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); if (onEditPatient) onEditPatient(patient); }}
               >
@@ -136,7 +152,7 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
   );
 }
 
-export default function WaitingList({ patients, onSelectPatient, onViewPatient, selectedPatientId, onEditPatient, onDischargeWaiting, userRole, searchQuery }) {
+export default function WaitingList({ patients, onSelectPatient, onViewPatient, selectedPatientId, onEditPatient, onDischargeWaiting, onRequestIC, userRole, searchQuery }) {
   const [timers, setTimers] = useState({});
   const isVisor = userRole === 'visor';
   const [activeTier, setActiveTier] = useState('todos'); // 'critical' | 'warning' | 'standard' | 'todos'
@@ -322,6 +338,7 @@ export default function WaitingList({ patients, onSelectPatient, onViewPatient, 
             onViewDetails={onViewPatient}
             onEditPatient={onEditPatient}
             onDischargeWaiting={onDischargeWaiting}
+            onRequestIC={onRequestIC}
             isVisor={isVisor}
           />
         ))}

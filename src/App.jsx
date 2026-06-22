@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { doc, updateDoc, setDoc, deleteField } from 'firebase/firestore';
+import { db } from './firebase';
 import { 
   Activity, Search, User, Sun, Moon, LogOut
 } from 'lucide-react';
@@ -12,6 +14,7 @@ import AseoPanel from './components/AseoPanel';
 import UserManagement from './components/UserManagement';
 import InfrastructureManagement from './components/InfrastructureManagement';
 import InsightsDashboard from './components/InsightsDashboard';
+import InterconsultaModal from './components/InterconsultaModal';
 import DatabasePanel from './components/DatabasePanel';
 import DischargesDatabasePanel from './components/DischargesDatabasePanel';
 import TransfersDatabasePanel from './components/TransfersDatabasePanel';
@@ -66,51 +69,42 @@ function App() {
     document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
   }, [theme]);
 
+  // ── PRESENCE / HEARTBEAT ──────────────────────────────────────────────────
+  // Usamos updateDoc con dot-notation para actualizar SOLO el campo del usuario
+  // actual, evitando race conditions (failed-precondition) entre múltiples
+  // clientes que antes re-escribían el documento completo vía transacción.
   useEffect(() => {
     if (!currentUser || activeUsersLoading) return;
 
-    const interval = setInterval(() => {
-      setActiveUsers(prev => {
-        const updated = { ...prev };
-        
-        updated[currentUser.username] = {
-          name: currentUser.name,
-          role: currentUser.role,
-          lastSeen: new Date().toISOString()
-        };
+    const activeUsersRef = doc(db, 'appState', 'activeUsers');
 
-        // Only cleanup extremely stale sessions (e.g. > 24 hours) to avoid DB bloat,
-        // but avoid aggressive 45-second cleanup of OTHER users which causes flickering 
-        // due to local clock skews between different computers.
-        const now = Date.now();
-        for (const username in updated) {
-          if (username === currentUser.username) continue;
-          if (!updated[username] || !updated[username].lastSeen) continue;
-          
-          const lastSeenTime = new Date(updated[username].lastSeen).getTime();
-          // 24 hours = 86400000 ms
-          if (now - lastSeenTime > 86400000) {
-            delete updated[username];
-          }
-        }
-
-        return updated;
-      });
-    }, 15000);
-
-    // Update presence immediately on mount/login
-    setActiveUsers(prev => {
-      const updated = { ...prev };
-      
-      updated[currentUser.username] = {
+    const updatePresence = async () => {
+      const presenceData = {
         name: currentUser.name,
         role: currentUser.role,
         lastSeen: new Date().toISOString()
       };
+      try {
+        // Actualización atómica: solo toca el campo `data.{username}` del doc
+        await updateDoc(activeUsersRef, {
+          [`data.${currentUser.username}`]: presenceData
+        });
+      } catch (e) {
+        if (e.code === 'not-found') {
+          // El documento no existe aún, lo creamos con setDoc
+          await setDoc(activeUsersRef, {
+            data: { [currentUser.username]: presenceData }
+          });
+        } else {
+          console.warn('[Presencia] Error al actualizar heartbeat:', e);
+        }
+      }
+    };
 
-      return updated;
-    });
+    // Actualización inmediata al montar/login
+    updatePresence();
 
+    const interval = setInterval(updatePresence, 15000);
     return () => clearInterval(interval);
   }, [currentUser, activeUsersLoading]);
 
@@ -125,13 +119,16 @@ function App() {
     setCurrentView('dashboard');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (currentUser) {
-      setActiveUsers(prev => {
-        const updated = { ...prev };
-        delete updated[currentUser.username];
-        return updated;
-      });
+      try {
+        const activeUsersRef = doc(db, 'appState', 'activeUsers');
+        await updateDoc(activeUsersRef, {
+          [`data.${currentUser.username}`]: deleteField()
+        });
+      } catch (e) {
+        console.warn('[Presencia] No se pudo eliminar presencia al salir:', e);
+      }
     }
     setCurrentUser(null);
     localStorage.removeItem('villarrica_session');
@@ -478,6 +475,7 @@ function App() {
           user={currentUser}
           setWaitingListDischarges={setWaitingListDischarges}
           setBlockLog={setBlockLog}
+          onRequestWaitingIC={(patient) => setRequestingWaitingIC(patient)}
         />
       )}
       {currentView === 'solicitud' && (

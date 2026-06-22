@@ -91,10 +91,10 @@ function DroppableBed({ bed, room, selectedPatient, onDischarge, onFinishCleanin
               <span className="patient-name has-tooltip" style={{ flex: 1 }}>
                 {bed.patient}
                 <div className="custom-tooltip">
-                  <strong>Detalles de Hospitalización</strong><br/>
+                  <strong>Detalles de Hospitalización</strong><br />
                   <div style={{ marginTop: '4px' }}>
-                    <strong>Diagnóstico:</strong> {bed.diagnosis || 'No especificado'}<br/>
-                    <strong>Ingreso:</strong> {bed.info || 'No especificado'}<br/>
+                    <strong>Diagnóstico:</strong> {bed.diagnosis || 'No especificado'}<br />
+                    <strong>Ingreso:</strong> {bed.info || 'No especificado'}<br />
                     <strong>GRD:</strong> {bed.grdName || 'No asignado'}
                   </div>
                 </div>
@@ -371,67 +371,67 @@ export default function Dashboard({ searchQuery }) {
       <div className={`main-layout ${!showFilters ? 'filters-hidden' : ''}`}>
         {showFilters && (
           <aside className="sidebar">
-          <div className="glass-panel sidebar-section">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <h3 className="sidebar-title" style={{ marginBottom: 0 }}>Filtros de Dashboard</h3>
-              <button
-                onClick={() => setShowFilters(false)}
-                className="glass-button"
-                style={{ padding: '6px' }}
-                title="Ocultar Filtros"
-              >
-                <Filter size={16} />
-              </button>
-            </div>
-            <div style={{ marginBottom: '20px' }}>
-              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>1. SELECCIÓN DE PISO</div>
-              <div className="stack-group">
-                <button className={`stack-btn ${selectedFloor === 'todos' ? 'active' : ''}`} onClick={() => setSelectedFloor('todos')}>Todo el Hospital</button>
-                <button className={`stack-btn ${selectedFloor === 'piso4' ? 'active' : ''}`} onClick={() => setSelectedFloor('piso4')}>Piso 4</button>
-                <button className={`stack-btn ${selectedFloor === 'piso3' ? 'active' : ''}`} onClick={() => setSelectedFloor('piso3')}>Piso 3</button>
-                <button className={`stack-btn ${selectedFloor === 'piso2' ? 'active' : ''}`} onClick={() => setSelectedFloor('piso2')}>Piso 2</button>
+            <div className="glass-panel sidebar-section">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <h3 className="sidebar-title" style={{ marginBottom: 0 }}>Filtros de Dashboard</h3>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="glass-button"
+                  style={{ padding: '6px' }}
+                  title="Ocultar Filtros"
+                >
+                  <Filter size={16} />
+                </button>
               </div>
-            </div>
-            <div style={{ marginBottom: '20px' }}>
-              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>2. VISTA DE SECTORES</div>
-              <div className="stack-group">
-                <button className={`stack-btn ${selectedSector === 'todos' ? 'active' : ''}`} onClick={() => setSelectedSector('todos')}>Mostrar Ambos</button>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button className={`stack-btn ${selectedSector === 'poniente' ? 'active' : ''}`} onClick={() => setSelectedSector('poniente')} style={{ flex: 1 }}>Poniente</button>
-                  <button className={`stack-btn ${selectedSector === 'oriente' ? 'active' : ''}`} onClick={() => setSelectedSector('oriente')} style={{ flex: 1 }}>Oriente</button>
+              <div style={{ marginBottom: '20px' }}>
+                <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>1. SELECCIÓN DE PISO</div>
+                <div className="stack-group">
+                  <button className={`stack-btn ${selectedFloor === 'todos' ? 'active' : ''}`} onClick={() => setSelectedFloor('todos')}>Todo el Hospital</button>
+                  <button className={`stack-btn ${selectedFloor === 'piso4' ? 'active' : ''}`} onClick={() => setSelectedFloor('piso4')}>Piso 4</button>
+                  <button className={`stack-btn ${selectedFloor === 'piso3' ? 'active' : ''}`} onClick={() => setSelectedFloor('piso3')}>Piso 3</button>
+                  <button className={`stack-btn ${selectedFloor === 'piso2' ? 'active' : ''}`} onClick={() => setSelectedFloor('piso2')}>Piso 2</button>
                 </div>
               </div>
-            </div>
-            <div style={{ marginBottom: '20px' }}>
-              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>3. ESTADO DE CAMA</div>
-              <div className="stack-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                <button className={`stack-btn ${statusFilter === 'todos' ? 'active' : ''}`} style={{ padding: '8px 4px', fontSize: '0.8rem' }} onClick={() => setStatusFilter('todos')}>Todas</button>
-                <button className={`stack-btn ${statusFilter === 'available' ? 'active' : ''}`} style={{ padding: '8px 4px', fontSize: '0.8rem' }} onClick={() => setStatusFilter('available')}>Disp.</button>
-                <button className={`stack-btn ${statusFilter === 'cleaning' ? 'active' : ''}`} style={{ padding: '8px 4px', fontSize: '0.8rem' }} onClick={() => setStatusFilter('cleaning')}>Aseo</button>
+              <div style={{ marginBottom: '20px' }}>
+                <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>2. VISTA DE SECTORES</div>
+                <div className="stack-group">
+                  <button className={`stack-btn ${selectedSector === 'todos' ? 'active' : ''}`} onClick={() => setSelectedSector('todos')}>Mostrar Ambos</button>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button className={`stack-btn ${selectedSector === 'poniente' ? 'active' : ''}`} onClick={() => setSelectedSector('poniente')} style={{ flex: 1 }}>Poniente</button>
+                    <button className={`stack-btn ${selectedSector === 'oriente' ? 'active' : ''}`} onClick={() => setSelectedSector('oriente')} style={{ flex: 1 }}>Oriente</button>
+                  </div>
+                </div>
+              </div>
+              <div style={{ marginBottom: '20px' }}>
+                <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>3. ESTADO DE CAMA</div>
+                <div className="stack-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  <button className={`stack-btn ${statusFilter === 'todos' ? 'active' : ''}`} style={{ padding: '8px 4px', fontSize: '0.8rem' }} onClick={() => setStatusFilter('todos')}>Todas</button>
+                  <button className={`stack-btn ${statusFilter === 'available' ? 'active' : ''}`} style={{ padding: '8px 4px', fontSize: '0.8rem' }} onClick={() => setStatusFilter('available')}>Disp.</button>
+                  <button className={`stack-btn ${statusFilter === 'cleaning' ? 'active' : ''}`} style={{ padding: '8px 4px', fontSize: '0.8rem' }} onClick={() => setStatusFilter('cleaning')}>Aseo</button>
+                </div>
+              </div>
+              <div style={{ marginBottom: '20px' }}>
+                <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>4. SERVICIO CLÍNICO</div>
+                <select className="glass-input" style={{ width: '100%' }} value={serviceFilter} onChange={(e) => setServiceFilter(e.target.value)}>
+                  <option value="todos">Todos los Servicios</option>
+                  <option value="upc">UPC (UCI/UTI)</option>
+                  <option value="maternidad">Maternidad</option>
+                  <option value="infantil">Infantil / Neo</option>
+                  <option value="medios">Cuidados Medios</option>
+                  <option value="basicos">Cuidados Básicos</option>
+                </select>
+              </div>
+              <div>
+                <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>5. ESTADO ESTADÍA GRD</div>
+                <select className="glass-input" style={{ width: '100%' }} value={stayFilter} onChange={(e) => setStayFilter(e.target.value)}>
+                  <option value="todos">Todos los Estados</option>
+                  <option value="inlier">Inlier (Estándar)</option>
+                  <option value="riesgo">Riesgo Outlier</option>
+                  <option value="outlier">Outlier Superior (Rojo)</option>
+                </select>
               </div>
             </div>
-            <div style={{ marginBottom: '20px' }}>
-              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>4. SERVICIO CLÍNICO</div>
-              <select className="glass-input" style={{ width: '100%' }} value={serviceFilter} onChange={(e) => setServiceFilter(e.target.value)}>
-                <option value="todos">Todos los Servicios</option>
-                <option value="upc">UPC (UCI/UTI)</option>
-                <option value="maternidad">Maternidad</option>
-                <option value="infantil">Infantil / Neo</option>
-                <option value="medios">Cuidados Medios</option>
-                <option value="basicos">Cuidados Básicos</option>
-              </select>
-            </div>
-            <div>
-              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>5. ESTADO ESTADÍA GRD</div>
-              <select className="glass-input" style={{ width: '100%' }} value={stayFilter} onChange={(e) => setStayFilter(e.target.value)}>
-                <option value="todos">Todos los Estados</option>
-                <option value="inlier">Inlier (Estándar)</option>
-                <option value="riesgo">Riesgo Outlier</option>
-                <option value="outlier">Outlier Superior (Rojo)</option>
-              </select>
-            </div>
-          </div>
-        </aside>
+          </aside>
         )}
 
         <main>

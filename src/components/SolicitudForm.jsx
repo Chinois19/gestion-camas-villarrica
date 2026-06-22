@@ -327,9 +327,11 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   const [aislamiento, setAislamiento] = useState(() => {
     if (patientData && patientData.aislamiento !== undefined) {
       if (typeof patientData.aislamiento === 'boolean') {
-        return patientData.aislamiento ? ['Requiere Aislamiento'] : ['Sin Precauciones'];
+        // Formato antiguo booleano: true => requiere aislamiento, false => sin precauciones (array vacío)
+        return patientData.aislamiento ? ['Requiere Aislamiento'] : [];
       }
-      return patientData.aislamiento;
+      // Formato nuevo (array): retornar tal cual
+      return Array.isArray(patientData.aislamiento) ? patientData.aislamiento : [];
     }
     return [];
   });

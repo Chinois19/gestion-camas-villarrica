@@ -171,14 +171,20 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
                 Dx: {Array.isArray(bed.diagnosis) ? bed.diagnosis.join(' • ') : bed.diagnosis}
               </div>
             )}
-            {bed.aislamiento && (
-              <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '2px 6px', marginTop: '4px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ fontSize: '0.8rem' }}>⚠️</span>
-                <span style={{ fontSize: '0.65rem', color: '#ef4444', fontWeight: 800, textTransform: 'uppercase' }}>
-                  Aislamiento: {Array.isArray(bed.aislamiento) ? bed.aislamiento.join(', ') : bed.aislamiento}
-                </span>
-              </div>
-            )}
+            {(() => {
+              const aislamientos = Array.isArray(bed.aislamiento)
+                ? bed.aislamiento.filter(a => a && a !== 'Sin Precauciones')
+                : (bed.aislamiento && bed.aislamiento !== 'Sin Precauciones' ? [bed.aislamiento] : []);
+              if (aislamientos.length === 0) return null;
+              return (
+                <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '2px 6px', marginTop: '4px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ fontSize: '0.8rem' }}>⚠️</span>
+                  <span style={{ fontSize: '0.65rem', color: '#ef4444', fontWeight: 800, textTransform: 'uppercase' }}>
+                    Aislamiento: {aislamientos.join(', ')}
+                  </span>
+                </div>
+              );
+            })()}
             <div className="patient-meta" style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: isVisor ? 'default' : 'pointer' }} onClick={() => !isVisor && onEditGrd(room.roomId, bed)}>
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: bed.status === 'pending_hodom' ? '#22c55e' : 'var(--status-occupied)' }}></span>
               {bed.grdName ? `GRD: ${bed.grdName}` : (bed.status === 'pending_hodom' ? 'Pendiente HODOM' : 'Ocupada')}
@@ -293,7 +299,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
   );
 }
 
-export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, onMarkHodomDoneByBed, user, onEditPatient, onViewPatient, onAddTransfers, setWaitingListDischarges, setBlockLog }) {
+export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, onMarkHodomDoneByBed, user, onEditPatient, onViewPatient, onAddTransfers, setWaitingListDischarges, setBlockLog, onRequestWaitingIC }) {
   const userRole = user?.role || 'visor';
   const isVisor = userRole === 'visor';
   const isGestoraServicio = userRole === 'gestora_servicio';
@@ -1548,6 +1554,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
               onViewPatient={onViewPatient}
               onEditPatient={onEditPatient}
               onDischargeWaiting={handleDischargeWaiting}
+              onRequestIC={onRequestWaitingIC}
               selectedPatientId={selectedPatient?.id}
               userRole={userRole}
               searchQuery={searchQuery}
