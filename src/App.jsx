@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import { doc, updateDoc, setDoc, deleteField } from 'firebase/firestore';
-import { db } from './firebase';
 import { 
   Activity, Search, User, Sun, Moon, LogOut
 } from 'lucide-react';
@@ -60,53 +58,16 @@ function App() {
   const [bedsData, setBedsData, bedsLoading] = useFirebaseSync('appState', 'bedsData', initialBedsData);
   const [waitingList, setWaitingList, waitingLoading] = useFirebaseSync('appState', 'waitingList', WAITING_LIST);
   const [hodomRequests, setHodomRequests, hodomLoading] = useFirebaseSync('appState', 'hodomRequests', initialHodomRequests);
-  const [activeUsers, setActiveUsers, activeUsersLoading] = useFirebaseSync('appState', 'activeUsers', {});
-  const [transferHistory, setTransferHistory, transfersLoading] = useFirebaseSync('appState', 'transferHistory', MOCK_TRANSFERS);
-  const [waitingListDischarges, setWaitingListDischarges, dischargesLoading] = useFirebaseSync('appState', 'waitingListDischarges', []);
-  const [blockLog, setBlockLog, blockLogLoading] = useFirebaseSync('appState', 'blockLog', []);
+  const [transferHistory, setTransferHistory, transfersLoading] = useFirebaseSync('appState', 'transferHistory', MOCK_TRANSFERS, { realtime: false });
+  const [waitingListDischarges, setWaitingListDischarges, dischargesLoading] = useFirebaseSync('appState', 'waitingListDischarges', [], { realtime: false });
+  const [blockLog, setBlockLog, blockLogLoading] = useFirebaseSync('appState', 'blockLog', [], { realtime: false });
+
 
   useEffect(() => {
     document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
   }, [theme]);
 
-  // ── PRESENCE / HEARTBEAT ──────────────────────────────────────────────────
-  // Usamos updateDoc con dot-notation para actualizar SOLO el campo del usuario
-  // actual, evitando race conditions (failed-precondition) entre múltiples
-  // clientes que antes re-escribían el documento completo vía transacción.
-  useEffect(() => {
-    if (!currentUser || activeUsersLoading) return;
 
-    const activeUsersRef = doc(db, 'appState', 'activeUsers');
-
-    const updatePresence = async () => {
-      const presenceData = {
-        name: currentUser.name,
-        role: currentUser.role,
-        lastSeen: new Date().toISOString()
-      };
-      try {
-        // Actualización atómica: solo toca el campo `data.{username}` del doc
-        await updateDoc(activeUsersRef, {
-          [`data.${currentUser.username}`]: presenceData
-        });
-      } catch (e) {
-        if (e.code === 'not-found') {
-          // El documento no existe aún, lo creamos con setDoc
-          await setDoc(activeUsersRef, {
-            data: { [currentUser.username]: presenceData }
-          });
-        } else {
-          console.warn('[Presencia] Error al actualizar heartbeat:', e);
-        }
-      }
-    };
-
-    // Actualización inmediata al montar/login
-    updatePresence();
-
-    const interval = setInterval(updatePresence, 15000);
-    return () => clearInterval(interval);
-  }, [currentUser, activeUsersLoading]);
 
   const isLoading = bedsLoading || waitingLoading || hodomLoading || transfersLoading || dischargesLoading || blockLogLoading;
 
@@ -119,17 +80,7 @@ function App() {
     setCurrentView('dashboard');
   };
 
-  const handleLogout = async () => {
-    if (currentUser) {
-      try {
-        const activeUsersRef = doc(db, 'appState', 'activeUsers');
-        await updateDoc(activeUsersRef, {
-          [`data.${currentUser.username}`]: deleteField()
-        });
-      } catch (e) {
-        console.warn('[Presencia] No se pudo eliminar presencia al salir:', e);
-      }
-    }
+  const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('villarrica_session');
     setCurrentView('dashboard');
@@ -556,7 +507,7 @@ function App() {
         />
       )}
       {currentView === 'usuarios' && isSuperAdmin && (
-        <UserManagement activeUsers={activeUsers} />
+        <UserManagement />
       )}
       {currentView === 'infraestructura' && isSuperAdmin && (
         <InfrastructureManagement bedsData={bedsData} setBedsData={setBedsData} />

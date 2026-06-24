@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { doc, onSnapshot, setDoc, runTransaction } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, runTransaction, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 /**
@@ -25,9 +25,14 @@ function countOccupiedBeds(data) {
   return count;
 }
 
-export function useFirebaseSync(collectionName, documentId, initialData) {
+export function useFirebaseSync(collectionName, documentId, initialData, options = {}) {
+  const { realtime = true, enabled = true } = options;
   const [data, setData] = useState(initialData);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
+
+  if (!enabled && loading) {
+    setLoading(false);
+  }
 
   // Keep a ref to the latest data so updater functions always see the current value
   const dataRef = useRef(data);
@@ -39,36 +44,67 @@ export function useFirebaseSync(collectionName, documentId, initialData) {
   const initializedRef = useRef(false);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    setLoading(true);
     const docRef = doc(db, collectionName, documentId);
 
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const firestoreData = docSnap.data().data;
-        // Always trust Firestore as the single source of truth
-        setData(firestoreData);
-        dataRef.current = firestoreData;
-      } else {
-        // ═══════════════════════════════════════════════════════════════
-        // PROTECCIÓN CAPA 1: NUNCA sobrescribir Firestore con datos dummy.
-        // Si el documento no existe, usamos los datos iniciales SOLO como
-        // estado local temporal. El documento se creará automáticamente
-        // con la primera acción real del usuario (asignar paciente, etc.)
-        // ═══════════════════════════════════════════════════════════════
-        console.warn(
-          `[useFirebaseSync] ⚠️ Documento "${collectionName}/${documentId}" no existe en Firestore. ` +
-          `Usando datos locales de respaldo. Se creará automáticamente con la primera acción del usuario.`
-        );
-        // Keep the initialData as local state — do NOT write it to Firestore
-      }
-      initializedRef.current = true;
-      setLoading(false);
-    }, (error) => {
-      console.error(`Error listening to ${collectionName}/${documentId}:`, error);
-      setLoading(false);
-    });
+    if (realtime) {
+      const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const firestoreData = docSnap.data().data;
+          // Always trust Firestore as the single source of truth
+          setData(firestoreData);
+          dataRef.current = firestoreData;
+        } else {
+          // ═══════════════════════════════════════════════════════════════
+          // PROTECCIÓN CAPA 1: NUNCA sobrescribir Firestore con datos dummy.
+          // Si el documento no existe, usamos los datos iniciales SOLO como
+          // estado local temporal. El documento se creará automáticamente
+          // con la primera acción real del usuario (asignar paciente, etc.)
+          // ═══════════════════════════════════════════════════════════════
+          console.warn(
+            `[useFirebaseSync] ⚠️ Documento "${collectionName}/${documentId}" no existe en Firestore. ` +
+            `Usando datos locales de respaldo. Se creará automáticamente con la primera acción del usuario.`
+          );
+          // Keep the initialData as local state — do NOT write it to Firestore
+        }
+        initializedRef.current = true;
+        setLoading(false);
+      }, (error) => {
+        console.error(`Error listening to ${collectionName}/${documentId}:`, error);
+        setLoading(false);
+      });
 
-    return () => unsubscribe();
-  }, [collectionName, documentId]);
+      return () => unsubscribe();
+    } else {
+      let active = true;
+      getDoc(docRef).then((docSnap) => {
+        if (!active) return;
+        if (docSnap.exists()) {
+          const firestoreData = docSnap.data().data;
+          setData(firestoreData);
+          dataRef.current = firestoreData;
+        } else {
+          console.warn(
+            `[useFirebaseSync] ⚠️ Documento "${collectionName}/${documentId}" no existe en Firestore.`
+          );
+        }
+        initializedRef.current = true;
+        setLoading(false);
+      }).catch((error) => {
+        if (!active) return;
+        console.error(`Error loading ${collectionName}/${documentId}:`, error);
+        setLoading(false);
+      });
+
+      return () => {
+        active = false;
+      };
+    }
+  }, [collectionName, documentId, realtime, enabled]);
 
   const updateData = useCallback(async (newDataOrUpdater) => {
     // 1. Compute local update immediately for responsive UI
