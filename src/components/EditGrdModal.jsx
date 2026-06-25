@@ -8,6 +8,13 @@ import { ESPECIALIDADES } from '../data/formData';
 import { formatAgeDetailed } from '../utils/age';
 import ViewInterconsultaModal from './ViewInterconsultaModal';
 
+const formatRut = (val) => {
+  if (!val) return '';
+  const clean = val.replace(/[^0-9kK]/g, '');
+  if (clean.length <= 1) return clean;
+  return `${clean.slice(0, -1)}-${clean.slice(-1).toUpperCase()}`;
+};
+
 export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onFinishCleaning }) {
   // Reconstruir diagnóstico CIE-10 priorizando los campos codificados.
   // Puede venir de bed.dxCie10 + bed.secondaryCodes (si el paciente fue registrado con CIE-10)
@@ -50,7 +57,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
     projectedDays: bed.projectedDays || 0,
     targetBedId: '',
     diagnosis: buildDiagnosisCodes(),
-    rut: bed.rut || '13.477.908-2',
+    rut: formatRut(bed.rut || '13.477.908-2'),
     age: bed.age || '58',
     fechaNacimiento: bed.fechaNacimiento || '',
     sex: bed.sex || bed.sexo || 'Femenino',
@@ -247,7 +254,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                           className="glass-input" 
                           style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%' }}
                           value={formData.rut} 
-                          onChange={e => setFormData(prev => ({ ...prev, rut: e.target.value }))} 
+                          onChange={e => setFormData(prev => ({ ...prev, rut: formatRut(e.target.value) }))} 
                         />
                       </div>
                       <div>

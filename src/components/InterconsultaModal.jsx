@@ -7,6 +7,13 @@ import { ESPECIALIDADES } from '../data/formData';
 import { matchesSearch } from '../utils/search';
 import { formatAgeDetailed } from '../utils/age';
 
+const formatRut = (val) => {
+  if (!val) return '';
+  const clean = val.replace(/[^0-9kK]/g, '');
+  if (clean.length <= 1) return clean;
+  return `${clean.slice(0, -1)}-${clean.slice(-1).toUpperCase()}`;
+};
+
 /* ── SearchableSelect ─────────────────────────────── */
 function SearchableSelect({ name, value, onChange, options, placeholder, allowFreeText }) {
   const [query, setQuery] = useState(value || '');
@@ -107,7 +114,7 @@ export default function InterconsultaModal({ bed, currentUser, onConfirm, onClos
   const [formData, setFormData] = useState({
     // Pre-filled from patient data
     nombrePaciente: bed.patient || '',
-    rut: bed.rut || '',
+    rut: formatRut(bed.rut || ''),
     edad: formatAgeDetailed(bed.fechaNacimiento, bed.age),
     profesionalDeriva: currentUser?.name || '',
     fecha: now.toLocaleDateString('es-CL'),
@@ -127,7 +134,11 @@ export default function InterconsultaModal({ bed, currentUser, onConfirm, onClos
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'rut') {
+      setFormData(prev => ({ ...prev, rut: formatRut(value) }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = (e) => {

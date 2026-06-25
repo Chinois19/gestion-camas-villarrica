@@ -11,6 +11,13 @@ import { calculateAgeDetailed } from '../utils/age';
 const DESTINOS = ['UCI', 'UTI', 'Cuidados Medios', 'GINE/PUERPERIO', 'Neonatología', 'Infantil', 'Básico'];
 const SEXOS = ['—', 'Masculino', 'Femenino', 'Otro'];
 
+const formatRut = (val) => {
+  if (!val) return '';
+  const clean = val.replace(/[^0-9kK]/g, '');
+  if (clean.length <= 1) return clean;
+  return `${clean.slice(0, -1)}-${clean.slice(-1).toUpperCase()}`;
+};
+
 /* ── SearchableSelect ─────────────────────────────── */
 function SearchableSelect({ name, value, onChange, options, placeholder, allowFreeText }) {
   const [query, setQuery] = useState(value || '');
@@ -144,11 +151,11 @@ function FieldLabel({ children }) {
   return <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 4 }}>{children}</div>;
 }
 
-function GInput({ placeholder, value, onChange, name, type = 'text', readOnly, style, required }) {
+function GInput({ placeholder, value, onChange, name, type = 'text', readOnly, style, required, autoComplete }) {
   return (
     <input
       type={type} name={name} value={value} onChange={onChange} readOnly={readOnly}
-      placeholder={placeholder} required={required}
+      placeholder={placeholder} required={required} autoComplete={autoComplete}
       style={{
         width: '100%', background: 'var(--inset-bg)', border: '1px solid var(--border-subtle)',
         borderRadius: 8, padding: '7px 11px', color: 'var(--text-primary)',
@@ -289,7 +296,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       setSecondaryCodes(patientData.secondaryCodes || []);
       setEvolutions(patientData.evolutions || []);
       setFormData({
-        nombre: patientData.name || '', rut: patientData.rut || '',
+        nombre: patientData.name || '', rut: formatRut(patientData.rut || ''),
         edad: patientData.age || '', sexo: patientData.sexo || '',
         fechaNacimiento: patientData.fechaNacimiento || '',
         prevision: patientData.prevision || '', comuna: patientData.comuna || '',
@@ -342,7 +349,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   const stats = getHospitalStats();
 
   const [formData, setFormData] = useState(() => patientData ? {
-    nombre: patientData.name || '', rut: patientData.rut || '',
+    nombre: patientData.name || '', rut: formatRut(patientData.rut || ''),
     edad: patientData.age || '', sexo: patientData.sexo || '',
     fechaNacimiento: patientData.fechaNacimiento || '',
     prevision: patientData.prevision || '', comuna: patientData.comuna || '',
@@ -415,6 +422,8 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
         fechaNacimiento: value,
         edad: calculatedYears
       }));
+    } else if (name === 'rut') {
+      setFormData(prev => ({ ...prev, rut: formatRut(value) }));
     } else {
       setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     }
@@ -476,8 +485,28 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     e.preventDefault();
     if (isViewMode) return;
 
-    if (!formData.nombre?.trim() || !formData.rut?.trim()) {
-      alert('Nombre Completo y RUT son campos obligatorios.');
+    const missingFields = [];
+    // 1. Datos del Paciente
+    if (!formData.nombre?.trim()) missingFields.push('Nombre Completo');
+    if (!formData.rut?.trim()) missingFields.push('RUT');
+    if (!formData.fechaNacimiento?.trim()) missingFields.push('Fecha de Nacimiento');
+    if (!formData.sexo || formData.sexo === '—' || !formData.sexo.trim()) missingFields.push('Sexo');
+    if (!formData.prevision?.trim()) missingFields.push('Previsión del Paciente');
+    if (!formData.comuna?.trim()) missingFields.push('Comuna de Residencia');
+
+    // 2. Diagnóstico & Categorización
+    if (!formData.dxPrincipal?.trim()) missingFields.push('Descripción clínica del cuadro principal');
+
+    // 3. Gestión de la Derivación
+    if (!formData.servicioSol?.trim()) missingFields.push('Servicio Solicitante');
+    if (!formData.destino?.trim()) missingFields.push('Destino (Unidad Requerida)');
+    if (!formData.medicoSol?.trim()) missingFields.push('Médico Solicitante / Tratante');
+    if (!formData.especialidadMedico?.trim()) missingFields.push('Especialidad del Médico');
+    if (!formData.requisitosUGP?.trim()) missingFields.push('Requisitos de UGP');
+    if (!formData.especialidadTratante || formData.especialidadTratante.length === 0) missingFields.push('Especialidad Tratante');
+
+    if (missingFields.length > 0) {
+      alert(`Los siguientes campos son obligatorios: ${missingFields.join(', ')}.`);
       return;
     }
 
@@ -726,7 +755,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
             </>
           ) : (
             /* Otros roles: fecha/hora actual de solo lectura */
-            [{label: 'FECHA', val: displayDate, icon: '📅'}, {label: 'HORA', val: displayTime, icon: '🕐'}].map(({label, val, icon}) => (
+            [{ label: 'FECHA', val: displayDate, icon: '📅' }, { label: 'HORA', val: displayTime, icon: '🕐' }].map(({ label, val, icon }) => (
               <div key={label} style={{ background: 'var(--inset-bg)', border: '1px solid var(--border-subtle)', borderRadius: 10, padding: '8px 16px', textAlign: 'center' }}>
                 <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>{label}</div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#38bdf8', marginTop: 2 }}>{icon} {val}</div>
@@ -744,266 +773,267 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       <form onSubmit={handleSubmit}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 12 }}>
           {/* Fila 1: 1. Datos del Paciente | 3. Gestión de la Derivación */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start', position: 'relative', zIndex: 10 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* 1. DATOS DEL PACIENTE */}
-            <SectionCard icon={User} title="1. Datos del Paciente" color="#06b6d4" zIndex={50}>
-              {isViewMode ? (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr', gap: 10, marginBottom: 10 }}>
-                    <ReadOnlyField label="Nombre Completo" value={formData.nombre} />
-                    <ReadOnlyField label="RUT" value={formData.rut} />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <ReadOnlyField label="Fecha de Nacimiento" value={formData.fechaNacimiento ? new Date(formData.fechaNacimiento).toLocaleDateString('es-CL', { timeZone: 'UTC' }) : '—'} />
-                    <ReadOnlyField label="Edad" value={calculateAgeDetailed(formData.fechaNacimiento) || (formData.edad ? `${formData.edad} años` : '—')} />
-                    <ReadOnlyField label="Sexo" value={formData.sexo} />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <ReadOnlyField label="Previsión del Paciente" value={formData.prevision} />
-                    <ReadOnlyField label="Comuna de Residencia" value={formData.comuna} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr', gap: 10, marginBottom: 10 }}>
-                    <div><FieldLabel>Nombre Completo <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Ej. Juan Pérez González" required /></div>
-                    <div><FieldLabel>RUT <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="rut" value={formData.rut} onChange={handleChange} placeholder="12.345.678-9" required /></div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <div>
-                      <FieldLabel>Fecha de Nacimiento <span style={{ color: '#ef4444' }}>*</span></FieldLabel>
-                      <GInput type="date" name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleChange} required />
+              {/* 1. DATOS DEL PACIENTE */}
+              <SectionCard icon={User} title="1. Datos del Paciente" color="#06b6d4" zIndex={50}>
+                {isViewMode ? (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr', gap: 10, marginBottom: 10 }}>
+                      <ReadOnlyField label="Nombre Completo" value={formData.nombre} />
+                      <ReadOnlyField label="RUT" value={formData.rut} />
                     </div>
-                    <div>
-                      <FieldLabel>Edad Calculada</FieldLabel>
-                      <GInput name="edadCalculada" value={calculateAgeDetailed(formData.fechaNacimiento) || (formData.edad ? `${formData.edad} años` : '')} readOnly placeholder="Se calcula desde F. Nacimiento" />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 10, marginBottom: 10 }}>
+                      <ReadOnlyField label="Fecha de Nacimiento" value={formData.fechaNacimiento ? new Date(formData.fechaNacimiento).toLocaleDateString('es-CL', { timeZone: 'UTC' }) : '—'} />
+                      <ReadOnlyField label="Edad" value={calculateAgeDetailed(formData.fechaNacimiento) || (formData.edad ? `${formData.edad} años` : '—')} />
+                      <ReadOnlyField label="Sexo" value={formData.sexo} />
                     </div>
-                    <div>
-                      <FieldLabel>Sexo</FieldLabel>
-                      <GSelect name="sexo" value={formData.sexo} onChange={handleChange} options={SEXOS} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <ReadOnlyField label="Previsión del Paciente" value={formData.prevision} />
+                      <ReadOnlyField label="Comuna de Residencia" value={formData.comuna} />
                     </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <div><FieldLabel>Previsión del Paciente</FieldLabel><SearchableSelect name="prevision" value={formData.prevision} onChange={handleChange} options={PREVISIONES} placeholder="Buscar previsión..." /></div>
-                    <div><FieldLabel>Comuna de Residencia</FieldLabel><SearchableSelect name="comuna" value={formData.comuna} onChange={handleChange} options={COMUNAS_CHILE} placeholder="Buscar comuna..." /></div>
-                  </div>
-                </>
-              )}
-            </SectionCard>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr', gap: 10, marginBottom: 10 }}>
+                      <div><FieldLabel>Nombre Completo <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Ej. Juan Pérez González" required /></div>
+                      <div><FieldLabel>RUT <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="rut" value={formData.rut} onChange={handleChange} placeholder="12345678-9" required /></div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 10, marginBottom: 10 }}>
+                      <div>
+                        <FieldLabel>Fecha de Nacimiento <span style={{ color: '#ef4444' }}>*</span></FieldLabel>
+                        <GInput type="date" name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleChange} required />
+                      </div>
+                      <div>
+                        <FieldLabel>Edad Calculada</FieldLabel>
+                        <GInput name="edadCalculada" value={calculateAgeDetailed(formData.fechaNacimiento) || (formData.edad ? `${formData.edad} años` : '')} readOnly placeholder="Se calcula desde F. Nacimiento" />
+                      </div>
+                      <div>
+                        <FieldLabel>Sexo <span style={{ color: '#ef4444' }}>*</span></FieldLabel>
+                        <GSelect required name="sexo" value={formData.sexo} onChange={handleChange} options={SEXOS} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div><FieldLabel>Previsión del Paciente <span style={{ color: '#ef4444' }}>*</span></FieldLabel><SearchableSelect name="prevision" value={formData.prevision} onChange={handleChange} options={PREVISIONES} placeholder="Buscar previsión..." /></div>
+                      <div><FieldLabel>Comuna de Residencia <span style={{ color: '#ef4444' }}>*</span></FieldLabel><SearchableSelect name="comuna" value={formData.comuna} onChange={handleChange} options={COMUNAS_CHILE} placeholder="Buscar comuna..." /></div>
+                    </div>
+                  </>
+                )}
+              </SectionCard>
 
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* 3. GESTIÓN DE LA DERIVACIÓN */}
-            <SectionCard icon={ArrowRightLeft} title="3. Gestión de la Derivación" color="#f59e0b" zIndex={30}>
-              {isViewMode ? (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <ReadOnlyField label="Servicio Solicitante" value={formData.servicioSol} />
-                    <ReadOnlyField label="Destino (Unidad Requerida)" value={formData.destino} />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <ReadOnlyField label="Médico Solicitante / Tratante" value={formData.medicoSol} />
-                    <ReadOnlyField label="Especialidad del Médico" value={formData.especialidadMedico} />
-                  </div>
-                  <div style={{ marginTop: 10 }}>
-                    <ReadOnlyField label="Requisitos de UGP (Texto libre para gestión)" value={formData.requisitosUGP} />
-                  </div>
-                  <div style={{ marginTop: 10 }}>
-                    <ReadOnlyField label="Especialidad Tratante" value={formData.especialidadTratante?.length > 0 ? formData.especialidadTratante.join(', ') : 'No especificada'} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <div><FieldLabel>Servicio Solicitante</FieldLabel><SearchableSelect name="servicioSol" value={formData.servicioSol} onChange={handleChange} options={SERVICIOS_SOLICITANTES} placeholder="Buscar servicio..." /></div>
-                    <div><FieldLabel>Destino (Unidad Requerida)</FieldLabel><GSelect name="destino" value={formData.destino} onChange={handleChange} options={DESTINOS} /></div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <div><FieldLabel>Médico Solicitante / Tratante</FieldLabel><SearchableSelect name="medicoSol" value={formData.medicoSol} onChange={handleChange} options={MEDICOS} placeholder="Nombre Dr. / Dra." allowFreeText={true} /></div>
-                    <div><FieldLabel>Especialidad del Médico</FieldLabel><SearchableSelect name="especialidadMedico" value={formData.especialidadMedico} onChange={handleChange} options={ESPECIALIDADES} placeholder="Buscar especialidad..." /></div>
-                  </div>
-                  <div style={{ marginTop: 10 }}>
-                    <FieldLabel>Requisitos de UGP (Texto libre para gestión)</FieldLabel>
-                    <GTextarea name="requisitosUGP" value={formData.requisitosUGP} onChange={handleChange} placeholder="Ingrese requerimientos específicos de la unidad de gestión de camas..." rows={2} />
-                  </div>
-                  <div style={{ marginTop: 10 }}>
-                    <FieldLabel>Especialidad Tratante (Hasta 2)</FieldLabel>
-                    <MultiSearchableSelect
-                      options={ESPECIALIDADES.map(e => ({ value: e, label: e }))}
-                      value={formData.especialidadTratante}
-                      onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))}
-                      placeholder="Buscar especialidad..."
-                      maxSelections={2}
-                    />
-                  </div>
-                </>
-              )}
-            </SectionCard>
+              {/* 3. GESTIÓN DE LA DERIVACIÓN */}
+              <SectionCard icon={ArrowRightLeft} title="3. Gestión de la Derivación" color="#f59e0b" zIndex={45}>
+                {isViewMode ? (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
+                      <ReadOnlyField label="Servicio Solicitante" value={formData.servicioSol} />
+                      <ReadOnlyField label="Destino (Unidad Requerida)" value={formData.destino} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
+                      <ReadOnlyField label="Médico Solicitante / Tratante" value={formData.medicoSol} />
+                      <ReadOnlyField label="Especialidad del Médico" value={formData.especialidadMedico} />
+                    </div>
+                    <div style={{ marginTop: 10 }}>
+                      <ReadOnlyField label="Requisitos de UGP (Texto libre para gestión)" value={formData.requisitosUGP} />
+                    </div>
+                    <div style={{ marginTop: 10 }}>
+                      <ReadOnlyField label="Especialidad Tratante" value={formData.especialidadTratante?.length > 0 ? formData.especialidadTratante.join(', ') : 'No especificada'} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
+                      <div><FieldLabel>Servicio Solicitante <span style={{ color: '#ef4444' }}>*</span></FieldLabel><SearchableSelect required name="servicioSol" value={formData.servicioSol} onChange={handleChange} options={SERVICIOS_SOLICITANTES} placeholder="Buscar servicio..." /></div>
+                      <div><FieldLabel>Destino (Unidad Requerida) <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GSelect required name="destino" value={formData.destino} onChange={handleChange} options={DESTINOS} /></div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
+                      <div><FieldLabel>Médico Solicitante / Tratante <span style={{ color: '#ef4444' }}>*</span></FieldLabel><SearchableSelect name="medicoSol" value={formData.medicoSol} required onChange={handleChange} options={MEDICOS} placeholder="Nombre Dr. / Dra." allowFreeText={true} /></div>
+                      <div><FieldLabel>Especialidad del Médico <span style={{ color: '#ef4444' }}>*</span></FieldLabel><SearchableSelect name="especialidadMedico" value={formData.especialidadMedico} required onChange={handleChange} options={ESPECIALIDADES} placeholder="Buscar especialidad..." /></div>
+                    </div>
+                    <div style={{ marginTop: 10 }}>
+                      <FieldLabel>Requisitos de UGP (Texto libre para gestión) <span style={{ color: '#ef4444' }}>*</span></FieldLabel>
+                      <GTextarea required name="requisitosUGP" value={formData.requisitosUGP} onChange={handleChange} placeholder="Ingrese requerimientos específicos de la unidad de gestión de camas..." rows={2} />
+                    </div>
+                    <div style={{ marginTop: 10 }}>
+                      <FieldLabel>Especialidad Tratante (Hasta 2) <span style={{ color: '#ef4444' }}>*</span></FieldLabel>
+                      <MultiSearchableSelect
+                        required
+                        options={ESPECIALIDADES.map(e => ({ value: e, label: e }))}
+                        value={formData.especialidadTratante}
+                        onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))}
+                        placeholder="Buscar especialidad..."
+                        maxSelections={2}
+                      />
+                    </div>
+                  </>
+                )}
+              </SectionCard>
 
             </div>
           </div>
 
           {/* Fila 2: 2. Diagnóstico Clínico | 4. Requerimientos Clínicos */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start', position: 'relative', zIndex: 5 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* 2. DIAGNÓSTICO CLÍNICO */}
-            <SectionCard icon={Stethoscope} title="2. Diagnóstico Clínico" color="#3b82f6" zIndex={40}>
-              <div style={{ marginBottom: 10 }}>
-                {isViewMode ? (
-                  <ReadOnlyField label="Diagnóstico Principal Descriptivo (Texto Libre Opcional)" value={formData.dxPrincipal} />
-                ) : (
-                  <>
-                    <FieldLabel>Diagnóstico Principal Descriptivo (Texto Libre Opcional)</FieldLabel>
-                    <GTextarea name="dxPrincipal" value={formData.dxPrincipal} onChange={handleChange} placeholder="Descripción clínica del cuadro principal..." rows={2} />
-                  </>
-                )}
-              </div>
+              {/* 2. DIAGNÓSTICO CLÍNICO */}
+              <SectionCard icon={Stethoscope} title="2. Diagnóstico Clínico" color="#3b82f6" zIndex={40}>
+                <div style={{ marginBottom: 10 }}>
+                  {isViewMode ? (
+                    <ReadOnlyField label="Diagnóstico Principal Descriptivo (Texto Libre Opcional)" value={formData.dxPrincipal} />
+                  ) : (
+                    <>
+                      <FieldLabel>Diagnóstico Principal Descriptivo (Texto Libre Opcional)</FieldLabel>
+                      <GTextarea required name="dxPrincipal" value={formData.dxPrincipal} onChange={handleChange} placeholder="Descripción clínica del cuadro principal..." rows={2} />
+                    </>
+                  )}
+                </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
-                {!isViewMode && (
-                  <div ref={autocompleteRef} style={{ position: 'relative' }}>
-                    <FieldLabel>Buscador DIAGNÓSTICO CIE-10 (CÓDIGO O GLOSA)</FieldLabel>
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <Search size={14} style={{ position: 'absolute', left: 12, color: 'var(--text-muted)', pointerEvents: 'none' }} />
-                      <input value={searchTerm} onChange={handleSearchCie10} onFocus={() => setShowSuggestions(true)}
-                        placeholder={secondaryCodes.length >= 5 && formData.dxCie10 ? 'Máximo 6 diagnósticos (1 principal + 5 sec) alcanzado' : 'Ej. J18 - Neumonía o \'cólera\''}
-                        disabled={secondaryCodes.length >= 5 && !!formData.dxCie10} autoComplete="off"
-                        style={{ width: '100%', background: 'var(--inset-bg)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '7px 11px 7px 32px', color: 'var(--text-primary)', fontFamily: 'var(--font)', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box', opacity: (secondaryCodes.length >= 5 && formData.dxCie10) ? 0.5 : 1 }} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
+                  {!isViewMode && (
+                    <div ref={autocompleteRef} style={{ position: 'relative' }}>
+                      <FieldLabel>Buscador DIAGNÓSTICO CIE-10 (CÓDIGO O GLOSA)</FieldLabel>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <Search size={14} style={{ position: 'absolute', left: 12, color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                        <input value={searchTerm} onChange={handleSearchCie10} onFocus={() => setShowSuggestions(true)}
+                          placeholder={secondaryCodes.length >= 5 && formData.dxCie10 ? 'Máximo 6 diagnósticos (1 principal + 5 sec) alcanzado' : 'Ej. J18 - Neumonía o \'cólera\''}
+                          disabled={secondaryCodes.length >= 5 && !!formData.dxCie10} autoComplete="off"
+                          style={{ width: '100%', background: 'var(--inset-bg)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '7px 11px 7px 32px', color: 'var(--text-primary)', fontFamily: 'var(--font)', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box', opacity: (secondaryCodes.length >= 5 && formData.dxCie10) ? 0.5 : 1 }} />
+                      </div>
+                      {showSuggestions && suggestions.length > 0 && (
+                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 99999, background: 'var(--bg-color)', border: '1px solid #3b82f6', borderRadius: 8, maxHeight: 200, overflowY: 'auto', marginTop: 4, boxShadow: '0 16px 48px rgba(0,0,0,0.85)' }}>
+                          {suggestions.map((item, idx) => (
+                            <div key={idx} onMouseDown={(e) => { e.preventDefault(); handleSelectCie10(item); }}
+                              style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '0.82rem', borderBottom: idx < suggestions.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}
+                              onMouseOver={e => e.currentTarget.style.background = 'rgba(59,130,246,0.15)'}
+                              onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                              <strong>{item.code}</strong> — {item.desc}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {showSuggestions && suggestions.length > 0 && (
-                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 99999, background: 'var(--bg-color)', border: '1px solid #3b82f6', borderRadius: 8, maxHeight: 200, overflowY: 'auto', marginTop: 4, boxShadow: '0 16px 48px rgba(0,0,0,0.85)' }}>
-                        {suggestions.map((item, idx) => (
-                          <div key={idx} onMouseDown={(e) => { e.preventDefault(); handleSelectCie10(item); }}
-                            style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '0.82rem', borderBottom: idx < suggestions.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}
-                            onMouseOver={e => e.currentTarget.style.background = 'rgba(59,130,246,0.15)'}
-                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
-                            <strong>{item.code}</strong> — {item.desc}
+                  )}
+
+                  {/* Renderización Unificada de Diagnósticos Seleccionados */}
+                  {(formData.dxCie10 || secondaryCodes.length > 0) && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+                      {formData.dxCie10 && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, padding: '8px 12px' }}>
+                          <div style={{ color: 'var(--text-primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ background: '#3b82f6', color: '#fff', fontSize: '0.6rem', fontWeight: 800, padding: '1px 5px', borderRadius: 3, letterSpacing: '0.05em' }}>PRINCIPAL</span>
+                            <span><strong>{formData.dxCie10}</strong> - {cie10Data.find(c => c.code === formData.dxCie10)?.desc || ''}</span>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Renderización Unificada de Diagnósticos Seleccionados */}
-                {(formData.dxCie10 || secondaryCodes.length > 0) && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
-                    {formData.dxCie10 && (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, padding: '8px 12px' }}>
-                        <div style={{ color: 'var(--text-primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ background: '#3b82f6', color: '#fff', fontSize: '0.6rem', fontWeight: 800, padding: '1px 5px', borderRadius: 3, letterSpacing: '0.05em' }}>PRINCIPAL</span>
-                          <span><strong>{formData.dxCie10}</strong> - {cie10Data.find(c => c.code === formData.dxCie10)?.desc || ''}</span>
+                          {!isViewMode && (
+                            <button type="button" onClick={() => removeDiagnosis(formData.dxCie10)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex' }}><X size={14} /></button>
+                          )}
                         </div>
-                        {!isViewMode && (
-                          <button type="button" onClick={() => removeDiagnosis(formData.dxCie10)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex' }}><X size={14} /></button>
-                        )}
-                      </div>
-                    )}
-                    {secondaryCodes.map((code, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '7px 11px' }}>
-                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ background: 'var(--border-light)', color: 'var(--text-muted)', fontSize: '0.6rem', fontWeight: 700, padding: '1px 5px', borderRadius: 3, letterSpacing: '0.05em' }}>SECUNDARIO</span>
-                          <span><strong>{code}</strong> - {cie10Data.find(c => c.code === code)?.desc || ''}</span>
+                      )}
+                      {secondaryCodes.map((code, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '7px 11px' }}>
+                          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ background: 'var(--border-light)', color: 'var(--text-muted)', fontSize: '0.6rem', fontWeight: 700, padding: '1px 5px', borderRadius: 3, letterSpacing: '0.05em' }}>SECUNDARIO</span>
+                            <span><strong>{code}</strong> - {cie10Data.find(c => c.code === code)?.desc || ''}</span>
+                          </div>
+                          {!isViewMode && (
+                            <button type="button" onClick={() => removeDiagnosis(code)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex' }}><X size={12} /></button>
+                          )}
                         </div>
-                        {!isViewMode && (
-                          <button type="button" onClick={() => removeDiagnosis(code)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex' }}><X size={12} /></button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
 
-                {formData.dxGrupo && (
-                  <div style={{ marginTop: 4 }}>
-                    <ReadOnlyField label="Grupo Diagnóstico Automático (CIE-10 Agrupado)" value={formData.dxGrupo} />
-                  </div>
-                )}
-              </div>
-            </SectionCard>
+                  {formData.dxGrupo && (
+                    <div style={{ marginTop: 4 }}>
+                      <ReadOnlyField label="Grupo Diagnóstico Automático (CIE-10 Agrupado)" value={formData.dxGrupo} />
+                    </div>
+                  )}
+                </div>
+              </SectionCard>
 
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* 4. REQUERIMIENTOS CLÍNICOS */}
-            <SectionCard icon={Activity} title="4. Requerimientos Clínicos" color="#10b981" zIndex={35}>
-              {isViewMode ? (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <ReadOnlyField label="Requerimientos de Enfermería" value={formData.reqEnfermeria} />
-                    <ReadOnlyField label="Procedimientos Médicos Pendientes" value={formData.procedimientosPendientes} />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 10, alignItems: 'start' }}>
-                    <div>
-                      <FieldLabel>Aislamiento / Precauciones</FieldLabel>
-                      <div style={{
-                        padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border-subtle)',
-                        background: (Array.isArray(aislamiento) && aislamiento.some(a => a !== 'Sin Precauciones')) || aislamiento === true ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)',
-                        color: (Array.isArray(aislamiento) && aislamiento.some(a => a !== 'Sin Precauciones')) || aislamiento === true ? '#ef4444' : '#10b981',
-                        fontWeight: 700, fontSize: '0.8rem', width: 'fit-content',
-                        borderColor: (Array.isArray(aislamiento) && aislamiento.some(a => a !== 'Sin Precauciones')) || aislamiento === true ? '#ef4444' : '#10b981',
-                      }}>
-                        {Array.isArray(aislamiento) && aislamiento.length > 0 
-                          ? aislamiento.join(', ') 
-                          : aislamiento === true ? 'REQUIERE AISLAMIENTO ⚠️' : aislamiento === false ? 'SIN AISLAMIENTO ✅' : 'No Especificado'}
+              {/* 4. REQUERIMIENTOS CLÍNICOS */}
+              <SectionCard icon={Activity} title="4. Requerimientos Clínicos" color="#10b981" zIndex={35}>
+                {isViewMode ? (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                      <ReadOnlyField label="Requerimientos de Enfermería" value={formData.reqEnfermeria} />
+                      <ReadOnlyField label="Procedimientos Médicos Pendientes" value={formData.procedimientosPendientes} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 10, alignItems: 'start' }}>
+                      <div>
+                        <FieldLabel>Aislamiento / Precauciones</FieldLabel>
+                        <div style={{
+                          padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border-subtle)',
+                          background: (Array.isArray(aislamiento) && aislamiento.some(a => a !== 'Sin Precauciones')) || aislamiento === true ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)',
+                          color: (Array.isArray(aislamiento) && aislamiento.some(a => a !== 'Sin Precauciones')) || aislamiento === true ? '#ef4444' : '#10b981',
+                          fontWeight: 700, fontSize: '0.8rem', width: 'fit-content',
+                          borderColor: (Array.isArray(aislamiento) && aislamiento.some(a => a !== 'Sin Precauciones')) || aislamiento === true ? '#ef4444' : '#10b981',
+                        }}>
+                          {Array.isArray(aislamiento) && aislamiento.length > 0
+                            ? aislamiento.join(', ')
+                            : aislamiento === true ? 'REQUIERE AISLAMIENTO ⚠️' : aislamiento === false ? 'SIN AISLAMIENTO ✅' : 'No Especificado'}
+                        </div>
+                      </div>
+                      <div>
+                        <FieldLabel>Programas / Convenios Especiales</FieldLabel>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '6px 12px', background: 'rgba(0,0,0,0.2)', borderRadius: 8, border: '1px solid var(--border-subtle)', minHeight: 20 }}>
+                          {[{ key: 'hodom', label: 'HODOM' }, { key: 'trr', label: 'TRR' }, { key: 'hfc', label: 'Traslado HFC' }, { key: 'ugcc', label: 'Traslado UGCC' }].map(({ key, label }) => (
+                            formData[key] ? (
+                              <span key={key} style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)', borderRadius: 20, padding: '2px 8px', fontSize: '0.74rem', color: '#10b981', fontWeight: 600 }}>
+                                ✓ {label}
+                              </span>
+                            ) : null
+                          ))}
+                          {!formData.hodom && !formData.trr && !formData.hfc && !formData.ugcc && (
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>Ninguno activo</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <FieldLabel>Programas / Convenios Especiales</FieldLabel>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '6px 12px', background: 'rgba(0,0,0,0.2)', borderRadius: 8, border: '1px solid var(--border-subtle)', minHeight: 20 }}>
-                        {[{ key: 'hodom', label: 'HODOM' }, { key: 'trr', label: 'TRR' }, { key: 'hfc', label: 'Traslado HFC' }, { key: 'ugcc', label: 'Traslado UGCC' }].map(({ key, label }) => (
-                          formData[key] ? (
-                            <span key={key} style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)', borderRadius: 20, padding: '2px 8px', fontSize: '0.74rem', color: '#10b981', fontWeight: 600 }}>
-                              ✓ {label}
-                            </span>
-                          ) : null
-                        ))}
-                        {!formData.hodom && !formData.trr && !formData.hfc && !formData.ugcc && (
-                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>Ninguno activo</span>
-                        )}
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                      <div><FieldLabel>Requerimientos de Enfermería</FieldLabel><GTextarea name="reqEnfermeria" value={formData.reqEnfermeria} onChange={handleChange} placeholder="Cuidados especiales, curaciones, etc..." rows={2} /></div>
+                      <div><FieldLabel>Procedimientos Médicos Pendientes</FieldLabel><GTextarea name="procedimientosPendientes" value={formData.procedimientosPendientes} onChange={handleChange} placeholder="Procedimientos pendientes..." rows={2} /></div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 10, alignItems: 'start' }}>
+                      <div>
+                        <FieldLabel>Aislamiento / Precauciones</FieldLabel>
+                        <div style={{ zIndex: 50, position: 'relative' }}>
+                          <MultiSearchableSelect
+                            options={[
+                              { value: 'Sin Precauciones', label: 'Sin Precauciones' },
+                              { value: 'Precauciones de Contacto', label: 'Precauciones de Contacto' },
+                              { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
+                              { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' },
+                              { value: 'Neutropénico', label: 'Neutropénico' }
+                            ]}
+                            value={Array.isArray(aislamiento) ? aislamiento : (aislamiento === true ? ['Requiere Aislamiento'] : (aislamiento === false ? ['Sin Precauciones'] : []))}
+                            onChange={(val) => setAislamiento(val)}
+                            placeholder="Seleccionar precauciones..."
+                          />
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                        <Toggle label="HODOM" checked={formData.hodom} onChange={() => handleToggle('hodom')} />
+                        <Toggle label="TRR (Dialisis)" checked={formData.trr} onChange={() => handleToggle('trr')} />
+                        <Toggle label="Traslado HFC" checked={formData.hfc} onChange={() => handleToggle('hfc')} />
+                        <Toggle label="Traslado UGCC" checked={formData.ugcc} onChange={() => handleToggle('ugcc')} />
                       </div>
                     </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <div><FieldLabel>Requerimientos de Enfermería</FieldLabel><GTextarea name="reqEnfermeria" value={formData.reqEnfermeria} onChange={handleChange} placeholder="Cuidados especiales, curaciones, etc..." rows={2} /></div>
-                    <div><FieldLabel>Procedimientos Médicos Pendientes</FieldLabel><GTextarea name="procedimientosPendientes" value={formData.procedimientosPendientes} onChange={handleChange} placeholder="Procedimientos pendientes..." rows={2} /></div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 10, alignItems: 'start' }}>
-                    <div>
-                      <FieldLabel>Aislamiento / Precauciones</FieldLabel>
-                      <div style={{ zIndex: 50, position: 'relative' }}>
-                        <MultiSearchableSelect 
-                          options={[
-                            { value: 'Sin Precauciones', label: 'Sin Precauciones' },
-                            { value: 'Precauciones de Contacto', label: 'Precauciones de Contacto' },
-                            { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
-                            { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' },
-                            { value: 'Neutropénico', label: 'Neutropénico' }
-                          ]}
-                          value={Array.isArray(aislamiento) ? aislamiento : (aislamiento === true ? ['Requiere Aislamiento'] : (aislamiento === false ? ['Sin Precauciones'] : []))}
-                          onChange={(val) => setAislamiento(val)}
-                          placeholder="Seleccionar precauciones..."
-                        />
-                      </div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                      <Toggle label="HODOM" checked={formData.hodom} onChange={() => handleToggle('hodom')} />
-                      <Toggle label="TRR (Dialisis)" checked={formData.trr} onChange={() => handleToggle('trr')} />
-                      <Toggle label="Traslado HFC" checked={formData.hfc} onChange={() => handleToggle('hfc')} />
-                      <Toggle label="Traslado UGCC" checked={formData.ugcc} onChange={() => handleToggle('ugcc')} />
-                    </div>
-                  </div>
-                </>
-              )}
-            </SectionCard>
+                  </>
+                )}
+              </SectionCard>
 
             </div>
           </div>
 
           {/* Fila 3: 5. Evolución Clínica */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, position: 'relative', zIndex: 1 }}>
             {/* 5. REGISTRO DE EVOLUCIONES CLÍNICAS */}
             {patientData && (
               <SectionCard icon={Activity} title="5. Registro de Evolución Clínica" color="#a855f7" zIndex={25}>
