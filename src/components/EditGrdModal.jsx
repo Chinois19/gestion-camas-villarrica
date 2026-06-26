@@ -15,7 +15,7 @@ const formatRut = (val) => {
   return `${clean.slice(0, -1)}-${clean.slice(-1).toUpperCase()}`;
 };
 
-export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onFinishCleaning }) {
+export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onFinishCleaning, onSaveNovedad }) {
   // Reconstruir diagnóstico CIE-10 priorizando los campos codificados.
   // Puede venir de bed.dxCie10 + bed.secondaryCodes (si el paciente fue registrado con CIE-10)
   // o desde bed.originalWaitingRequest que guarda la solicitud original.
@@ -88,6 +88,8 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
 
   const [limitDays, setLimitDays] = useState(0);
   const [newNovedadText, setNewNovedadText] = useState('');
+  const [isSavingNovedad, setIsSavingNovedad] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [viewingIC, setViewingIC] = useState(null);
 
   // Permisos del rol Gestora de Servicio Clínico
@@ -119,8 +121,8 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
     setFormData(prev => ({ ...prev, projectedDays: e.target.value }));
   };
 
-  const handleAddNovedad = () => {
-    if (!newNovedadText.trim()) return;
+  const handleAddNovedad = async () => {
+    if (!newNovedadText.trim() || isSavingNovedad) return;
     const now = new Date();
     const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     const newEntry = {
@@ -130,15 +132,26 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
       rol: user?.role || 'Clinico',
       contenido: newNovedadText.trim()
     };
+    // 1. Actualizar estado local del modal (respuesta inmediata en UI)
     setFormData(prev => ({
       ...prev,
       novedades: [newEntry, ...prev.novedades]
     }));
     setNewNovedadText('');
+    // 2. Persistir en Firebase y esperar confirmación antes de re-habilitar el botón
+    if (onSaveNovedad) {
+      setIsSavingNovedad(true);
+      try {
+        await onSaveNovedad(newEntry);
+      } finally {
+        setIsSavingNovedad(false);
+      }
+    }
   };
 
-  const handleConfirm = (e) => {
+  const handleConfirm = async (e) => {
     e.preventDefault();
+    if (isSaving) return;
     const grd = GRD_DATA.find(g => g.id === formData.grdId);
 
     let transferTarget = null;
@@ -148,23 +161,28 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
     }
 
     // Gestora de Servicio sólo persiste novedades (no puede cambiar GRD ni otros campos clínicos)
-    onConfirm({
-      grdId: formData.grdId,
-      grdName: grd ? grd.name : '',
-      severity: formData.severity,
-      projectedDays: parseInt(formData.projectedDays) || 0,
-      diagnosis: formData.diagnosis,
-      dxPrincipal: formData.dxPrincipal,
-      rut: formData.rut,
-      age: formData.age,
-      fechaNacimiento: formData.fechaNacimiento,
-      comuna: formData.comuna,
-      prevision: formData.prevision,
-      especialidadTratante: formData.especialidadTratante,
-      aislamiento: formData.aislamiento,
-      novedades: formData.novedades,
-      destino: formData.destino
-    }, transferTarget);
+    setIsSaving(true);
+    try {
+      await onConfirm({
+        grdId: formData.grdId,
+        grdName: grd ? grd.name : '',
+        severity: formData.severity,
+        projectedDays: parseInt(formData.projectedDays) || 0,
+        diagnosis: formData.diagnosis,
+        dxPrincipal: formData.dxPrincipal,
+        rut: formData.rut,
+        age: formData.age,
+        fechaNacimiento: formData.fechaNacimiento,
+        comuna: formData.comuna,
+        prevision: formData.prevision,
+        especialidadTratante: formData.especialidadTratante,
+        aislamiento: formData.aislamiento,
+        novedades: formData.novedades,
+        destino: formData.destino
+      }, transferTarget);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -328,7 +346,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                           rows={2}
                         />
                       </div>
-                      
+
                     </div>
 
                     {!isGestoraServicio && (
@@ -706,8 +724,9 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                       placeholder="Registrar nuevo procedimiento o novedad del estado del paciente..."
                       value={newNovedadText}
                       onChange={e => setNewNovedadText(e.target.value)}
+                      disabled={isSavingNovedad}
                       onKeyDown={e => {
-                        if (e.key === 'Enter') {
+                        if (e.key === 'Enter' && !isSavingNovedad) {
                           e.preventDefault();
                           handleAddNovedad();
                         }
@@ -716,10 +735,11 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     <button
                       type="button"
                       className="glass-button primary"
-                      style={{ padding: '0 16px', fontSize: '0.8rem' }}
+                      style={{ padding: '0 16px', fontSize: '0.8rem', opacity: isSavingNovedad ? 0.6 : 1, cursor: isSavingNovedad ? 'not-allowed' : 'pointer' }}
                       onClick={handleAddNovedad}
+                      disabled={isSavingNovedad}
                     >
-                      Registrar
+                      {isSavingNovedad ? 'Guardando...' : 'Registrar'}
                     </button>
                   </div>
 
@@ -763,9 +783,9 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
 
           {/* Modal Actions */}
           <div className="modal-actions" style={{ background: 'var(--panel-bg)', borderTop: '1px solid var(--glass-border)', padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-            <button type="button" className="glass-button" onClick={onClose} style={{ background: '#4c1d95', color: '#fff', border: 'none' }}>Cancelar</button>
-            <button type="submit" className="glass-button primary" style={{ background: '#0891b2', color: '#fff', border: 'none' }}>
-              <Save size={18} /> Guardar Cambios
+            <button type="button" className="glass-button" onClick={onClose} disabled={isSaving} style={{ background: '#4c1d95', color: '#fff', border: 'none', opacity: isSaving ? 0.5 : 1 }}>Cancelar</button>
+            <button type="submit" className="glass-button primary" disabled={isSaving} style={{ background: '#0891b2', color: '#fff', border: 'none', opacity: isSaving ? 0.6 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+              <Save size={18} /> {isSaving ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
 

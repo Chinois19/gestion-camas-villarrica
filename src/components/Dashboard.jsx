@@ -37,7 +37,7 @@ const getBedStayStatus = (bed) => {
   if ((bed.status !== 'occupied' && bed.status !== 'pending_hodom') || !bed.assignedAt || !bed.projectedDays) return 'none';
   const elapsed = (new Date() - new Date(bed.assignedAt)) / (1000 * 60 * 60 * 24);
   const remainingDays = Math.max(0, Math.round(bed.projectedDays - elapsed));
-  
+
   if (elapsed >= bed.projectedDays || remainingDays === 0) return 'outlier';
   if ((elapsed / bed.projectedDays) >= 0.8 || remainingDays <= 2) return 'riesgo';
   return 'inlier';
@@ -66,7 +66,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
   if ((bed.status === 'occupied' || bed.status === 'pending_hodom') && bed.assignedAt) {
     const elapsed = (new Date() - new Date(bed.assignedAt)) / (1000 * 60 * 60 * 24);
     daysOfStay = Math.max(1, Math.ceil(elapsed));
-    
+
     if (bed.projectedDays) {
       if (elapsed >= bed.projectedDays) {
         isExceeded = true;
@@ -99,7 +99,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
   } : (isSelecting && isCompatible && !isVisor ? { cursor: 'pointer' } : {});
 
   return (
-    <div 
+    <div
       ref={setNodeRef}
       className={`glass-panel bed-card ${getBedTypeClass(styleTarget)} ${bed.status} 
         ${isOver && isCompatible ? 'droppable-over' : ''} 
@@ -157,10 +157,10 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
               <span className="patient-name has-tooltip" style={{ flex: 1 }}>
                 {bed.patient}
                 <div className="custom-tooltip">
-                  <strong>Detalles de Hospitalización</strong><br/>
+                  <strong>Detalles de Hospitalización</strong><br />
                   <div style={{ marginTop: '4px' }}>
-                    <strong>Diagnóstico:</strong> {bed.diagnosis || 'No especificado'}<br/>
-                    <strong>Ingreso:</strong> {bed.info || 'No especificado'}<br/>
+                    <strong>Diagnóstico:</strong> {bed.diagnosis || 'No especificado'}<br />
+                    <strong>Ingreso:</strong> {bed.info || 'No especificado'}<br />
                     <strong>GRD:</strong> {bed.grdName || 'No asignado'}
                   </div>
                 </div>
@@ -202,7 +202,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
               <div className="los-progress-bar">
                 <div className="progress-fill" style={{ width: `${progress}%`, background: isExceeded ? '#ef4444' : progress > 80 ? '#f59e0b' : 'var(--accent-color)', boxShadow: isExceeded ? '0 0 8px #ef4444' : 'none' }}></div>
                 <span className="progress-text" style={{ color: isExceeded ? '#ef4444' : 'var(--text-secondary)', fontWeight: isExceeded ? 'bold' : 'normal' }}>
-                  {isExceeded 
+                  {isExceeded
                     ? (exceededDays > 0 ? `¡El paciente ha excedido en ${exceededDays} días su estadía proyectada!` : `¡Alerta: 0 días restantes proyectados!`)
                     : `Quedan ${remainingDays} días de ${bed.projectedDays} proyectados`}
                 </span>
@@ -210,14 +210,14 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
             )}
             {bed.status === 'pending_hodom' ? (
               !isVisor && (
-                <button 
-                  className="glass-button primary" 
-                  style={{ 
-                    padding: '6px 8px', 
-                    fontSize: '0.65rem', 
-                    marginTop: '8px', 
-                    width: '100%', 
-                    display: 'flex', 
+                <button
+                  className="glass-button primary"
+                  style={{
+                    padding: '6px 8px',
+                    fontSize: '0.65rem',
+                    marginTop: '8px',
+                    width: '100%',
+                    display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '4px',
@@ -251,7 +251,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
                 </>
               )
             )}
-            
+
             {bed.status === 'pending_hodom' && user?.role === 'superadmin' && bed.previousPatient && (
               <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '4px', width: '100%', display: 'flex', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); onUndoDischarge(room.roomId, bed.id); }}>
                 <RotateCcw size={12} /> Revertir Alta (Recuperar)
@@ -273,7 +273,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
           </div>
         </div>
       )}
-      
+
       {/* Botones de acción para camas sin paciente, ubicados al fondo de la tarjeta */}
       {bed.status === 'cleaning' && !bed.patient && (
         <div style={{ padding: '0 12px 12px 12px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -287,7 +287,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
           )}
         </div>
       )}
-      
+
       {bed.status === 'available' && !bed.patient && canManageBlocks && (
         <div style={{ padding: '0 12px 12px 12px', marginTop: 'auto' }}>
           <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.4)' }} onClick={(e) => { e.stopPropagation(); onBlockBed(room.roomId, bed.id); }}>
@@ -314,7 +314,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   const [requestingIC, setRequestingIC] = useState(null); // { roomId, bed }
   const [blockingBed, setBlockingBed] = useState(null);
   const [unblockingBed, setUnblockingBed] = useState(null);
-  
+
   const [selectedFloor, setSelectedFloor] = useState('todos');
   const [selectedSector, setSelectedSector] = useState('todos');
   const [statusFilter, setStatusFilter] = useState('todos');
@@ -323,7 +323,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   const [icFilter, setIcFilter] = useState('todos');
   const [espTratanteFilter, setEspTratanteFilter] = useState([]);
   const [showFilters, setShowFilters] = useState(true);
-  
+
   const [isDraggingActive, setIsDraggingActive] = useState(false);
 
   const sensors = useSensors(
@@ -339,7 +339,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     if (over && active.data.current && over.data.current) {
       const patient = active.data.current.patient;
       const { roomId, bedId } = over.data.current;
-      
+
       // Encontrar la cama para checkear servicio y estado
       let targetBed = null;
       for (const floor in bedsData) {
@@ -352,12 +352,12 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         }
         if (targetBed) break;
       }
-      
+
       if (targetBed.status !== 'available') {
         alert('No puede asignar un paciente sobre una cama que se encuentra ocupada o en aseo. El paciente de esta cama debe pasar primero por el proceso de Alta y Aseo.');
         return;
       }
-      
+
       const serviceMismatch = !checkServiceMatch(targetBed, patient);
 
       // En lugar de asignar, abrimos el modal
@@ -367,7 +367,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
 
   const handleAssignPatientClick = (roomId, bedId, patient) => {
     if (isVisor || isGestoraServicio) return;
-    
+
     // Encontrar la cama para checkear servicio y estado
     let targetBed = null;
     for (const floor in bedsData) {
@@ -380,14 +380,14 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       }
       if (targetBed) break;
     }
-    
+
     if (!targetBed) return;
-    
+
     if (targetBed.status !== 'available') {
       alert('No puede asignar un paciente sobre una cama que se encuentra ocupada o en aseo. El paciente de esta cama debe pasar primero por el proceso de Alta y Aseo.');
       return;
     }
-    
+
     const serviceMismatch = !checkServiceMatch(targetBed, patient);
 
     // Abrimos el modal
@@ -396,7 +396,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
 
   const confirmAssignment = async (assignmentData) => {
     const { roomId, bedId, patient } = pendingAssignment;
-    
+
     // Capturar datos del paciente antes de cerrar el modal
     const patientData = { ...pendingAssignment.patient };
     const patientId = patient.id;
@@ -474,7 +474,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     if (!blockingBed) return;
     const now = new Date();
     const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    
+
     const newNovedad = {
       id: Date.now(),
       fecha: formattedDate,
@@ -517,7 +517,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     if (!unblockingBed) return;
     const now = new Date();
     const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    
+
     const newNovedad = {
       id: Date.now(),
       fecha: formattedDate,
@@ -554,7 +554,8 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
 
   const updateBedState = (roomId, bedId, updates) => {
     // Usar función updater con deep clone para sincronización correcta entre usuarios
-    setBedsData(prev => {
+    // Retorna la Promise de Firebase para que el llamador pueda awaitearlo
+    return setBedsData(prev => {
       const next = JSON.parse(JSON.stringify(prev));
       for (const floor in next) {
         if (typeof next[floor] !== 'object') continue;
@@ -573,6 +574,36 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       }
       return JSON.parse(JSON.stringify(next));
     });
+  };
+
+  const handleSaveNovedad = (roomId, bedId, newEntry) => {
+    const result = setBedsData(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      for (const floor in next) {
+        if (typeof next[floor] !== 'object') continue;
+        for (const sector in next[floor]) {
+          if (!Array.isArray(next[floor][sector])) continue;
+          next[floor][sector] = next[floor][sector].map(room => {
+            if (room.roomId === roomId) {
+              return {
+                ...room,
+                beds: room.beds.map(bed => {
+                  if (bed.id === bedId) {
+                    const existing = Array.isArray(bed.novedades) ? bed.novedades : [];
+                    return { ...bed, novedades: [newEntry, ...existing] };
+                  }
+                  return bed;
+                })
+              };
+            }
+            return room;
+          });
+        }
+      }
+      return JSON.parse(JSON.stringify(next));
+    });
+    // Retornar la Promise para que el llamador pueda esperarla
+    return result;
   };
 
   const handleDischarge = (roomId, bedId) => {
@@ -616,7 +647,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     if (dischargingPatient.isWaiting) {
       // 1. Remove from waiting list
       setWaitingList(prev => prev.filter(p => p.id !== bedId));
-      
+
       // 2. Add to waiting list discharges
       if (setWaitingListDischarges) {
         setWaitingListDischarges(prev => {
@@ -641,13 +672,13 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
           return [...arr, dischargeRecord];
         });
       }
-      
+
       setDischargingPatient(null);
       return;
     }
 
     if (formData.destino === 'Hospitalización domiciliaria') {
-      updateBedState(roomId, bedId, { 
+      updateBedState(roomId, bedId, {
         status: 'pending_hodom',
         previousPatient: {
           ...bed,
@@ -664,9 +695,9 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         onHodomSubmit(formData.hodomData);
       }
     } else {
-      updateBedState(roomId, bedId, { 
-        status: 'cleaning', 
-        patient: null, 
+      updateBedState(roomId, bedId, {
+        status: 'cleaning',
+        patient: null,
         rut: null,
         age: null,
         fechaNacimiento: null,
@@ -682,9 +713,9 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         servicioSol: null,
         destino: null,
         prioridad: null,
-        diagnosis: null, 
-        grdId: null, 
-        grdName: null, 
+        diagnosis: null,
+        grdId: null,
+        grdName: null,
         projectedDays: null,
         assignedAt: null,
         projectedReleaseDate: null,
@@ -720,7 +751,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       }
       if (targetBed) break;
     }
-    
+
     if (targetBed && targetBed.previousPatient) {
       const restoredBed = { ...targetBed.previousPatient, status: 'occupied' };
       delete restoredBed.previousPatient;
@@ -740,7 +771,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       }
       if (targetBed) break;
     }
-    
+
     if (targetBed) {
       if (!window.confirm('¿Está seguro de que desea revocar el acueste de este paciente y devolverlo a la lista de espera?')) {
         return;
@@ -870,10 +901,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                   if (b.id === bedId) {
                     const currentICs = b.interconsultas || [];
                     const currentNovedades = b.novedades || [];
-                    
+
                     const now = new Date();
                     const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-                    
+
                     const newNovedad = {
                       id: Date.now(),
                       fecha: formattedDate,
@@ -909,7 +940,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   const handleTransfer = (sourceRoomId, sourceBedId, targetRoomId, targetBedId, newGrdData, transferType = 'libre') => {
     let sourceBedInfo = null;
     let targetBedInfo = null;
-    
+
     // First pass: find source and target bed infos (read-only from current state)
     for (const floor in bedsData) {
       for (const sector in bedsData[floor]) {
@@ -959,7 +990,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             const year = d.getFullYear();
             return `${day}-${month}-${year}`;
           }
-        } catch (e) {}
+        } catch (e) { }
         return '—';
       };
 
@@ -992,7 +1023,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             const diffTime = Math.abs(new Date() - date);
             estadaSource = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + ' días';
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // Diagnostics source
@@ -1100,7 +1131,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
               const diffTime = Math.abs(new Date() - date);
               estadaTarget = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + ' días';
             }
-          } catch (e) {}
+          } catch (e) { }
         }
 
         // Diagnostics target
@@ -1258,11 +1289,11 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     setEditingGrdBed(null);
   };
 
-  const confirmGrdEdit = (grdData, transferTarget) => {
+  const confirmGrdEdit = async (grdData, transferTarget) => {
     if (transferTarget) {
       handleTransfer(editingGrdBed.roomId, editingGrdBed.bed.id, transferTarget.roomId, transferTarget.bedId, grdData, transferTarget.type);
     } else {
-      updateBedState(editingGrdBed.roomId, editingGrdBed.bed.id, grdData);
+      await updateBedState(editingGrdBed.roomId, editingGrdBed.bed.id, grdData);
       setEditingGrdBed(null);
     }
   };
@@ -1292,9 +1323,9 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
 
   const formatFloor = (f) => f.replace('piso', 'Piso ');
   const formatSector = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  const availableFloors = Object.keys(bedsData).sort((a,b) => a.localeCompare(b));
+  const availableFloors = Object.keys(bedsData).sort((a, b) => a.localeCompare(b));
   const availableSectors = Array.from(new Set(Object.keys(bedsData).flatMap(floor => Object.keys(bedsData[floor]))))
-    .sort((a,b) => {
+    .sort((a, b) => {
       if (a.toLowerCase() === 'poniente') return -1;
       if (b.toLowerCase() === 'poniente') return 1;
       return a.localeCompare(b);
@@ -1303,7 +1334,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   const floorsToRender = selectedFloor === 'todos' ? availableFloors : [selectedFloor];
 
   return (
-    <DndContext 
+    <DndContext
       sensors={sensors}
       onDragStart={() => setIsDraggingActive(true)}
       onDragEnd={(event) => {
@@ -1314,113 +1345,113 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       <div className={`main-layout ${!showFilters ? 'filters-hidden' : ''} ${isDraggingActive ? 'dragging-active' : ''}`}>
         {showFilters && (
           <aside className="sidebar">
-          <div className="glass-panel sidebar-section">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <h3 className="sidebar-title" style={{ marginBottom: 0 }}>Filtros de Dashboard</h3>
-              <button 
-                onClick={() => setShowFilters(false)} 
-                className="glass-button" 
-                style={{ padding: '6px' }}
-                title="Ocultar Filtros"
-              >
-                <Filter size={16} />
-              </button>
-            </div>
-            <div style={{ marginBottom: '20px' }}>
-              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>1. SELECCIÓN DE PISO</div>
-              <div className="stack-group">
-                <button className={`stack-btn ${selectedFloor === 'todos' ? 'active' : ''}`} onClick={() => setSelectedFloor('todos')}>Todo el Hospital</button>
-                {availableFloors.map(floor => (
-                  <button key={floor} className={`stack-btn ${selectedFloor === floor ? 'active' : ''}`} onClick={() => setSelectedFloor(floor)} style={{ textTransform: 'capitalize' }}>
-                    {floor.replace('piso', 'Piso ')}
-                  </button>
-                ))}
+            <div className="glass-panel sidebar-section">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <h3 className="sidebar-title" style={{ marginBottom: 0 }}>Filtros de Dashboard</h3>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="glass-button"
+                  style={{ padding: '6px' }}
+                  title="Ocultar Filtros"
+                >
+                  <Filter size={16} />
+                </button>
               </div>
-            </div>
-            <div style={{ marginBottom: '20px' }}>
-              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>2. VISTA DE SECTORES</div>
-              <div className="stack-group">
-                <button className={`stack-btn ${selectedSector === 'todos' ? 'active' : ''}`} onClick={() => setSelectedSector('todos')}>Mostrar Ambos</button>
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                  {availableSectors.map(sector => (
-                    <button key={sector} className={`stack-btn ${selectedSector === sector ? 'active' : ''}`} onClick={() => setSelectedSector(sector)} style={{ flex: 1, textTransform: 'capitalize' }}>
-                      {sector}
+              <div style={{ marginBottom: '20px' }}>
+                <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>1. SELECCIÓN DE PISO</div>
+                <div className="stack-group">
+                  <button className={`stack-btn ${selectedFloor === 'todos' ? 'active' : ''}`} onClick={() => setSelectedFloor('todos')}>Todo el Hospital</button>
+                  {availableFloors.map(floor => (
+                    <button key={floor} className={`stack-btn ${selectedFloor === floor ? 'active' : ''}`} onClick={() => setSelectedFloor(floor)} style={{ textTransform: 'capitalize' }}>
+                      {floor.replace('piso', 'Piso ')}
                     </button>
                   ))}
                 </div>
               </div>
-            </div>
-            <div style={{ marginBottom: '20px' }}>
-              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>3. ESTADO DE CAMA</div>
-              <div className="stack-group" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px' }}>
-                <button className={`stack-btn ${statusFilter === 'todos' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('todos')}>Todas</button>
-                <button className={`stack-btn ${statusFilter === 'available' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('available')}>Disp.</button>
-                <button className={`stack-btn ${statusFilter === 'cleaning' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('cleaning')}>Aseo</button>
-                <button className={`stack-btn ${statusFilter === 'pending_hodom' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('pending_hodom')}>Pend. HODOM</button>
-                <button className={`stack-btn ${statusFilter === 'blocked' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('blocked')}>Bloq.</button>
+              <div style={{ marginBottom: '20px' }}>
+                <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>2. VISTA DE SECTORES</div>
+                <div className="stack-group">
+                  <button className={`stack-btn ${selectedSector === 'todos' ? 'active' : ''}`} onClick={() => setSelectedSector('todos')}>Mostrar Ambos</button>
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    {availableSectors.map(sector => (
+                      <button key={sector} className={`stack-btn ${selectedSector === sector ? 'active' : ''}`} onClick={() => setSelectedSector(sector)} style={{ flex: 1, textTransform: 'capitalize' }}>
+                        {sector}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div style={{ marginBottom: '20px' }}>
-              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>4. SERVICIO CLÍNICO</div>
-              <select className="glass-input" style={{ width: '100%' }} value={serviceFilter} onChange={(e) => setServiceFilter(e.target.value)}>
-                <option value="todos">Todos los Servicios</option>
-                <option value="upc">UPC (UCI/UTI)</option>
-                <option value="gine/puerperio">GINE/PUERPERIO</option>
-                <option value="infantil">Infantil / Neo</option>
-                <option value="medios">Cuidados Medios</option>
-                <option value="basicos">Cuidados Básicos</option>
-              </select>
-            </div>
-            <div>
-              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>5. ESTADO ESTADÍA GRD</div>
-              <select className="glass-input" style={{ width: '100%' }} value={stayFilter} onChange={(e) => setStayFilter(e.target.value)}>
-                <option value="todos">Todos los Estados</option>
-                <option value="inlier">Inlier (Estándar)</option>
-                <option value="riesgo">Riesgo Outlier</option>
-                <option value="outlier">Outlier Superior (Rojo)</option>
-              </select>
-            </div>
-            <div style={{ marginTop: '20px' }}>
-              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>6. IC PENDIENTES</div>
-              <select className="glass-input" style={{ width: '100%' }} value={icFilter} onChange={(e) => setIcFilter(e.target.value)}>
-                <option value="todos">Todas las Camas</option>
-                <option value="con_ic">Todas con IC Pendientes</option>
-                {Array.from(new Set(
-                  Object.values(bedsData).flatMap(floor => 
-                    Object.values(floor).flatMap(sector => 
-                      sector.flatMap(room => 
-                        room.beds.flatMap(bed => 
-                          (bed.interconsultas || []).filter(ic => ic.estado === 'pendiente').map(ic => ic.especialidadDestino)
+              <div style={{ marginBottom: '20px' }}>
+                <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>3. ESTADO DE CAMA</div>
+                <div className="stack-group" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px' }}>
+                  <button className={`stack-btn ${statusFilter === 'todos' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('todos')}>Todas</button>
+                  <button className={`stack-btn ${statusFilter === 'available' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('available')}>Disp.</button>
+                  <button className={`stack-btn ${statusFilter === 'cleaning' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('cleaning')}>Aseo</button>
+                  <button className={`stack-btn ${statusFilter === 'pending_hodom' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('pending_hodom')}>Pend. HODOM</button>
+                  <button className={`stack-btn ${statusFilter === 'blocked' ? 'active' : ''}`} style={{ padding: '8px 2px', fontSize: '0.65rem' }} onClick={() => setStatusFilter('blocked')}>Bloq.</button>
+                </div>
+              </div>
+              <div style={{ marginBottom: '20px' }}>
+                <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>4. SERVICIO CLÍNICO</div>
+                <select className="glass-input" style={{ width: '100%' }} value={serviceFilter} onChange={(e) => setServiceFilter(e.target.value)}>
+                  <option value="todos">Todos los Servicios</option>
+                  <option value="upc">UPC (UCI/UTI)</option>
+                  <option value="gine/puerperio">GINE/PUERPERIO</option>
+                  <option value="infantil">Infantil / Neo</option>
+                  <option value="medios">Cuidados Medios</option>
+                  <option value="basicos">Cuidados Básicos</option>
+                </select>
+              </div>
+              <div>
+                <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>5. ESTADO ESTADÍA GRD</div>
+                <select className="glass-input" style={{ width: '100%' }} value={stayFilter} onChange={(e) => setStayFilter(e.target.value)}>
+                  <option value="todos">Todos los Estados</option>
+                  <option value="inlier">Inlier (Estándar)</option>
+                  <option value="riesgo">Riesgo Outlier</option>
+                  <option value="outlier">Outlier Superior (Rojo)</option>
+                </select>
+              </div>
+              <div style={{ marginTop: '20px' }}>
+                <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>6. IC PENDIENTES</div>
+                <select className="glass-input" style={{ width: '100%' }} value={icFilter} onChange={(e) => setIcFilter(e.target.value)}>
+                  <option value="todos">Todas las Camas</option>
+                  <option value="con_ic">Todas con IC Pendientes</option>
+                  {Array.from(new Set(
+                    Object.values(bedsData).flatMap(floor =>
+                      Object.values(floor).flatMap(sector =>
+                        sector.flatMap(room =>
+                          room.beds.flatMap(bed =>
+                            (bed.interconsultas || []).filter(ic => ic.estado === 'pendiente').map(ic => ic.especialidadDestino)
+                          )
                         )
                       )
                     )
-                  )
-                )).sort().map(esp => (
-                  <option key={esp} value={`ic_${esp}`}>IC {esp}</option>
-                ))}
-              </select>
+                  )).sort().map(esp => (
+                    <option key={esp} value={`ic_${esp}`}>IC {esp}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ marginTop: '20px' }}>
+                <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>7. ESPECIALIDAD TRATANTE</div>
+                <MultiSearchableSelect
+                  options={ESPECIALIDADES.map(e => ({ value: e, label: e }))}
+                  value={espTratanteFilter}
+                  onChange={setEspTratanteFilter}
+                  placeholder="Filtrar especialidad..."
+                  maxSelections={5}
+                />
+              </div>
             </div>
-            <div style={{ marginTop: '20px' }}>
-              <div className="sidebar-title" style={{ fontSize: '0.75rem', marginBottom: '12px', color: 'var(--accent-color)' }}>7. ESPECIALIDAD TRATANTE</div>
-              <MultiSearchableSelect 
-                options={ESPECIALIDADES.map(e => ({ value: e, label: e }))} 
-                value={espTratanteFilter} 
-                onChange={setEspTratanteFilter} 
-                placeholder="Filtrar especialidad..." 
-                maxSelections={5} 
-              />
-            </div>
-          </div>
-        </aside>
+          </aside>
         )}
 
         <main>
           <div className="glass-panel" style={{ padding: '20px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {!showFilters && (
-                <button 
-                  onClick={() => setShowFilters(true)} 
-                  className="glass-button" 
+                <button
+                  onClick={() => setShowFilters(true)}
+                  className="glass-button"
                   style={{ padding: '8px', marginRight: '8px' }}
                   title="Mostrar Filtros"
                 >
@@ -1492,12 +1523,12 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                   }
                   return matchStatus && matchService && matchStay && matchIc && matchEspTratante && matchSearch;
                 });
-                return { 
-                  ...room, 
-                  beds: filteredBeds.sort((a,b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true })) 
+                return {
+                  ...room,
+                  beds: filteredBeds.sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true }))
                 };
               }).filter(room => room.beds.length > 0)
-                .sort((a,b) => String(a.roomId).localeCompare(String(b.roomId), undefined, { numeric: true }));
+                .sort((a, b) => String(a.roomId).localeCompare(String(b.roomId), undefined, { numeric: true }));
               if (roomsWithFilteredBeds.length === 0) return null;
               hasRoomsInFloor = true;
               return (
@@ -1508,11 +1539,11 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                       <div className="room-header"><div className="room-title">Hab. {room.roomId}</div></div>
                       <div className={`beds-grid ${room.roomId === '201' ? 'beds-grid-wrap-201' : ''}`}>
                         {room.beds.map((bed) => (
-                          <DroppableBed 
-                            key={bed.id} 
-                            bed={bed} 
-                            room={room} 
-                            selectedPatient={selectedPatient} 
+                          <DroppableBed
+                            key={bed.id}
+                            bed={bed}
+                            room={room}
+                            selectedPatient={selectedPatient}
                             onAssignPatient={handleAssignPatientClick}
                             onDischarge={handleDischarge}
                             onFinishCleaning={handleFinishCleaning}
@@ -1546,25 +1577,25 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         </main>
 
         {!isGestoraServicio && (
-        <aside className="waiting-list-section">
-          <div className="glass-panel sidebar-section">
-            <WaitingList 
-              patients={waitingList} 
-              onSelectPatient={(p) => setSelectedPatient(selectedPatient?.id === p.id ? null : p)}
-              onViewPatient={onViewPatient}
-              onEditPatient={onEditPatient}
-              onDischargeWaiting={handleDischargeWaiting}
-              onRequestIC={onRequestWaitingIC}
-              selectedPatientId={selectedPatient?.id}
-              userRole={userRole}
-              searchQuery={searchQuery}
-            />
-          </div>
-        </aside>
+          <aside className="waiting-list-section">
+            <div className="glass-panel sidebar-section">
+              <WaitingList
+                patients={waitingList}
+                onSelectPatient={(p) => setSelectedPatient(selectedPatient?.id === p.id ? null : p)}
+                onViewPatient={onViewPatient}
+                onEditPatient={onEditPatient}
+                onDischargeWaiting={handleDischargeWaiting}
+                onRequestIC={onRequestWaitingIC}
+                selectedPatientId={selectedPatient?.id}
+                userRole={userRole}
+                searchQuery={searchQuery}
+              />
+            </div>
+          </aside>
         )}
 
         {pendingAssignment && (
-          <AssignmentModal 
+          <AssignmentModal
             patient={pendingAssignment.patient}
             bed={pendingAssignment}
             user={user}
@@ -1572,7 +1603,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             onClose={() => setPendingAssignment(null)}
           />
         )}
-        
+
         {editingGrdBed && (
           <EditGrdModal
             bed={{ ...editingGrdBed.bed, roomId: editingGrdBed.roomId }}
@@ -1580,6 +1611,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             user={user}
             onConfirm={confirmGrdEdit}
             onClose={() => setEditingGrdBed(null)}
+            onSaveNovedad={(newEntry) => handleSaveNovedad(editingGrdBed.roomId, editingGrdBed.bed.id, newEntry)}
             onDischargeRequest={(b) => {
               setDischargingPatient({ roomId: editingGrdBed.roomId, bed: b });
               setEditingGrdBed(null);
@@ -1627,7 +1659,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             user={user}
           />
         )}
-        
+
         {unblockingBed && (
           <UnblockBedModal
             bed={unblockingBed.bed}

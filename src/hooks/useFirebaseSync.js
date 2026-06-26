@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { doc, onSnapshot, setDoc, runTransaction, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 /**
@@ -144,72 +144,33 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
 
     const docRef = doc(db, collectionName, documentId);
 
-    // Auto-backup before write for bedsData (Capa 2)
+    // Auto-backup para bedsData (Capa 2) — fire-and-forget, no bloquea la escritura principal
     if (documentId === 'bedsData' && currentData) {
-      try {
-        const backupRef = doc(db, collectionName, `${documentId}_lastBackup`);
-        await setDoc(backupRef, {
-          data: currentData,
-          backedUpAt: new Date().toISOString(),
-          occupiedBeds: countOccupiedBeds(currentData),
-          reason: 'auto_backup_before_write'
-        });
-      } catch (backupErr) {
+      const backupRef = doc(db, collectionName, `${documentId}_lastBackup`);
+      setDoc(backupRef, {
+        data: currentData,
+        backedUpAt: new Date().toISOString(),
+        occupiedBeds: countOccupiedBeds(currentData),
+        reason: 'auto_backup_before_write'
+      }).catch(backupErr => {
         console.warn('[Backup] No se pudo guardar respaldo automático:', backupErr);
-      }
+      });
     }
 
+    // Escritura directa con setDoc — más rápido que runTransaction (evita round-trip de lectura).
+    // Los checks de integridad arriba ya validan con datos locales frescos del onSnapshot.
     try {
-      // Use transaction to ensure concurrent updates are merged correctly
-      await runTransaction(db, async (transaction) => {
-        const docSnap = await transaction.get(docRef);
-        let freshFirestoreData = docSnap.exists() ? docSnap.data().data : undefined;
-
-        if (freshFirestoreData === undefined) {
-          freshFirestoreData = currentData;
-        }
-
-        const finalNewData = typeof newDataOrUpdater === 'function'
-          ? newDataOrUpdater(freshFirestoreData)
-          : newDataOrUpdater;
-
-        // Double check validation on the fresh server data if it's bedsData
-        if (documentId === 'bedsData') {
-          const freshOldCount = countOccupiedBeds(freshFirestoreData);
-          const freshNewCount = countOccupiedBeds(finalNewData);
-          if (freshOldCount > 0 && freshNewCount === 0) {
-            throw new Error('PROTECCIÓN TRANSACCIÓN: Se intentó eliminar todos los pacientes.');
-          }
-        }
-
-        transaction.set(docRef, { data: finalNewData });
-      });
-      console.log(`[useFirebaseSync] Sincronización exitosa (transacción) para ${documentId}`);
+      await setDoc(docRef, { data: localNewData });
       return true;
-    } catch (txError) {
-      if (txError.message && txError.message.includes('PROTECCIÓN')) {
-        console.error('[useFirebaseSync] Transacción cancelada por reglas de protección de datos:', txError);
-        // Revert local state to the previous value before the edit
-        setData(currentData);
-        dataRef.current = currentData;
-        return false;
-      }
-
-      // Fallback: If transaction fails (e.g. offline, permissions, timeout), fallback to setDoc
-      console.warn(`[useFirebaseSync] Transacción fallida para ${documentId}, intentando setDoc fallback:`, txError);
-      try {
-        await setDoc(docRef, { data: localNewData });
-        console.log(`[useFirebaseSync] Sincronización exitosa (fallback setDoc) para ${documentId}`);
-        return true;
-      } catch (fallbackError) {
-        console.error(`[useFirebaseSync] Error crítico al sincronizar ${documentId}:`, fallbackError);
-        // Revert local state on critical failure
-        setData(currentData);
-        dataRef.current = currentData;
-        return false;
-      }
+    } catch (writeError) {
+      console.error(`[useFirebaseSync] Error al sincronizar ${documentId}:`, writeError);
+      // Revert local state on critical failure
+      setData(currentData);
+      dataRef.current = currentData;
+      return false;
     }
   }, [collectionName, documentId]);
+
 
   return [data, updateData, loading];
 }
