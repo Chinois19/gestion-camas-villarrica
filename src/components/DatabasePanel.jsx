@@ -53,11 +53,11 @@ export default function DatabasePanel({ bedsData }) {
       });
       sectors.forEach(sector => {
         const rooms = [...(bedsData[floor][sector] || [])].sort((a, b) => 
-          String(b.roomId).localeCompare(String(a.roomId), undefined, { numeric: true })
+          String(a.roomId).localeCompare(String(b.roomId), undefined, { numeric: true })
         );
         rooms.forEach(room => {
           const beds = [...(room.beds || [])].sort((a, b) => 
-            String(b.id).localeCompare(String(a.id), undefined, { numeric: true })
+            String(a.id).localeCompare(String(b.id), undefined, { numeric: true })
           );
           beds.forEach(bed => {
             if (bed.status === 'occupied' && bed.patient) {
@@ -221,15 +221,15 @@ export default function DatabasePanel({ bedsData }) {
       'SERVICIO DE ACUESTE',
       'SALA',
       'CAMA',
-      'ESTADA',
-      'FECHA INGRESO',
-      'PRECAUCIONES',
       'NOMBRE',
       'RUN',
-      'EDAD',
       'DIAGNÓSTICOS',
       'ESPECIALIDADES',
       'ACTUALIZACIÓN',
+      'ESTADA',
+      'FECHA INGRESO',
+      'PRECAUCIONES',
+      'EDAD',
       'COMUNA'
     ];
     
@@ -237,17 +237,17 @@ export default function DatabasePanel({ bedsData }) {
       row.servicio || '',
       row.sala || '',
       row.cama || '',
-      row.estada || '',
-      row.fechaIngreso || '',
-      row.precauciones || '',
       row.nombre || '',
       row.run || '',
-      row.edad || '',
       row.diagnosticos || '',
       row.especialidades || '',
       Array.isArray(row.actualizacion)
         ? row.actualizacion.map(act => `${act.texto}   ${act.fecha}`).join('\n')
         : (row.actualizacion || ''),
+      row.estada || '',
+      row.fechaIngreso || '',
+      row.precauciones || '',
+      row.edad || '',
       row.comuna || ''
     ]);
     
@@ -259,10 +259,16 @@ export default function DatabasePanel({ bedsData }) {
     
     // Auto-ajuste de ancho de columnas básico
     const wscols = headers.map(() => ({ wch: 20 }));
-    wscols[6].wch = 35; // Nombre
-    wscols[9].wch = 50; // Diagnósticos
-    wscols[10].wch = 30; // Especialidades
-    wscols[11].wch = 60; // Actualización
+    wscols[3].wch = 35; // Nombre
+    wscols[4].wch = 35; // RUN
+    wscols[5].wch = 50; // Diagnósticos
+    wscols[6].wch = 30; // Especialidades
+    wscols[7].wch = 60; // Actualización
+    wscols[8].wch = 20; // Estada
+    wscols[9].wch = 20; // Fecha Ingreso
+    wscols[10].wch = 20; // Precauciones
+    wscols[11].wch = 20; // Edad
+    wscols[12].wch = 20; // Comuna
     ws['!cols'] = wscols;
 
     // Exportar archivo físico

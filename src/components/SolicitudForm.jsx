@@ -155,7 +155,8 @@ function GInput({ placeholder, value, onChange, name, type = 'text', readOnly, s
   return (
     <input
       type={type} name={name} value={value} onChange={onChange} readOnly={readOnly}
-      placeholder={placeholder} required={required} autoComplete={autoComplete}
+      placeholder={placeholder} required={required}
+      autoComplete={autoComplete}
       style={{
         width: '100%', background: 'var(--inset-bg)', border: '1px solid var(--border-subtle)',
         borderRadius: 8, padding: '7px 11px', color: 'var(--text-primary)',
@@ -486,29 +487,29 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     if (isViewMode) return;
 
     const missingFields = [];
-    // 1. Datos del Paciente
     if (!formData.nombre?.trim()) missingFields.push('Nombre Completo');
     if (!formData.rut?.trim()) missingFields.push('RUT');
-    if (!formData.fechaNacimiento?.trim()) missingFields.push('Fecha de Nacimiento');
-    if (!formData.sexo || formData.sexo === '—' || !formData.sexo.trim()) missingFields.push('Sexo');
-    if (!formData.prevision?.trim()) missingFields.push('Previsión del Paciente');
-    if (!formData.comuna?.trim()) missingFields.push('Comuna de Residencia');
-
-    // 2. Diagnóstico & Categorización
-    if (!formData.dxPrincipal?.trim()) missingFields.push('Descripción clínica del cuadro principal');
-
-    // 3. Gestión de la Derivación
     if (!formData.servicioSol?.trim()) missingFields.push('Servicio Solicitante');
     if (!formData.destino?.trim()) missingFields.push('Destino (Unidad Requerida)');
     if (!formData.medicoSol?.trim()) missingFields.push('Médico Solicitante / Tratante');
     if (!formData.especialidadMedico?.trim()) missingFields.push('Especialidad del Médico');
     if (!formData.requisitosUGP?.trim()) missingFields.push('Requisitos de UGP');
     if (!formData.especialidadTratante || formData.especialidadTratante.length === 0) missingFields.push('Especialidad Tratante');
+    if (!formData.sexo?.trim()) missingFields.push('Sexo');
+    if (!formData.edad?.trim()) missingFields.push('Edad');
+    if (!formData.fechaNacimiento?.trim()) missingFields.push('Fecha de Nacimiento');
+    if (!formData.prevision?.trim()) missingFields.push('Previsión');
+    if (!formData.comuna?.trim()) missingFields.push('Comuna');
+    if (!formData.dxPrincipal.trim()) missingFields.push('Descripción clínica del cuadro principal');
+    if (!formData.dxCie10?.trim()) missingFields.push('Código CIE-10');
+    if (!formData.dxGrupo?.trim()) missingFields.push('Grupo CIE-10');
+    if (!formData.procedimientosPendientes?.trim()) missingFields.push('Procedimientos Pendientes');
 
     if (missingFields.length > 0) {
       alert(`Los siguientes campos son obligatorios: ${missingFields.join(', ')}.`);
       return;
     }
+
 
     // Helper para parsear la fecha de forma segura y evitar RangeError
     const getParsedEffectiveDate = () => {
@@ -797,7 +798,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                   <>
                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr', gap: 10, marginBottom: 10 }}>
                       <div><FieldLabel>Nombre Completo <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Ej. Juan Pérez González" required /></div>
-                      <div><FieldLabel>RUT <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="rut" value={formData.rut} onChange={handleChange} placeholder="12345678-9" required /></div>
+                      <div><FieldLabel>RUT <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="rut" value={formData.rut} onChange={handleChange} maxLength={10} placeholder="12345678-9" required /></div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 10, marginBottom: 10 }}>
                       <div>
@@ -809,13 +810,13 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                         <GInput name="edadCalculada" value={calculateAgeDetailed(formData.fechaNacimiento) || (formData.edad ? `${formData.edad} años` : '')} readOnly placeholder="Se calcula desde F. Nacimiento" />
                       </div>
                       <div>
-                        <FieldLabel>Sexo <span style={{ color: '#ef4444' }}>*</span></FieldLabel>
+                        <FieldLabel>Sexo</FieldLabel>
                         <GSelect required name="sexo" value={formData.sexo} onChange={handleChange} options={SEXOS} />
                       </div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      <div><FieldLabel>Previsión del Paciente <span style={{ color: '#ef4444' }}>*</span></FieldLabel><SearchableSelect name="prevision" value={formData.prevision} onChange={handleChange} options={PREVISIONES} placeholder="Buscar previsión..." /></div>
-                      <div><FieldLabel>Comuna de Residencia <span style={{ color: '#ef4444' }}>*</span></FieldLabel><SearchableSelect name="comuna" value={formData.comuna} onChange={handleChange} options={COMUNAS_CHILE} placeholder="Buscar comuna..." /></div>
+                      <div><FieldLabel>Previsión del Paciente</FieldLabel><SearchableSelect name="prevision" value={formData.prevision} onChange={handleChange} options={PREVISIONES} placeholder="Buscar previsión..." /></div>
+                      <div><FieldLabel>Comuna de Residencia</FieldLabel><SearchableSelect name="comuna" value={formData.comuna} onChange={handleChange} options={COMUNAS_CHILE} placeholder="Buscar comuna..." /></div>
                     </div>
                   </>
                 )}
@@ -845,19 +846,19 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                 ) : (
                   <>
                     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
-                      <div><FieldLabel>Servicio Solicitante <span style={{ color: '#ef4444' }}>*</span></FieldLabel><SearchableSelect required name="servicioSol" value={formData.servicioSol} onChange={handleChange} options={SERVICIOS_SOLICITANTES} placeholder="Buscar servicio..." /></div>
-                      <div><FieldLabel>Destino (Unidad Requerida) <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GSelect required name="destino" value={formData.destino} onChange={handleChange} options={DESTINOS} /></div>
+                      <div><FieldLabel>Servicio Solicitante</FieldLabel><SearchableSelect required name="servicioSol" value={formData.servicioSol} onChange={handleChange} options={SERVICIOS_SOLICITANTES} placeholder="Buscar servicio..." /></div>
+                      <div><FieldLabel>Destino (Unidad Requerida)</FieldLabel><GSelect required name="destino" value={formData.destino} onChange={handleChange} options={DESTINOS} /></div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10, marginBottom: 10 }}>
-                      <div><FieldLabel>Médico Solicitante / Tratante <span style={{ color: '#ef4444' }}>*</span></FieldLabel><SearchableSelect name="medicoSol" value={formData.medicoSol} required onChange={handleChange} options={MEDICOS} placeholder="Nombre Dr. / Dra." allowFreeText={true} /></div>
-                      <div><FieldLabel>Especialidad del Médico <span style={{ color: '#ef4444' }}>*</span></FieldLabel><SearchableSelect name="especialidadMedico" value={formData.especialidadMedico} required onChange={handleChange} options={ESPECIALIDADES} placeholder="Buscar especialidad..." /></div>
+                      <div><FieldLabel>Médico Solicitante / Tratante</FieldLabel><SearchableSelect name="medicoSol" value={formData.medicoSol} required onChange={handleChange} options={MEDICOS} placeholder="Nombre Dr. / Dra." allowFreeText={true} /></div>
+                      <div><FieldLabel>Especialidad del Médico</FieldLabel><SearchableSelect name="especialidadMedico" value={formData.especialidadMedico} required onChange={handleChange} options={ESPECIALIDADES} placeholder="Buscar especialidad..." /></div>
                     </div>
                     <div style={{ marginTop: 10 }}>
-                      <FieldLabel>Requisitos de UGP (Texto libre para gestión) <span style={{ color: '#ef4444' }}>*</span></FieldLabel>
+                      <FieldLabel>Requisitos de UGP (Texto libre para gestión)</FieldLabel>
                       <GTextarea required name="requisitosUGP" value={formData.requisitosUGP} onChange={handleChange} placeholder="Ingrese requerimientos específicos de la unidad de gestión de camas..." rows={2} />
                     </div>
                     <div style={{ marginTop: 10 }}>
-                      <FieldLabel>Especialidad Tratante (Hasta 2) <span style={{ color: '#ef4444' }}>*</span></FieldLabel>
+                      <FieldLabel>Especialidad Tratante (Hasta 2)</FieldLabel>
                       <MultiSearchableSelect
                         required
                         options={ESPECIALIDADES.map(e => ({ value: e, label: e }))}

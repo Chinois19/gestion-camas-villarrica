@@ -63,6 +63,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
     sex: bed.sex || bed.sexo || 'Femenino',
     comuna: bed.comuna || 'Gorbea',
     prevision: bed.prevision || 'DIPRECA',
+    dxPrincipal: bed.dxPrincipal || bed.originalWaitingRequest?.dxPrincipal || '',
     especialidadTratante: Array.isArray(bed.especialidadTratante) ? bed.especialidadTratante : (bed.especialidadTratante ? [bed.especialidadTratante] : []),
     aislamiento: (() => {
       if (Array.isArray(bed.aislamiento)) {
@@ -139,7 +140,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
   const handleConfirm = (e) => {
     e.preventDefault();
     const grd = GRD_DATA.find(g => g.id === formData.grdId);
-    
+
     let transferTarget = null;
     if (formData.showTransferPanel && formData.targetBedId) {
       const [roomId, bedId] = formData.targetBedId.split('|');
@@ -153,6 +154,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
       severity: formData.severity,
       projectedDays: parseInt(formData.projectedDays) || 0,
       diagnosis: formData.diagnosis,
+      dxPrincipal: formData.dxPrincipal,
       rut: formData.rut,
       age: formData.age,
       fechaNacimiento: formData.fechaNacimiento,
@@ -168,7 +170,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
   return (
     <div className="modal-overlay" style={{ zIndex: 3000 }}>
       <div className="glass-panel modal-content" style={{ maxWidth: '1100px', width: 'min(98vw, 1100px)', height: 'min(95vh, 850px)', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
-        
+
         {/* Header */}
         <div className="modal-header grd-modal-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '20px 24px', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -185,9 +187,9 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                 </p>
               </div>
               {bed.assignedAt && (
-                <div style={{ 
-                  padding: '6px 16px', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.15)', 
-                  color: '#ffffff', fontSize: '0.85rem', fontWeight: 800, 
+                <div style={{
+                  padding: '6px 16px', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.15)',
+                  color: '#ffffff', fontSize: '0.85rem', fontWeight: 800,
                   border: '1px solid rgba(255, 255, 255, 0.3)',
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px'
@@ -198,8 +200,8 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
               )}
             </div>
           </div>
-          <button 
-            className="close-btn" 
+          <button
+            className="close-btn"
             onClick={onClose}
             style={{
               background: 'rgba(255, 255, 255, 0.12)',
@@ -229,17 +231,17 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
           {/* Modal Body */}
           <div className="modal-body" style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '24px', alignItems: 'start' }}>
-              
+
               {/* Left Column (Sidebar) */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                
+
                 {/* 1. IDENTIFICACIÓN */}
                 <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', zIndex: 40 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
                     <span style={{ fontSize: '1rem' }}>👤</span>
                     <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Identificación</h4>
                   </div>
-                  
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Paciente</div>
@@ -249,21 +251,21 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                       <div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>RUT</div>
-                        <input 
-                          type="text" 
-                          className="glass-input" 
+                        <input
+                          type="text"
+                          className="glass-input"
                           style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%' }}
-                          value={formData.rut} 
-                          onChange={e => setFormData(prev => ({ ...prev, rut: formatRut(e.target.value) }))} 
+                          value={formData.rut}
+                          onChange={e => setFormData(prev => ({ ...prev, rut: formatRut(e.target.value) }))}
                         />
                       </div>
                       <div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Fecha de Nacimiento</div>
-                        <input 
-                          type="date" 
-                          className="glass-input" 
+                        <input
+                          type="date"
+                          className="glass-input"
                           style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%' }}
-                          value={formData.fechaNacimiento} 
+                          value={formData.fechaNacimiento}
                           onChange={e => {
                             const val = e.target.value;
                             let computedAge = formData.age;
@@ -294,35 +296,48 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                       <div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Comuna</div>
-                        <input 
-                          type="text" 
-                          className="glass-input" 
+                        <input
+                          type="text"
+                          className="glass-input"
                           style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%' }}
-                          value={formData.comuna} 
+                          value={formData.comuna}
                           onChange={e => setFormData(prev => ({ ...prev, comuna: e.target.value }))}
                           readOnly={isGestoraServicio}
                         />
                       </div>
                       <div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Previsión</div>
-                        <input 
-                          type="text" 
-                          className="glass-input" 
+                        <input
+                          type="text"
+                          className="glass-input"
                           style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%' }}
-                          value={formData.prevision} 
+                          value={formData.prevision}
                           onChange={e => setFormData(prev => ({ ...prev, prevision: e.target.value }))}
                           readOnly={isGestoraServicio}
                         />
                       </div>
+                      <div style={{ gridColumn: 'span 2' }}>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Diagnóstico Principal Descriptivo (Texto Libre Opcional)</div>
+                        <textarea
+                          className="glass-input"
+                          style={{ padding: '6px 8px', fontSize: '0.8rem', width: '100%', minHeight: '50px', resize: 'vertical', fontFamily: 'inherit' }}
+                          value={formData.dxPrincipal || ''}
+                          onChange={e => setFormData(prev => ({ ...prev, dxPrincipal: e.target.value }))}
+                          readOnly={isGestoraServicio}
+                          placeholder="Descripción clínica del cuadro principal..."
+                          rows={2}
+                        />
+                      </div>
+                      
                     </div>
 
                     {!isGestoraServicio && (
                       <div style={{ marginTop: '12px' }}>
                         <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>Destino (Unidad Requerida) / Serv. Acueste</div>
-                        <select 
-                          className="glass-input" 
+                        <select
+                          className="glass-input"
                           style={{ padding: '6px 10px', fontSize: '0.8rem', width: '100%', background: 'var(--inset-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}
-                          value={formData.destino} 
+                          value={formData.destino}
                           onChange={e => setFormData(prev => ({ ...prev, destino: e.target.value }))}
                         >
                           {['UCI', 'UTI', 'Cuidados Medios', 'GINE/PUERPERIO', 'Neonatología', 'Infantil', 'Básico'].map(d => (
@@ -336,42 +351,42 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
 
                 {/* 2. ESPECIALIDAD TRATANTE ACTUAL - oculto para gestora_servicio */}
                 {!isGestoraServicio && (
-                <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', zIndex: 30 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
-                    <span style={{ fontSize: '1rem' }}>🩺</span>
-                    <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Especialidad Tratante</h4>
+                  <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', zIndex: 30 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
+                      <span style={{ fontSize: '1rem' }}>🩺</span>
+                      <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Especialidad Tratante</h4>
+                    </div>
+                    <MultiSearchableSelect
+                      options={ESPECIALIDADES.map(e => ({ value: e, label: e }))}
+                      value={formData.especialidadTratante}
+                      onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))}
+                      placeholder="Buscar especialidad..."
+                      maxSelections={2}
+                    />
                   </div>
-                  <MultiSearchableSelect 
-                    options={ESPECIALIDADES.map(e => ({ value: e, label: e }))} 
-                    value={formData.especialidadTratante} 
-                    onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))} 
-                    placeholder="Buscar especialidad..." 
-                    maxSelections={2} 
-                  />
-                </div>
                 )}
 
                 {/* 3. AISLAMIENTO (PRECAUCIONES) - oculto para gestora_servicio */}
                 {!isGestoraServicio && (
-                <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', zIndex: 20 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
-                    <span style={{ fontSize: '1rem' }}>🛡️</span>
-                    <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Aislamiento</h4>
+                  <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', zIndex: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
+                      <span style={{ fontSize: '1rem' }}>🛡️</span>
+                      <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Aislamiento</h4>
+                    </div>
+                    <MultiSearchableSelect
+                      options={[
+                        { value: 'Sin Precauciones', label: 'Sin Precauciones' },
+                        { value: 'Precauciones de Contacto', label: 'Precauciones de Contacto' },
+                        { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
+                        { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' },
+                        { value: 'Requiere Aislamiento', label: 'Requiere Aislamiento' },
+                        { value: 'Neutropénico', label: 'Neutropénico' }
+                      ]}
+                      value={formData.aislamiento}
+                      onChange={(val) => setFormData(prev => ({ ...prev, aislamiento: val }))}
+                      placeholder="Seleccionar..."
+                    />
                   </div>
-                  <MultiSearchableSelect 
-                    options={[
-                      { value: 'Sin Precauciones', label: 'Sin Precauciones' },
-                      { value: 'Precauciones de Contacto', label: 'Precauciones de Contacto' },
-                      { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
-                      { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' },
-                      { value: 'Requiere Aislamiento', label: 'Requiere Aislamiento' },
-                      { value: 'Neutropénico', label: 'Neutropénico' }
-                    ]}
-                    value={formData.aislamiento}
-                    onChange={(val) => setFormData(prev => ({ ...prev, aislamiento: val }))}
-                    placeholder="Seleccionar..."
-                  />
-                </div>
                 )}
 
                 {/* 3.5 INTERCONSULTAS PENDIENTES */}
@@ -428,9 +443,9 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                               <Eye size={12} /> Ver Interconsulta
                             </button>
                             {(user?.role === 'administrador' || user?.role === 'Médico') && (
-                               <div style={{ marginTop: '8px', fontSize: '0.7rem', color: '#f59e0b', fontStyle: 'italic', lineHeight: 1.2 }}>
-                                 Para resolver o desestimar, diríjase al <b>Panel de Interconsultas</b>.
-                               </div>
+                              <div style={{ marginTop: '8px', fontSize: '0.7rem', color: '#f59e0b', fontStyle: 'italic', lineHeight: 1.2 }}>
+                                Para resolver o desestimar, diríjase al <b>Panel de Interconsultas</b>.
+                              </div>
                             )}
                           </div>
                         ))}
@@ -446,12 +461,12 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Acciones Rápidas</h4>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <button 
-                      type="button" 
-                      className="glass-button" 
-                      style={{ 
-                        justifyContent: 'space-between', 
-                        padding: '10px 12px', 
+                    <button
+                      type="button"
+                      className="glass-button"
+                      style={{
+                        justifyContent: 'space-between',
+                        padding: '10px 12px',
                         fontSize: '0.78rem',
                         borderColor: 'rgba(168,85,247,0.3)',
                         background: 'rgba(168,85,247,0.03)'
@@ -465,12 +480,12 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     {/* Interconsulta y Traslado: ocultos para gestora_servicio */}
                     {!isGestoraServicio && (
                       <>
-                        <button 
-                          type="button" 
-                          className="glass-button" 
-                          style={{ 
-                            justifyContent: 'space-between', 
-                            padding: '10px 12px', 
+                        <button
+                          type="button"
+                          className="glass-button"
+                          style={{
+                            justifyContent: 'space-between',
+                            padding: '10px 12px',
                             fontSize: '0.78rem',
                             borderColor: 'rgba(59,130,246,0.3)',
                             background: 'rgba(59,130,246,0.03)'
@@ -480,13 +495,13 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                           <span>📋 Interconsulta</span>
                           <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>+</span>
                         </button>
-                        
-                        <button 
-                          type="button" 
-                          className="glass-button" 
-                          style={{ 
-                            justifyContent: 'space-between', 
-                            padding: '10px 12px', 
+
+                        <button
+                          type="button"
+                          className="glass-button"
+                          style={{
+                            justifyContent: 'space-between',
+                            padding: '10px 12px',
                             fontSize: '0.78rem',
                             borderColor: formData.showTransferPanel ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)',
                             background: formData.showTransferPanel ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)'
@@ -505,102 +520,102 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
 
               {/* Right Column - GRD oculto para gestora_servicio */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                
+
                 {/* A. GESTIÓN CLÍNICA (GRD) - solo visible para roles con permisos clínicos */}
                 {!isGestoraServicio && (
-                <div className="glass-panel" style={{ padding: '20px', zIndex: 40 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
-                    <span style={{ fontSize: '1.1rem' }}>📋</span>
-                    <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Gestión Clínica (GRD)</h3>
-                  </div>
+                  <div className="glass-panel" style={{ padding: '20px', zIndex: 40 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
+                      <span style={{ fontSize: '1.1rem' }}>📋</span>
+                      <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Gestión Clínica (GRD)</h3>
+                    </div>
 
-                  <div className="form-group" style={{ marginBottom: '16px' }}>
-                    <label style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
-                      Diagnóstico de Ingreso (Hasta 5)
-                    </label>
-                    <MultiSearchableSelect 
-                      options={CIE10_OPTIONS}
-                      value={formData.diagnosis}
-                      onChange={(val) => setFormData(prev => ({ ...prev, diagnosis: val }))}
-                      placeholder="Buscar diagnósticos CIE-10..."
-                      maxSelections={5}
-                    />
-                  </div>
-
-                  <div className="form-group" style={{ marginBottom: '16px' }}>
-                    <label style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
-                      Grupo Diagnóstico (GRD)
-                    </label>
-                    <SearchableSelect 
-                      options={GRD_DATA.map(g => ({ value: g.id, label: `${g.id} - ${g.name}` }))}
-                      value={formData.grdId}
-                      onChange={handleGrdChange}
-                      placeholder="Seleccione GRD..."
-                    />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'end', marginTop: '16px' }}>
-                    <div className="form-group" style={{ marginBottom: 0 }}>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
                       <label style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
-                        Nivel de Severidad
+                        Diagnóstico de Ingreso (Hasta 5)
                       </label>
-                      <div className="severity-selector" style={{ display: 'flex', gap: '8px' }}>
-                        {[1, 2, 3].map(level => {
-                          const isSelected = parseInt(formData.severity) === level;
-                          return (
-                            <button 
-                              key={level} 
-                              type="button" 
-                              className={`severity-btn ${isSelected ? `active s-${level}` : ''}`}
-                              style={{
-                                flex: 1,
-                                padding: '8px 12px',
-                                fontSize: '0.75rem',
-                                fontWeight: 700,
-                                borderRadius: '8px',
-                                cursor: formData.grdId ? 'pointer' : 'not-allowed',
-                                opacity: formData.grdId ? 1 : 0.5,
-                                transition: 'all 0.2s ease'
-                              }}
-                              onClick={() => handleSeverityChange(level)}
-                              disabled={!formData.grdId}
-                            >
-                              {level === 1 ? 'Menor' : level === 2 ? 'Moderada' : 'Mayor'}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <MultiSearchableSelect
+                        options={CIE10_OPTIONS}
+                        value={formData.diagnosis}
+                        onChange={(val) => setFormData(prev => ({ ...prev, diagnosis: val }))}
+                        placeholder="Buscar diagnósticos CIE-10..."
+                        maxSelections={5}
+                      />
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
-                      {/* Límite Outliers (Most Prominent) */}
-                      {limitDays > 0 && (
-                        <div className="outlier-warning">
-                          🚨 Límite Outliers: {limitDays} días
-                        </div>
-                      )}
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                      <label style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                        Grupo Diagnóstico (GRD)
+                      </label>
+                      <SearchableSelect
+                        options={GRD_DATA.map(g => ({ value: g.id, label: `${g.id} - ${g.name}` }))}
+                        value={formData.grdId}
+                        onChange={handleGrdChange}
+                        placeholder="Seleccione GRD..."
+                      />
+                    </div>
 
-                      {/* Promedio días de estada Hospital de Villarrica (Less Prominent) */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'end', marginTop: '16px' }}>
                       <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px', display: 'block', fontWeight: 600 }}>
-                          Promedio días de estada Hospital de Villarrica
+                        <label style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                          Nivel de Severidad
                         </label>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <input 
-                            type="number" 
-                            value={formData.projectedDays} 
-                            onChange={handleChangeDays} 
-                            className="glass-input" 
-                            style={{ width: '70px', padding: '5px 8px', textAlign: 'center', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.01)', borderColor: 'rgba(255,255,255,0.08)' }}
-                            min="0"
-                          />
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>días (histórico referencial)</span>
+                        <div className="severity-selector" style={{ display: 'flex', gap: '8px' }}>
+                          {[1, 2, 3].map(level => {
+                            const isSelected = parseInt(formData.severity) === level;
+                            return (
+                              <button
+                                key={level}
+                                type="button"
+                                className={`severity-btn ${isSelected ? `active s-${level}` : ''}`}
+                                style={{
+                                  flex: 1,
+                                  padding: '8px 12px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  borderRadius: '8px',
+                                  cursor: formData.grdId ? 'pointer' : 'not-allowed',
+                                  opacity: formData.grdId ? 1 : 0.5,
+                                  transition: 'all 0.2s ease'
+                                }}
+                                onClick={() => handleSeverityChange(level)}
+                                disabled={!formData.grdId}
+                              >
+                                {level === 1 ? 'Menor' : level === 2 ? 'Moderada' : 'Mayor'}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                        {/* Límite Outliers (Most Prominent) */}
+                        {limitDays > 0 && (
+                          <div className="outlier-warning">
+                            🚨 Límite Outliers: {limitDays} días
+                          </div>
+                        )}
+
+                        {/* Promedio días de estada Hospital de Villarrica (Less Prominent) */}
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <label style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px', display: 'block', fontWeight: 600 }}>
+                            Promedio días de estada Hospital de Villarrica
+                          </label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <input
+                              type="number"
+                              value={formData.projectedDays}
+                              onChange={handleChangeDays}
+                              className="glass-input"
+                              style={{ width: '70px', padding: '5px 8px', textAlign: 'center', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.01)', borderColor: 'rgba(255,255,255,0.08)' }}
+                              min="0"
+                            />
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>días (histórico referencial)</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                </div>
+                  </div>
                 )} {/* fin !isGestoraServicio GRD */}
 
                 {/* B. SECCIÓN OPCIONAL: TRASLADO DE PACIENTE (COLLAPSIBLE) */}
@@ -610,24 +625,24 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                       <span style={{ fontSize: '1.1rem' }}>🔄</span>
                       <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--accent-color)' }}>Traslado de Cama</h3>
                     </div>
-                    
+
                     <div style={{ display: 'flex', gap: '20px', marginBottom: '16px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', color: formData.transferType === 'libre' ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                        <input 
-                          type="radio" 
-                          name="transferType" 
-                          value="libre" 
-                          checked={formData.transferType === 'libre'} 
+                        <input
+                          type="radio"
+                          name="transferType"
+                          value="libre"
+                          checked={formData.transferType === 'libre'}
                           onChange={(e) => setFormData(prev => ({ ...prev, transferType: e.target.value, targetBedId: '' }))}
                         />
                         Cama Libre
                       </label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', color: formData.transferType === 'enroque' ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                        <input 
-                          type="radio" 
-                          name="transferType" 
-                          value="enroque" 
-                          checked={formData.transferType === 'enroque'} 
+                        <input
+                          type="radio"
+                          name="transferType"
+                          value="enroque"
+                          checked={formData.transferType === 'enroque'}
                           onChange={(e) => setFormData(prev => ({ ...prev, transferType: e.target.value, targetBedId: '' }))}
                         />
                         Coordinado (Enroque)
@@ -636,9 +651,9 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
 
                     <div className="form-group" style={{ margin: 0 }}>
                       <label style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>Seleccione Cama de Destino</label>
-                      <select 
-                        name="targetBedId" 
-                        value={formData.targetBedId} 
+                      <select
+                        name="targetBedId"
+                        value={formData.targetBedId}
                         onChange={(e) => setFormData(prev => ({ ...prev, targetBedId: e.target.value }))}
                         className="glass-input"
                         style={{ width: '100%', padding: '10px 12px' }}
@@ -647,10 +662,10 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                         {allBeds
                           .filter(b => !(b.roomId === bed.roomId && b.id === bed.id) && (formData.transferType === 'libre' ? b.status === 'available' : b.status === 'occupied'))
                           .map(b => (
-                          <option key={`${b.roomId}|${b.id}`} value={`${b.roomId}|${b.id}`}>
-                            {b.floor ? `${b.floor} - ` : ''}Hab {b.roomId} - Cama {b.id} ({b.tag || b.type}) {formData.transferType === 'enroque' && b.patient ? `- ${b.patient}` : ''}
-                          </option>
-                        ))}
+                            <option key={`${b.roomId}|${b.id}`} value={`${b.roomId}|${b.id}`}>
+                              {b.floor ? `${b.floor} - ` : ''}Hab {b.roomId} - Cama {b.id} ({b.tag || b.type}) {formData.transferType === 'enroque' && b.patient ? `- ${b.patient}` : ''}
+                            </option>
+                          ))}
                       </select>
 
                       {formData.targetBedId && (
@@ -659,7 +674,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                           const tBed = allBeds.find(b => String(b.roomId) === tRoomId && String(b.id) === tBedId);
                           const currentTag = bed.tag || bed.type;
                           const targetTag = tBed?.tag || tBed?.type;
-                          
+
                           if (tBed && currentTag !== targetTag) {
                             return (
                               <div style={{ marginTop: '12px', padding: '10px 12px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontSize: '0.8rem' }}>
@@ -684,9 +699,9 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
 
                   {/* Input de Registro */}
                   <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-                    <input 
-                      type="text" 
-                      className="glass-input" 
+                    <input
+                      type="text"
+                      className="glass-input"
                       style={{ flex: 1 }}
                       placeholder="Registrar nuevo procedimiento o novedad del estado del paciente..."
                       value={newNovedadText}
@@ -698,9 +713,9 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                         }
                       }}
                     />
-                    <button 
-                      type="button" 
-                      className="glass-button primary" 
+                    <button
+                      type="button"
+                      className="glass-button primary"
                       style={{ padding: '0 16px', fontSize: '0.8rem' }}
                       onClick={handleAddNovedad}
                     >
@@ -712,14 +727,14 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '200px', overflowY: 'auto', paddingRight: '4px' }}>
                     {formData.novedades && formData.novedades.length > 0 ? (
                       formData.novedades.map((nov) => (
-                        <div 
-                          key={nov.id} 
-                          style={{ 
-                            padding: '10px 12px', 
-                            background: 'rgba(255,255,255,0.02)', 
-                            border: '1px solid var(--glass-border)', 
-                            borderRadius: '10px', 
-                            fontSize: '0.8rem' 
+                        <div
+                          key={nov.id}
+                          style={{
+                            padding: '10px 12px',
+                            background: 'rgba(255,255,255,0.02)',
+                            border: '1px solid var(--glass-border)',
+                            borderRadius: '10px',
+                            fontSize: '0.8rem'
                           }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.72rem', opacity: 0.8 }}>
@@ -758,9 +773,9 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
 
       </div>
       {viewingIC && (
-        <ViewInterconsultaModal 
-          ic={viewingIC} 
-          onClose={() => setViewingIC(null)} 
+        <ViewInterconsultaModal
+          ic={viewingIC}
+          onClose={() => setViewingIC(null)}
         />
       )}
     </div>
