@@ -20,8 +20,15 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
   // Puede venir de bed.dxCie10 + bed.secondaryCodes (si el paciente fue registrado con CIE-10)
   // o desde bed.originalWaitingRequest que guarda la solicitud original.
   const buildDiagnosisCodes = () => {
-    const cie10Regex = /^[A-Z]\d{2}(\.\d+)?/;
-    // Intentar desde los datos de la solicitud original guardada en la cama
+    const cie10Regex = /^[A-Z]\d{2}/;
+
+    // Prioridad 1: bed.diagnosis ya es un array con entradas CIE-10 — usarlo directamente
+    if (Array.isArray(bed.diagnosis)) {
+      const cie10Entries = bed.diagnosis.filter(d => cie10Regex.test(d));
+      if (cie10Entries.length > 0) return cie10Entries;
+    }
+
+    // Prioridad 2: reconstruir desde dxCie10 + secondaryCodes (datos de la solicitud original)
     const orig = bed.originalWaitingRequest;
     const dxCie10 = bed.dxCie10 || orig?.dxCie10;
     const secondaryCodes = bed.secondaryCodes || orig?.secondaryCodes;
@@ -38,16 +45,12 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
       }
       return result;
     }
-    // Si bed.diagnosis ya es array con formato CIE-10 real, usarlo
-    if (Array.isArray(bed.diagnosis)) {
-      const cie10Entries = bed.diagnosis.filter(d => cie10Regex.test(d));
-      if (cie10Entries.length > 0) return cie10Entries;
-    }
-    // Si es string con formato CIE-10
+
+    // Prioridad 3: string con formato CIE-10
     if (typeof bed.diagnosis === 'string' && cie10Regex.test(bed.diagnosis)) {
       return [bed.diagnosis];
     }
-    // Texto libre (ej "ICC"): devolver vacío para que el usuario complete
+
     return [];
   };
 
@@ -393,12 +396,12 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     </div>
                     <MultiSearchableSelect
                       options={[
-                        { value: 'Sin Precauciones', label: 'Sin Precauciones' },
+                        {value: 'Sin Precauciones', label:'Sin Precauciones'},
+                        { value: 'Precaución Estandar', label: 'Precaución Estandar' },
                         { value: 'Precauciones de Contacto', label: 'Precauciones de Contacto' },
                         { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
                         { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' },
-                        { value: 'Requiere Aislamiento', label: 'Requiere Aislamiento' },
-                        { value: 'Neutropénico', label: 'Neutropénico' }
+                        { value: 'Requiere Aislamiento', label: 'Requiere Aislamiento' }
                       ]}
                       value={formData.aislamiento}
                       onChange={(val) => setFormData(prev => ({ ...prev, aislamiento: val }))}

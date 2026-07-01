@@ -1008,10 +1008,11 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                           <MultiSearchableSelect
                             options={[
                               { value: 'Sin Precauciones', label: 'Sin Precauciones' },
+                              { value: 'Precaución Estandar', label: 'Precaución Estandar' },
                               { value: 'Precauciones de Contacto', label: 'Precauciones de Contacto' },
                               { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
                               { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' },
-                              { value: 'Neutropénico', label: 'Neutropénico' }
+                              { value: 'Requiere Aislamiento', label: 'Requiere Aislamiento' }
                             ]}
                             value={Array.isArray(aislamiento) ? aislamiento : (aislamiento === true ? ['Requiere Aislamiento'] : (aislamiento === false ? ['Sin Precauciones'] : []))}
                             onChange={(val) => setAislamiento(val)}

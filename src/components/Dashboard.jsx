@@ -198,6 +198,17 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
             <div style={{ fontSize: '0.7rem', color: '#06b6d4', marginTop: '4px', fontWeight: 700 }}>
               Días de Estada: {daysOfStay}
             </div>
+            <div style={{ fontSize: '0.7rem', color: '#a78bfa', marginTop: '2px', fontWeight: 700 }}>
+              📅 Ingreso:{' '}
+              {bed.assignedAt
+                ? (() => {
+                    const d = new Date(bed.assignedAt);
+                    return isNaN(d)
+                      ? bed.assignedAt
+                      : d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                  })()
+                : '—'}
+            </div>
             {bed.projectedDays > 0 && (
               <div className="los-progress-bar">
                 <div className="progress-fill" style={{ width: `${progress}%`, background: isExceeded ? '#ef4444' : progress > 80 ? '#f59e0b' : 'var(--accent-color)', boxShadow: isExceeded ? '0 0 8px #ef4444' : 'none' }}></div>

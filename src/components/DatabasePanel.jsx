@@ -221,13 +221,13 @@ export default function DatabasePanel({ bedsData }) {
       'SERVICIO DE ACUESTE',
       'SALA',
       'CAMA',
+      'FECHA INGRESO',
       'NOMBRE',
       'RUN',
       'DIAGNÓSTICOS',
       'ESPECIALIDADES',
       'ACTUALIZACIÓN',
       'ESTADA',
-      'FECHA INGRESO',
       'PRECAUCIONES',
       'EDAD',
       'COMUNA'
@@ -237,6 +237,7 @@ export default function DatabasePanel({ bedsData }) {
       row.servicio || '',
       row.sala || '',
       row.cama || '',
+      row.fechaIngreso || '',
       row.nombre || '',
       row.run || '',
       row.diagnosticos || '',
@@ -245,7 +246,6 @@ export default function DatabasePanel({ bedsData }) {
         ? row.actualizacion.map(act => `${act.texto}   ${act.fecha}`).join('\n')
         : (row.actualizacion || ''),
       row.estada || '',
-      row.fechaIngreso || '',
       row.precauciones || '',
       row.edad || '',
       row.comuna || ''
@@ -259,13 +259,13 @@ export default function DatabasePanel({ bedsData }) {
     
     // Auto-ajuste de ancho de columnas básico
     const wscols = headers.map(() => ({ wch: 20 }));
-    wscols[3].wch = 35; // Nombre
-    wscols[4].wch = 35; // RUN
-    wscols[5].wch = 50; // Diagnósticos
-    wscols[6].wch = 30; // Especialidades
-    wscols[7].wch = 60; // Actualización
-    wscols[8].wch = 20; // Estada
-    wscols[9].wch = 20; // Fecha Ingreso
+    wscols[3].wch = 20; // Fecha Ingreso
+    wscols[4].wch = 35; // Nombre
+    wscols[5].wch = 35; // RUN
+    wscols[6].wch = 50; // Diagnósticos
+    wscols[7].wch = 30; // Especialidades
+    wscols[8].wch = 60; // Actualización
+    wscols[9].wch = 20; // Estada
     wscols[10].wch = 20; // Precauciones
     wscols[11].wch = 20; // Edad
     wscols[12].wch = 20; // Comuna
