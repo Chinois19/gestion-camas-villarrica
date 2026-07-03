@@ -554,7 +554,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
 
       onUpdatePatient({
         ...patientData, ...formData, secondaryCodes, evolutions: evolWithSave,
-        name: formData.nombre, age: parseInt(formData.edad) || 0, origin: formData.servicioSol,
+        name: formData.nombre?.toUpperCase(), age: parseInt(formData.edad) || 0, origin: formData.servicioSol,
         bedTypeRequired: formData.destino, updatedAt: new Date().toISOString(),
         updatedBy: currentUser?.name || 'Usuario',
         requestedAt: effectiveDate.toISOString(),
@@ -575,7 +575,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
 
     const newPatient = {
       id: `W-${Date.now()}`,
-      name: formData.nombre || 'Paciente Sin Nombre',
+      name: formData.nombre?.toUpperCase() || 'PACIENTE SIN NOMBRE',
       age: parseInt(formData.edad) || 0,
       fechaNacimiento: formData.fechaNacimiento,
       requestedAt: effectiveDate.toISOString(),
@@ -1009,10 +1009,9 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                             options={[
                               { value: 'Sin Precauciones', label: 'Sin Precauciones' },
                               { value: 'Precaución Estandar', label: 'Precaución Estandar' },
-                              { value: 'Precauciones de Contacto', label: 'Precauciones de Contacto' },
+                              { value: 'Aislamiento Protector', label: 'Aislamiento Protector' },
                               { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
                               { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' },
-                              { value: 'Requiere Aislamiento', label: 'Requiere Aislamiento' }
                             ]}
                             value={Array.isArray(aislamiento) ? aislamiento : (aislamiento === true ? ['Requiere Aislamiento'] : (aislamiento === false ? ['Sin Precauciones'] : []))}
                             onChange={(val) => setAislamiento(val)}

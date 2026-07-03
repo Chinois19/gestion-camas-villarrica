@@ -453,7 +453,12 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                     projectedReleaseDate: assignmentData.projectedReleaseDate,
                     waitMinutes: assignmentData.waitMinutes,
                     info: `Ingreso desde ${assignmentData.origin}`,
-                    originalWaitingRequest: patientData
+                    originalWaitingRequest: patientData,
+                    // ── Limpiar datos del paciente anterior ──────────────────
+                    novedades: [],
+                    interconsultas: [],
+                    evolutions: [],
+                    previousPatient: null
                   };
                 }
                 return bed;

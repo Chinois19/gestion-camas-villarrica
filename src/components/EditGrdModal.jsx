@@ -396,12 +396,11 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     </div>
                     <MultiSearchableSelect
                       options={[
-                        {value: 'Sin Precauciones', label:'Sin Precauciones'},
+                        { value: 'Sin Precauciones', label: 'Sin Precauciones' },
                         { value: 'Precaución Estandar', label: 'Precaución Estandar' },
-                        { value: 'Precauciones de Contacto', label: 'Precauciones de Contacto' },
+                        { value: 'Aislamiento Protector', label: 'Aislamiento Protector' },
                         { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
                         { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' },
-                        { value: 'Requiere Aislamiento', label: 'Requiere Aislamiento' }
                       ]}
                       value={formData.aislamiento}
                       onChange={(val) => setFormData(prev => ({ ...prev, aislamiento: val }))}
