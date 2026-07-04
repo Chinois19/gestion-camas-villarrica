@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { 
-  Activity, Search, User, Sun, Moon, LogOut
+  Activity, Search, User, Sun, Moon, LogOut, KeyRound
 } from 'lucide-react';
 import './App.css';
 import Login from './components/Login';
+import ChangePasswordModal from './components/ChangePasswordModal';
 import Dashboard from './components/Dashboard';
 import SolicitudForm from './components/SolicitudForm';
 import HodomPanel from './components/HodomPanel';
@@ -50,6 +51,7 @@ function App() {
   const [requestingWaitingIC, setRequestingWaitingIC] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [theme, setTheme] = useState('dark');
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const [isPublicRoute] = useState(() => {
     return window.location.hash.includes('#solicitud-publica') || window.location.search.includes('public=solicitud');
   });
@@ -393,6 +395,14 @@ function App() {
             <button
               className="glass-button"
               style={{ padding: '8px' }}
+              onClick={() => setShowChangePassword(true)}
+              title="Modificar Contraseña"
+            >
+              <KeyRound size={18} />
+            </button>
+            <button
+              className="glass-button"
+              style={{ padding: '8px' }}
               onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
               title={theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
             >
@@ -539,6 +549,14 @@ function App() {
           blockLog={blockLog || []}
           setBlockLog={setBlockLog}
           userRole={currentUser.role}
+        />
+      )}
+
+      {/* Modal de cambio de contraseña */}
+      {showChangePassword && (
+        <ChangePasswordModal
+          currentUser={currentUser}
+          onClose={() => setShowChangePassword(false)}
         />
       )}
 

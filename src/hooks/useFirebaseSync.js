@@ -113,7 +113,9 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
       ? newDataOrUpdater(currentData)
       : newDataOrUpdater;
 
-    // Validation checks for bedsData (Capa 3)
+    // ═══════════════════════════════════════════════════════════════════════
+    // PROTECCIÓN CAPA 3 — bedsData: Validación de integridad de pacientes
+    // ═══════════════════════════════════════════════════════════════════════
     if (documentId === 'bedsData') {
       const oldCount = countOccupiedBeds(currentData);
       const newCount = countOccupiedBeds(localNewData);
@@ -138,13 +140,74 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
       }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // PROTECCIÓN CAPA 3 — users: Validación de integridad de usuarios
+    // Previene que los 6 defaultUsers sobrescriban el listado real cuando
+    // hay una race condition entre el montaje del componente y la respuesta
+    // de Firestore (onSnapshot).
+    // ═══════════════════════════════════════════════════════════════════════
+    if (documentId === 'users') {
+      const oldCount = Array.isArray(currentData) ? currentData.length : 0;
+      const newCount = Array.isArray(localNewData) ? localNewData.length : 0;
+
+      // Block if replacing real users with defaultUsers (6 hardcoded)
+      if (oldCount > 6 && newCount <= 6) {
+        console.error(
+          `[PROTECCIÓN USUARIOS] ❌ ESCRITURA BLOQUEADA: Se intentó reducir de ` +
+          `${oldCount} a ${newCount} usuarios. Posible sobrescritura con defaultUsers.`
+        );
+        return false;
+      }
+
+      // Block if more than 30% of users are lost in a single operation
+      if (oldCount > 3 && newCount < oldCount * 0.7) {
+        console.error(
+          `[PROTECCIÓN USUARIOS] ❌ ESCRITURA BLOQUEADA: Reducción sospechosa ` +
+          `(${oldCount} → ${newCount}, pérdida >${Math.round((1 - newCount/oldCount) * 100)}%). ` +
+          `Operación cancelada.`
+        );
+        return false;
+      }
+
+      // Extra safety: verify against Firestore before writing
+      // If Firestore has significantly more users, abort to prevent overwrite
+      try {
+        const verifyRef = doc(db, collectionName, documentId);
+        const verifySnap = await getDoc(verifyRef);
+        if (verifySnap.exists()) {
+          const firestoreUsers = verifySnap.data().data;
+          if (Array.isArray(firestoreUsers) && firestoreUsers.length > newCount + 1) {
+            console.error(
+              `[PROTECCIÓN USUARIOS] ❌ ESCRITURA BLOQUEADA: Firestore tiene ${firestoreUsers.length} ` +
+              `usuarios pero se intentó escribir solo ${newCount}. Sincronizando datos reales.`
+            );
+            // Re-sync local state with Firestore truth
+            setData(firestoreUsers);
+            dataRef.current = firestoreUsers;
+            return false;
+          }
+        }
+      } catch (verifyErr) {
+        console.warn('[PROTECCIÓN USUARIOS] No se pudo verificar Firestore pre-escritura:', verifyErr);
+        // If we can't verify and the count drop is suspicious, block anyway
+        if (oldCount > 6 && newCount < oldCount) {
+          console.error('[PROTECCIÓN USUARIOS] ❌ Sin verificación posible + reducción detectada. Bloqueando.');
+          return false;
+        }
+      }
+    }
+
     // Immediately update local state + ref for a fast UI response
     setData(localNewData);
     dataRef.current = localNewData;
 
     const docRef = doc(db, collectionName, documentId);
 
-    // Auto-backup para bedsData (Capa 2) — fire-and-forget, no bloquea la escritura principal
+    // ═══════════════════════════════════════════════════════════════════════
+    // PROTECCIÓN CAPA 2 — Auto-backup antes de cada escritura
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // Auto-backup para bedsData — fire-and-forget, no bloquea la escritura principal
     if (documentId === 'bedsData' && currentData) {
       const backupRef = doc(db, collectionName, `${documentId}_lastBackup`);
       setDoc(backupRef, {
@@ -154,6 +217,19 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
         reason: 'auto_backup_before_write'
       }).catch(backupErr => {
         console.warn('[Backup] No se pudo guardar respaldo automático:', backupErr);
+      });
+    }
+
+    // Auto-backup para users — guarda el estado previo antes de cada modificación
+    if (documentId === 'users' && currentData && Array.isArray(currentData) && currentData.length > 6) {
+      const backupRef = doc(db, collectionName, `${documentId}_lastBackup`);
+      setDoc(backupRef, {
+        data: currentData,
+        backedUpAt: new Date().toISOString(),
+        userCount: currentData.length,
+        reason: 'auto_backup_before_write'
+      }).catch(backupErr => {
+        console.warn('[Backup Users] No se pudo guardar respaldo automático:', backupErr);
       });
     }
 
