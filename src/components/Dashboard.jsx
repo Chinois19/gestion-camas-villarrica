@@ -739,6 +739,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         destino: null,
         prioridad: null,
         diagnosis: null,
+        dxPrincipal: null,
+        dxCie10: null,
+        dxGrupo: null,
+        secondaryCodes: [],
         grdId: null,
         grdName: null,
         projectedDays: null,
@@ -749,6 +753,8 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         especialidadTratante: null,
         severity: null,
         interconsultas: [],
+        novedades: [],
+        evolutions: [],
         previousPatient: {
           ...bed,
           destino: formData.destino,
@@ -959,7 +965,12 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   };
 
   const handleFinishCleaning = (roomId, bedId) => {
-    updateBedState(roomId, bedId, { status: 'available' });
+    updateBedState(roomId, bedId, { 
+      status: 'available',
+      novedades: [],
+      evolutions: [],
+      cleaningAt: null
+    });
   };
 
   const handleTransfer = (sourceRoomId, sourceBedId, targetRoomId, targetBedId, newGrdData, transferType = 'libre') => {
@@ -1272,12 +1283,14 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             const bIndex = room.beds.findIndex(b => String(b.id) === String(sourceBedId));
             if (bIndex !== -1) {
               if (transferType === 'enroque') {
-                const { id, type, tag, ...targetPatientData } = targetBedInfo;
+                const { id, type, tag, novedades: _n, evolutions: _e, ...targetPatientData } = targetBedInfo;
                 room.beds[bIndex] = {
                   id: room.beds[bIndex].id,
                   type: room.beds[bIndex].type,
                   tag: room.beds[bIndex].tag,
                   ...targetPatientData,
+                  novedades: [],
+                  evolutions: [],
                   transferAt: new Date().toISOString()
                 };
               } else {
@@ -1285,7 +1298,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                   id: room.beds[bIndex].id,
                   type: room.beds[bIndex].type,
                   tag: room.beds[bIndex].tag,
-                  status: 'cleaning'
+                  status: 'cleaning',
+                  novedades: [],
+                  evolutions: [],
+                  cleaningAt: new Date().toISOString()
                 };
               }
             }

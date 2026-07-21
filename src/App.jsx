@@ -166,7 +166,7 @@ function App() {
         for (const s in next[f]) {
           next[f][s] = next[f][s].map(room => {
             if (room.roomId === roomId) {
-              return { ...room, beds: room.beds.map(bed => bed.id === bedId ? { ...bed, status: 'available', cleaningAt: null } : bed) };
+              return { ...room, beds: room.beds.map(bed => bed.id === bedId ? { ...bed, status: 'available', cleaningAt: null, novedades: [], evolutions: [] } : bed) };
             }
             return room;
           });
