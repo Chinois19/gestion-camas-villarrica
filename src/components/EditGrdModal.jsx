@@ -396,7 +396,6 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     </div>
                     <MultiSearchableSelect
                       options={[
-                        { value: 'Sin Precauciones', label: 'Sin Precauciones' },
                         { value: 'Precaución Estandar', label: 'Precaución Estandar' },
                         { value: 'Aislamiento Protector', label: 'Aislamiento Protector' },
                         { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },

@@ -13,6 +13,7 @@ import UnblockBedModal from './UnblockBedModal';
 import { ESPECIALIDADES } from '../data/formData';
 import { matchesSearch } from '../utils/search';
 import { formatAgeDetailed } from '../utils/age';
+import cie10Data from '../data/cie10.json';
 import { DndContext, useDroppable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 
 const checkCompatibility = (bed, patient) => {
@@ -166,9 +167,17 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
                 </div>
               </span>
             </div>
-            {bed.diagnosis && (
+            {(bed.dxPrincipal || bed.diagnosis) && (
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', marginTop: '2px', marginBottom: '2px', lineHeight: 1.3 }}>
+                {bed.dxPrincipal || (Array.isArray(bed.diagnosis) ? bed.diagnosis.join(' • ') : bed.diagnosis)}
+              </div>
+            )}
+            {(bed.dxCie10 || (bed.secondaryCodes && bed.secondaryCodes.length > 0)) && (
               <div style={{ fontSize: '0.65rem', color: '#f59e0b', marginTop: '2px', marginBottom: '2px', fontWeight: 600, lineHeight: 1.3 }}>
-                Dx: {Array.isArray(bed.diagnosis) ? bed.diagnosis.join(' • ') : bed.diagnosis}
+                {[bed.dxCie10, ...(bed.secondaryCodes || [])].filter(Boolean).map(code => {
+                  const item = cie10Data.find(c => c.code === code);
+                  return item ? `${code} - ${item.desc}` : code;
+                }).join(' • ')}
               </div>
             )}
             {(() => {

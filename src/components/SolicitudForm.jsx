@@ -487,23 +487,24 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     if (isViewMode) return;
 
     const missingFields = [];
-    if (!formData.nombre?.trim()) missingFields.push('Nombre Completo');
-    if (!formData.rut?.trim()) missingFields.push('RUT');
-    if (!formData.servicioSol?.trim()) missingFields.push('Servicio Solicitante');
-    if (!formData.destino?.trim()) missingFields.push('Destino (Unidad Requerida)');
-    if (!formData.medicoSol?.trim()) missingFields.push('Médico Solicitante / Tratante');
-    if (!formData.especialidadMedico?.trim()) missingFields.push('Especialidad del Médico');
-    if (!formData.requisitosUGP?.trim()) missingFields.push('Requisitos de UGP');
+    const getVal = (val) => String(val ?? '').trim();
+    if (!getVal(formData.nombre)) missingFields.push('Nombre Completo');
+    if (!getVal(formData.rut)) missingFields.push('RUT');
+    if (!getVal(formData.servicioSol)) missingFields.push('Servicio Solicitante');
+    if (!getVal(formData.destino)) missingFields.push('Destino (Unidad Requerida)');
+    if (!getVal(formData.medicoSol)) missingFields.push('Médico Solicitante / Tratante');
+    if (!getVal(formData.especialidadMedico)) missingFields.push('Especialidad del Médico');
+    if (!getVal(formData.requisitosUGP)) missingFields.push('Requisitos de UGP');
     if (!formData.especialidadTratante || formData.especialidadTratante.length === 0) missingFields.push('Especialidad Tratante');
-    if (!formData.sexo?.trim()) missingFields.push('Sexo');
-    if (!formData.edad?.trim()) missingFields.push('Edad');
-    if (!formData.fechaNacimiento?.trim()) missingFields.push('Fecha de Nacimiento');
-    if (!formData.prevision?.trim()) missingFields.push('Previsión');
-    if (!formData.comuna?.trim()) missingFields.push('Comuna');
-    if (!formData.dxPrincipal.trim()) missingFields.push('Descripción clínica del cuadro principal');
-    if (!formData.dxCie10?.trim()) missingFields.push('Código CIE-10');
-    if (!formData.dxGrupo?.trim()) missingFields.push('Grupo CIE-10');
-    if (!formData.procedimientosPendientes?.trim()) missingFields.push('Procedimientos Pendientes');
+    if (!getVal(formData.sexo)) missingFields.push('Sexo');
+    if (!getVal(formData.edad)) missingFields.push('Edad');
+    if (!getVal(formData.fechaNacimiento)) missingFields.push('Fecha de Nacimiento');
+    if (!getVal(formData.prevision)) missingFields.push('Previsión');
+    if (!getVal(formData.comuna)) missingFields.push('Comuna');
+    if (!getVal(formData.dxPrincipal)) missingFields.push('Descripción clínica del cuadro principal');
+    if (!getVal(formData.dxCie10)) missingFields.push('Código CIE-10');
+    if (!getVal(formData.dxGrupo)) missingFields.push('Grupo CIE-10');
+    if (!getVal(formData.procedimientosPendientes)) missingFields.push('Procedimientos Pendientes');
 
     if (missingFields.length > 0) {
       alert(`Los siguientes campos son obligatorios: ${missingFields.join(', ')}.`);
@@ -1007,7 +1008,6 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                         <div style={{ zIndex: 50, position: 'relative' }}>
                           <MultiSearchableSelect
                             options={[
-                              { value: 'Sin Precauciones', label: 'Sin Precauciones' },
                               { value: 'Precaución Estandar', label: 'Precaución Estandar' },
                               { value: 'Aislamiento Protector', label: 'Aislamiento Protector' },
                               { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
