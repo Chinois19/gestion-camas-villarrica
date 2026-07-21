@@ -272,7 +272,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
               )
             )}
 
-            {bed.status === 'pending_hodom' && user?.role === 'superadmin' && bed.previousPatient && (
+            {bed.status === 'pending_hodom' && (user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'administrador') && bed.previousPatient && (
               <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '4px', width: '100%', display: 'flex', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); onUndoDischarge(room.roomId, bed.id); }}>
                 <RotateCcw size={12} /> Revertir Alta (Recuperar)
               </button>
@@ -300,7 +300,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
           <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', color: 'var(--status-available)', borderColor: 'var(--status-available)' }} onClick={(e) => { e.stopPropagation(); onFinishCleaning(room.roomId, bed.id); }}>
             <CheckCircle size={12} /> Finalizar Aseo
           </button>
-          {user?.role === 'superadmin' && bed.previousPatient && (
+          {(user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'administrador') && bed.previousPatient && (
             <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); onUndoDischarge(room.roomId, bed.id); }}>
               <RotateCcw size={12} /> Revertir Alta
             </button>
@@ -406,6 +406,36 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     if (targetBed.status !== 'available') {
       alert('No puede asignar un paciente sobre una cama que se encuentra ocupada o en aseo. El paciente de esta cama debe pasar primero por el proceso de Alta y Aseo.');
       return;
+    }
+
+    // Verificar si el paciente ya está acostado en alguna cama
+    const patientRut = (patient.rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
+    if (patientRut) {
+      let alreadyInBed = false;
+      let existingBedInfo = '';
+      for (const floor in bedsData) {
+        for (const sector in bedsData[floor]) {
+          for (const room of bedsData[floor][sector]) {
+            for (const b of room.beds) {
+              if (b.status === 'occupied' && b.rut) {
+                const bRut = b.rut.replace(/[^0-9kK]/g, '').toLowerCase();
+                if (bRut && bRut === patientRut) {
+                  alreadyInBed = true;
+                  existingBedInfo = `Hab ${room.roomId} — Cama ${b.id}`;
+                  break;
+                }
+              }
+            }
+            if (alreadyInBed) break;
+          }
+          if (alreadyInBed) break;
+        }
+        if (alreadyInBed) break;
+      }
+      if (alreadyInBed) {
+        alert(`⚠️ ADVERTENCIA — Paciente ya acostado\n\nEl paciente ${patient.name} (RUT: ${patient.rut}) ya figura como acostado en ${existingBedInfo}.\n\nNo es posible acostar al mismo paciente dos veces. Si corresponde, primero realice el alta del paciente en la cama actual.`);
+        return;
+      }
     }
 
     const serviceMismatch = !checkServiceMatch(targetBed, patient);

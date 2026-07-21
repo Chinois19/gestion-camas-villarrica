@@ -251,6 +251,42 @@ function App() {
   };
 
   const handleAddNewPatient = (newPatient) => {
+    const cleanRut = (rut) => (rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
+    const newRut = cleanRut(newPatient.rut);
+
+    if (newRut) {
+      // Verificar si ya está en lista de espera
+      const duplicateInWaiting = waitingList.find(p => cleanRut(p.rut) === newRut);
+      if (duplicateInWaiting) {
+        alert(`⚠️ PACIENTE DUPLICADO\n\n${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra en la lista de espera con el ticket ${duplicateInWaiting.ticket || duplicateInWaiting.id}.\n\nNo es posible ingresar el mismo paciente dos veces.`);
+        return;
+      }
+
+      // Verificar si ya está acostado
+      let bedInfo = '';
+      let foundInBed = false;
+      for (const floor in bedsData) {
+        for (const sector in bedsData[floor]) {
+          for (const room of bedsData[floor][sector]) {
+            for (const bed of room.beds) {
+              if (bed.status === 'occupied' && cleanRut(bed.rut) === newRut) {
+                bedInfo = `Hab ${room.roomId} — Cama ${bed.id} (Paciente: ${bed.patient})`;
+                foundInBed = true;
+                break;
+              }
+            }
+            if (foundInBed) break;
+          }
+          if (foundInBed) break;
+        }
+        if (foundInBed) break;
+      }
+      if (foundInBed) {
+        alert(`⚠️ PACIENTE YA ACOSTADO\n\n${newPatient.name} (RUT: ${newPatient.rut}) ya figura como paciente acostado en ${bedInfo}.\n\nNo es posible ingresar a lista de espera a un paciente que ya se encuentra hospitalizado.`);
+        return;
+      }
+    }
+
     setWaitingList(prev => [newPatient, ...prev]);
   };
 
@@ -300,6 +336,15 @@ function App() {
       <div className="app-container" style={{ padding: '24px 0', minHeight: '100vh', overflowY: 'auto' }}>
         <SolicitudForm
           onSubmit={(newPatient) => {
+            const cleanRut = (rut) => (rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
+            const newRut = cleanRut(newPatient.rut);
+            if (newRut) {
+              const dup = waitingList.find(p => cleanRut(p.rut) === newRut);
+              if (dup) {
+                alert(`⚠️ PACIENTE DUPLICADO\n\n${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra en la lista de espera.\n\nNo es posible ingresar el mismo paciente dos veces.`);
+                return;
+              }
+            }
             setWaitingList(prev => [newPatient, ...prev]);
           }}
           currentUser={{ name: "Usuario Remoto (Web)", role: "public", username: "public" }}
