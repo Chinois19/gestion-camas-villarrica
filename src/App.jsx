@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  Activity, Search, User, Sun, Moon, LogOut, KeyRound
+  Activity, Search, User, Sun, Moon, LogOut, KeyRound, Leaf
 } from 'lucide-react';
 import './App.css';
 import Login from './components/Login';
@@ -61,13 +61,25 @@ function App() {
   const [waitingList, setWaitingList, waitingLoading] = useFirebaseSync('appState', 'waitingList', WAITING_LIST);
   const [hodomRequests, setHodomRequests, hodomLoading] = useFirebaseSync('appState', 'hodomRequests', initialHodomRequests);
   const [transferHistory, setTransferHistory, transfersLoading] = useFirebaseSync('appState', 'transferHistory', MOCK_TRANSFERS, { realtime: false });
-  const [waitingListDischarges, setWaitingListDischarges, dischargesLoading] = useFirebaseSync('appState', 'waitingListDischarges', [], { realtime: false });
+  const [waitingListDischarges, setWaitingListDischarges, dischargesLoading] = useFirebaseSync('appState', 'waitingListDischarges', []);
   const [blockLog, setBlockLog, blockLogLoading] = useFirebaseSync('appState', 'blockLog', [], { realtime: false });
+  // ── LOG PERMANENTE DE EPISODIOS DE ALTA ─────────────────────────────────────
+  // dischargesLog es append-only: cada alta genera un registro único e inmutable.
+  // Nunca se edita ni se borra un registro existente, solo se agregan nuevos.
+  // Es la fuente de verdad del Informe de Altas, independiente del estado de las camas.
+  const [dischargesLog, setDischargesLog] = useFirebaseSync('appState', 'dischargesLog', [], { realtime: false });
 
 
   useEffect(() => {
-    document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
+    const classMap = { dark: 'theme-dark', light: 'theme-light', emerald: 'theme-emerald' };
+    document.body.className = classMap[theme] || 'theme-dark';
   }, [theme]);
+
+  const cycleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : prev === 'light' ? 'emerald' : 'dark');
+  };
+  const themeIcon = theme === 'light' ? <Moon size={18} /> : theme === 'emerald' ? <Leaf size={18} /> : <Sun size={18} />;
+  const themeTitle = theme === 'dark' ? 'Cambiar a Modo Claro' : theme === 'light' ? 'Cambiar a Modo Esmeralda' : 'Cambiar a Modo Oscuro';
 
 
 
@@ -447,11 +459,11 @@ function App() {
             </button>
             <button
               className="glass-button"
-              style={{ padding: '8px' }}
-              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-              title={theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
+              style={{ padding: '8px', position: 'relative' }}
+              onClick={cycleTheme}
+              title={themeTitle}
             >
-              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+              {themeIcon}
             </button>
             <button
               className="glass-button"
@@ -480,6 +492,7 @@ function App() {
           onAddTransfers={(newTransfers) => setTransferHistory(prev => [...newTransfers, ...(prev || [])])}
           user={currentUser}
           setWaitingListDischarges={setWaitingListDischarges}
+          setDischargesLog={setDischargesLog}
           setBlockLog={setBlockLog}
           onRequestWaitingIC={(patient) => setRequestingWaitingIC(patient)}
         />
@@ -582,6 +595,8 @@ function App() {
           setBedsData={setBedsData} 
           waitingListDischarges={waitingListDischarges}
           setWaitingListDischarges={setWaitingListDischarges}
+          dischargesLog={dischargesLog}
+          setDischargesLog={setDischargesLog}
           setWaitingList={setWaitingList}
           userRole={currentUser.role} 
         />

@@ -97,17 +97,38 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
         )}
 
         {(() => {
-          // Solo mostrar badge si hay precauciones REALES (excluye 'Sin Precauciones' y arrays vacíos)
+          // Solo mostrar badge si hay precauciones REALES (excluye valores legacy)
           const aislamientos = Array.isArray(patient.aislamiento)
-            ? patient.aislamiento.filter(a => a && a !== 'Sin Precauciones')
-            : (patient.aislamiento && patient.aislamiento !== 'Sin Precauciones' ? [patient.aislamiento] : []);
+            ? patient.aislamiento.filter(a => a && a !== 'Sin Precauciones' && a !== 'Requiere Aislamiento')
+            : (patient.aislamiento && patient.aislamiento !== 'Sin Precauciones' && patient.aislamiento !== 'Requiere Aislamiento' ? [patient.aislamiento] : []);
           if (aislamientos.length === 0) return null;
           return (
-            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '2px 6px', marginTop: '4px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '0.8rem' }}>⚠️</span>
-              <span style={{ fontSize: '0.65rem', color: '#ef4444', fontWeight: 800, textTransform: 'uppercase' }}>
-                Aislamiento: {aislamientos.join(', ')}
-              </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '4px', marginBottom: '4px' }}>
+              {aislamientos.map((a, idx) => {
+                const isContact = a === 'Precaución de contacto';
+                const isGotitas = a === 'Precaución de gotitas';
+                const isAereo = a === 'Precaución aérea';
+                const isProtector = a === 'Aislamiento protector';
+                let bg, color, borderColor;
+                if (isContact || isGotitas || isAereo) {
+                  bg = 'rgba(245,158,11,0.18)'; color = '#f59e0b'; borderColor = 'rgba(245,158,11,0.5)';
+                } else if (isProtector) {
+                  bg = 'rgba(239,68,68,0.18)'; color = '#ef4444'; borderColor = 'rgba(239,68,68,0.5)';
+                } else {
+                  bg = 'rgba(100,116,139,0.18)'; color = '#94a3b8'; borderColor = 'rgba(100,116,139,0.4)';
+                }
+                return (
+                  <span key={idx} style={{
+                    background: bg, border: `1px solid ${borderColor}`, borderRadius: '4px',
+                    padding: '1px 5px', display: 'inline-flex', alignItems: 'center', gap: '3px'
+                  }}>
+                    <span style={{ fontSize: '0.7rem', ...(isProtector ? { filter: 'grayscale(1) sepia(1) saturate(20) hue-rotate(330deg)' } : {}) }}>
+                      {(isContact || isGotitas || isAereo) ? '⚠️' : isProtector ? '🛡️' : 'ℹ️'}
+                    </span>
+                    <span style={{ fontSize: '0.6rem', color, fontWeight: 800, textTransform: 'uppercase' }}>{a}</span>
+                  </span>
+                );
+              })}
             </div>
           );
         })()}

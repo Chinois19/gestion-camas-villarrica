@@ -182,15 +182,36 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
             )}
             {(() => {
               const aislamientos = Array.isArray(bed.aislamiento)
-                ? bed.aislamiento.filter(a => a && a !== 'Sin Precauciones')
-                : (bed.aislamiento && bed.aislamiento !== 'Sin Precauciones' ? [bed.aislamiento] : []);
+                ? bed.aislamiento.filter(a => a && a !== 'Sin Precauciones' && a !== 'Requiere Aislamiento')
+                : (bed.aislamiento && bed.aislamiento !== 'Sin Precauciones' && bed.aislamiento !== 'Requiere Aislamiento' ? [bed.aislamiento] : []);
               if (aislamientos.length === 0) return null;
               return (
-                <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '2px 6px', marginTop: '4px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ fontSize: '0.8rem' }}>⚠️</span>
-                  <span style={{ fontSize: '0.65rem', color: '#ef4444', fontWeight: 800, textTransform: 'uppercase' }}>
-                    Aislamiento: {aislamientos.join(', ')}
-                  </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '4px', marginBottom: '4px' }}>
+                  {aislamientos.map((a, idx) => {
+                    const isContact = a === 'Precaución de contacto';
+                    const isGotitas = a === 'Precaución de gotitas';
+                    const isAereo = a === 'Precaución aérea';
+                    const isProtector = a === 'Aislamiento protector';
+                    let bg, color, borderColor;
+                    if (isContact || isGotitas || isAereo) {
+                      bg = 'rgba(245,158,11,0.18)'; color = '#f59e0b'; borderColor = 'rgba(245,158,11,0.5)';
+                    } else if (isProtector) {
+                      bg = 'rgba(239,68,68,0.18)'; color = '#ef4444'; borderColor = 'rgba(239,68,68,0.5)';
+                    } else {
+                      bg = 'rgba(100,116,139,0.18)'; color = '#94a3b8'; borderColor = 'rgba(100,116,139,0.4)';
+                    }
+                    return (
+                      <span key={idx} style={{
+                        background: bg, border: `1px solid ${borderColor}`, borderRadius: '4px',
+                        padding: '1px 5px', display: 'inline-flex', alignItems: 'center', gap: '3px'
+                      }}>
+                        <span style={{ fontSize: '0.7rem', ...(isProtector ? { filter: 'grayscale(1) sepia(1) saturate(20) hue-rotate(330deg)' } : {}) }}>
+                          {(isContact || isGotitas || isAereo) ? '⚠️' : isProtector ? '🛡️' : 'ℹ️'}
+                        </span>
+                        <span style={{ fontSize: '0.6rem', color, fontWeight: 800, textTransform: 'uppercase' }}>{a}</span>
+                      </span>
+                    );
+                  })}
                 </div>
               );
             })()}
@@ -319,7 +340,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
   );
 }
 
-export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, onMarkHodomDoneByBed, user, onEditPatient, onViewPatient, onAddTransfers, setWaitingListDischarges, setBlockLog, onRequestWaitingIC }) {
+export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, onMarkHodomDoneByBed, user, onEditPatient, onViewPatient, onAddTransfers, setWaitingListDischarges, setDischargesLog, setBlockLog, onRequestWaitingIC }) {
   const userRole = user?.role || 'visor';
   const isVisor = userRole === 'visor';
   const isGestoraServicio = userRole === 'gestora_servicio';
@@ -463,6 +484,22 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             if (room.roomId === roomId) {
               const updatedBeds = room.beds.map(bed => {
                 if (bed.id === bedId) {
+                  // ── Migración legacy: si hay previousPatient sin dischargeHistory, conservarlo ──
+                  // Esto garantiza que altas registradas antes de implementar dischargeHistory
+                  // no se pierdan cuando se asigna un nuevo paciente a la cama.
+                  let preservedHistory = Array.isArray(bed.dischargeHistory) ? bed.dischargeHistory : [];
+                  if (bed.previousPatient && preservedHistory.length === 0) {
+                    // Migrar el registro legacy al nuevo formato acumulativo
+                    preservedHistory = [bed.previousPatient];
+                  } else if (bed.previousPatient && preservedHistory.length > 0) {
+                    // Si existe dischargeHistory pero también previousPatient con distinto _dischargeId,
+                    // asegurarse de que el legacy no se duplique
+                    const legacyId = bed.previousPatient._dischargeId;
+                    if (!legacyId || !preservedHistory.some(r => r._dischargeId === legacyId)) {
+                      preservedHistory = [bed.previousPatient, ...preservedHistory];
+                    }
+                  }
+
                   return {
                     ...bed,
                     status: 'occupied',
@@ -497,7 +534,9 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
                     novedades: [],
                     interconsultas: [],
                     evolutions: [],
-                    previousPatient: null
+                    previousPatient: null,
+                    // Preservar historial acumulativo de altas anteriores
+                    dischargeHistory: preservedHistory
                   };
                 }
                 return bed;
@@ -724,6 +763,25 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             observaciones: formData.observaciones || '',
             isWaitingListDischarge: true
           };
+
+          // ── LOG PERMANENTE: también registrar en dischargesLog ──
+          if (setDischargesLog) {
+            setDischargesLog(prev => {
+              const log = Array.isArray(prev) ? prev : [];
+              return [{
+                _logId: `log-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+                _loggedAt: new Date().toISOString(),
+                _source: 'waitingList',
+                piso: '—',
+                sector: '—',
+                habitacion: 'Lista de Espera',
+                cama: '—',
+                bedType: '—',
+                ...dischargeRecord
+              }, ...log];
+            });
+          }
+
           return [...arr, dischargeRecord];
         });
       }
@@ -732,18 +790,58 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       return;
     }
 
+    // ── Buscar piso y sector de la cama para el log ──
+    let logPiso = '—', logSector = '—';
+    for (const floor in bedsData) {
+      let found = false;
+      for (const sector in bedsData[floor]) {
+        const room = bedsData[floor][sector].find(r => r.roomId === roomId);
+        if (room) { logPiso = floor; logSector = sector; found = true; break; }
+      }
+      if (found) break;
+    }
+
+    // ── Snapshot limpio del alta (sin dischargeHistory anidado para evitar ciclos en Firebase) ──
+    // eslint-disable-next-line no-unused-vars
+    const { dischargeHistory: _dh, previousPatient: _pp, lastDischarge: _ld, ...bedDataOnly } = bed;
+    const cleanDischargeRecord = {
+      ...bedDataOnly,
+      destino: formData.destino,
+      establecimientoRed: formData.establecimientoRed || '',
+      otroEstablecimientoDetalle: formData.otroEstablecimientoDetalle || '',
+      redPrivadaDetalle: formData.redPrivadaDetalle || '',
+      observaciones: formData.observaciones || '',
+      cleaningAt: new Date().toISOString(),
+      _dischargeId: Date.now()   // ID único para localizar este registro en el historial
+    };
+    // Acumular: cada nueva alta se prepende; las anteriores se conservan intactas
+    const updatedDischargeHistory = [cleanDischargeRecord, ...(bed.dischargeHistory || [])];
+
+    // ── LOG PERMANENTE: escribir el episodio en dischargesLog (append-only, inmutable) ──
+    // Este log es la fuente de verdad del Informe de Altas, independiente del estado de las camas.
+    // Cada alta genera exactamente 1 entrada. Nunca se modifica ni elimina.
+    if (setDischargesLog) {
+      setDischargesLog(prev => {
+        const log = Array.isArray(prev) ? prev : [];
+        return [{
+          _logId: `log-${cleanDischargeRecord._dischargeId}-${Math.random().toString(36).slice(2,7)}`,
+          _loggedAt: new Date().toISOString(),
+          _source: 'cama',
+          piso: logPiso,
+          sector: logSector,
+          habitacion: roomId,
+          cama: bedId,
+          bedType: bed.tag || bed.type || '',
+          ...cleanDischargeRecord
+        }, ...log];
+      });
+    }
+
     if (formData.destino === 'Hospitalización domiciliaria') {
       updateBedState(roomId, bedId, {
         status: 'pending_hodom',
-        previousPatient: {
-          ...bed,
-          destino: formData.destino,
-          establecimientoRed: formData.establecimientoRed || '',
-          otroEstablecimientoDetalle: formData.otroEstablecimientoDetalle || '',
-          redPrivadaDetalle: formData.redPrivadaDetalle || '',
-          observaciones: formData.observaciones || '',
-          cleaningAt: new Date().toISOString()
-        }
+        previousPatient: cleanDischargeRecord,
+        dischargeHistory: updatedDischargeHistory
       });
 
       if (onHodomSubmit && formData.hodomData) {
@@ -785,15 +883,8 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         interconsultas: [],
         novedades: [],
         evolutions: [],
-        previousPatient: {
-          ...bed,
-          destino: formData.destino,
-          establecimientoRed: formData.establecimientoRed || '',
-          otroEstablecimientoDetalle: formData.otroEstablecimientoDetalle || '',
-          redPrivadaDetalle: formData.redPrivadaDetalle || '',
-          observaciones: formData.observaciones || '',
-          cleaningAt: new Date().toISOString()
-        },
+        previousPatient: cleanDischargeRecord,       // retrocompatibilidad con datos legacy
+        dischargeHistory: updatedDischargeHistory,   // historial acumulativo (fuente de verdad)
         originalWaitingRequest: null
       });
     }
@@ -816,6 +907,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     if (targetBed && targetBed.previousPatient) {
       const restoredBed = { ...targetBed.previousPatient, status: 'occupied' };
       delete restoredBed.previousPatient;
+      // Marcar el alta más reciente como revertida; el historial se conserva pero no aparece en el panel
+      restoredBed.dischargeHistory = (targetBed.dischargeHistory || []).map((rec, idx) =>
+        idx === 0 ? { ...rec, _reverted: true, _revertedAt: new Date().toISOString() } : rec
+      );
       updateBedState(roomId, bedId, restoredBed);
     }
   };

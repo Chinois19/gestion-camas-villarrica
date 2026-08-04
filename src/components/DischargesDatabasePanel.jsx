@@ -163,225 +163,218 @@ const EditAltaModal = ({ row, onClose, onSave }) => {
   );
 };
 
-export default function DischargesDatabasePanel({ bedsData, setBedsData, waitingListDischarges, setWaitingListDischarges, setWaitingList, userRole }) {
+export default function DischargesDatabasePanel({ bedsData, setBedsData, waitingListDischarges, setWaitingListDischarges, dischargesLog, setDischargesLog, setWaitingList, userRole }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [startDate, setStartDate] = useState('2026-01-01');
-  const [endDate, setEndDate] = useState('2026-12-31');
+  const currentYear = new Date().getFullYear();
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState(`${currentYear}-01-01`);
+  const [endDate, setEndDate] = useState(`${currentYear}-12-31`);
   const [editingRow, setEditingRow] = useState(null);
 
   const isAdminOrGestor = userRole === 'superadmin' || userRole === 'administrador' || userRole === 'gestor_camas';
 
   const patientsData = useMemo(() => {
     const data = [];
-    const floors = Object.keys(bedsData || {}).filter(key => 
-      key !== 'waitingListDischarges' && 
-      bedsData[key] && 
-      typeof bedsData[key] === 'object' && 
-      !Array.isArray(bedsData[key])
-    ).sort((a, b) => a.localeCompare(b));
-    floors.forEach(floor => {
-      const sectors = Object.keys(bedsData[floor] || {}).sort((a, b) => {
-        if (a.toLowerCase() === 'poniente') return -1;
-        if (b.toLowerCase() === 'poniente') return 1;
-        return a.localeCompare(b);
+    // Rastrear _logId y clave nombre+fecha para evitar duplicados entre fuentes
+    const seenLogIds = new Set();
+    const seenKeys  = new Set();
+    const dupKey = (nombre, fecha) => `${(nombre || '').toLowerCase().trim()}|${fecha || ''}`;
+
+    const formatDateTime = (isoString) => {
+      if (!isoString) return '—';
+      try {
+        const date = new Date(isoString);
+        if (isNaN(date.getTime())) return isoString;
+        return date.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      } catch { return isoString; }
+    };
+
+    const buildRow = (p, meta) => {
+      let dxList = [];
+      if (p.diagnosis) {
+        if (Array.isArray(p.diagnosis)) dxList = [...dxList, ...p.diagnosis];
+        else dxList.push(p.diagnosis);
+      }
+      if (p.dxPrincipal) dxList.push(p.dxPrincipal);
+      if (p.diagnostics && Array.isArray(p.diagnostics)) dxList = [...dxList, ...p.diagnostics];
+      const uniqueDx = [...new Set(dxList.filter(Boolean))].join(' | ');
+
+      let specs = [];
+      if (p.especialidadTratante) {
+        if (Array.isArray(p.especialidadTratante)) specs = [...specs, ...p.especialidadTratante];
+        else specs.push(p.especialidadTratante);
+      }
+      const uniqueSpecs = [...new Set(specs.filter(Boolean))].join(', ');
+
+      let precautions = [];
+      if (p.aislamiento) {
+        if (Array.isArray(p.aislamiento)) precautions = [...p.aislamiento];
+        else precautions = [p.aislamiento];
+      }
+      const precStr = precautions.length > 0 ? precautions.join(', ') : 'Ninguna';
+
+      const dischargeTimestamp = p.cleaningAt || p.dischargeAt || null;
+      const dischargeDateObj   = dischargeTimestamp ? new Date(dischargeTimestamp) : null;
+      const fechaAlta          = formatDateTime(dischargeTimestamp);
+      const admDate            = p.admissionDate || p.assignedAt;
+
+      let estada = meta.estada || '—';
+      if (admDate && dischargeDateObj && !meta.estada) {
+        try {
+          const d = new Date(admDate);
+          if (!isNaN(d.getTime()) && !isNaN(dischargeDateObj.getTime()))
+            estada = Math.ceil(Math.abs(dischargeDateObj - d) / 86400000) + ' días';
+        } catch (e) {}
+      }
+
+      let updates = [];
+      (p.evolutions || []).forEach(ev => {
+        if (ev.note) updates.push({ texto: `Evolución: ${ev.note}`, fecha: formatDateToDDMMYYYY(ev.timestamp), rawDate: parseEntryDate(ev) });
       });
-      sectors.forEach(sector => {
-        const rooms = [...(bedsData[floor][sector] || [])].sort((a, b) => 
-          String(b.roomId).localeCompare(String(a.roomId), undefined, { numeric: true })
-        );
-        rooms.forEach(room => {
-          const beds = [...(room.beds || [])].sort((a, b) => 
-            String(b.id).localeCompare(String(a.id), undefined, { numeric: true })
-          );
-          beds.forEach(bed => {
-            // Include patients who have a previous patient (an 'alta' logged)
-            const p = bed.previousPatient || bed.lastDischarge;
-            if (p) {
-              // Normalize data
-              
-              // Helper for diagnoses
-              let dxList = [];
-              if (p.diagnosis) {
-                if (Array.isArray(p.diagnosis)) {
-                  dxList = [...dxList, ...p.diagnosis];
-                } else {
-                  dxList.push(p.diagnosis);
+      (p.novedades || []).forEach(nov => {
+        if (nov.contenido) updates.push({ texto: nov.contenido, fecha: formatDateToDDMMYYYY(nov.fecha), rawDate: parseEntryDate(nov) });
+      });
+      updates.sort((a, b) => b.rawDate - a.rawDate);
+      if (updates.length === 0) {
+        const fallbackDate = p.updatedAt || p.assignedAt;
+        updates.push({ texto: 'Ingreso registrado', fecha: formatDateToDDMMYYYY(fallbackDate), rawDate: fallbackDate ? new Date(fallbackDate) : new Date() });
+      }
+
+      let servicioAcueste = p.destino || meta.bedType || 'No definido';
+      if (p.destino === 'Otro establecimiento') {
+        const hosp = p.establecimientoRed === 'Otro' ? (p.otroEstablecimientoDetalle || 'Otro') : p.establecimientoRed;
+        servicioAcueste = `Traslado: ${hosp || 'Otro establecimiento'}`;
+      } else if (p.destino === 'Red Privada' && p.redPrivadaDetalle) {
+        servicioAcueste = `Privado: ${p.redPrivadaDetalle}`;
+      }
+
+      return {
+        rawBedData: p,
+        rawDischargeDate: dischargeDateObj,
+        servicio: servicioAcueste,
+        estada,
+        sala: meta.sala || '—',
+        cama: meta.cama || '—',
+        fechaIngreso: formatDateTime(admDate),
+        fechaAlta,
+        precauciones: precStr,
+        nombre: p.patient || p.patientName || p.nombre || 'Desconocido',
+        run: p.rut || '—',
+        edad: formatAgeDetailed(p.fechaNacimiento, p.age || p.edad),
+        diagnosticos: uniqueDx || 'No registrado',
+        especialidades: uniqueSpecs || 'No asignada',
+        actualizacion: updates,
+        comuna: p.comuna || '—',
+        isWaitingListDischarge: meta.isWaiting || false,
+        _source: meta.source || 'legacy'
+      };
+    };
+
+    // ── FUENTE 1: dischargesLog — log permanente (episodios desde alta confirmada) ──
+    // Fuente de verdad para todos los episodios registrados a partir de ahora.
+    const logArr = Array.isArray(dischargesLog) ? dischargesLog : [];
+    logArr.forEach(p => {
+      if (p._reverted) return;
+      const nombre = p.patient || p.patientName || p.nombre || '';
+      const ts     = p.cleaningAt || p.dischargeAt || '';
+      const key    = dupKey(nombre, ts);
+      if (p._logId) seenLogIds.add(p._logId);
+      seenKeys.add(key);
+
+      data.push(buildRow(p, {
+        sala:    p.habitacion || '—',
+        cama:    p.cama || '—',
+        bedType: p.bedType || '—',
+        isWaiting: p._source === 'waitingList',
+        source:  'dischargesLog',
+        estada:  p._source === 'waitingList' ? 'Alta previa a asignación' : undefined
+      }));
+    });
+
+    // ── FUENTE 2: bedsData — backfill legacy (previousPatient recursivo + dischargeHistory) ──
+    // Cubre todos los episodios anteriores a la implementación del log permanente.
+    const floors = Object.keys(bedsData || {}).filter(key =>
+      key !== 'waitingListDischarges' &&
+      bedsData[key] && typeof bedsData[key] === 'object' && !Array.isArray(bedsData[key])
+    ).sort((a, b) => a.localeCompare(b));
+
+    floors.forEach(floor => {
+      Object.keys(bedsData[floor] || {}).forEach(sector => {
+        (bedsData[floor][sector] || []).forEach(room => {
+          (room.beds || []).forEach(bed => {
+            const extractAll = (bedObj, depth = 0) => {
+              if (!bedObj || depth > 8) return [];
+              const recs = [];
+              if (Array.isArray(bedObj.dischargeHistory) && bedObj.dischargeHistory.length > 0) {
+                bedObj.dischargeHistory.filter(r => !r._reverted).forEach(r => recs.push(r));
+              }
+              if (bedObj.previousPatient) {
+                const pp = bedObj.previousPatient;
+                if ((pp.cleaningAt || pp.dischargeAt) && !pp._reverted) {
+                  const notDup = !recs.some(r =>
+                    (r.cleaningAt || r.dischargeAt) === (pp.cleaningAt || pp.dischargeAt) &&
+                    (r.patient || r.patientName) === (pp.patient || pp.patientName)
+                  );
+                  if (notDup) recs.push(pp);
                 }
-              }
-              if (p.dxPrincipal) dxList.push(p.dxPrincipal);
-              if (p.diagnostics && Array.isArray(p.diagnostics)) {
-                dxList = [...dxList, ...p.diagnostics];
-              }
-              const uniqueDx = [...new Set(dxList.filter(Boolean))].join(' | ');
-
-              // Helper for specialties
-              let specs = [];
-              if (p.especialidadTratante) {
-                if (Array.isArray(p.especialidadTratante)) {
-                  specs = [...specs, ...p.especialidadTratante];
-                } else {
-                  specs.push(p.especialidadTratante);
-                }
-              }
-              if (p.specialty) specs.push(p.specialty);
-              if (p.specialties && Array.isArray(p.specialties)) {
-                specs = [...specs, ...p.specialties];
-              }
-              const uniqueSpecs = [...new Set(specs.filter(Boolean))].join(', ');
-
-              // Helper for precautions
-              let precautions = [];
-              if (p.aislamiento) {
-                if (Array.isArray(p.aislamiento)) {
-                  precautions = [...p.aislamiento];
-                } else {
-                  precautions = [p.aislamiento];
-                }
-              } else if (p.precautions) {
-                if (Array.isArray(p.precautions)) {
-                  precautions = p.precautions;
-                } else if (typeof p.precautions === 'string') {
-                  precautions = [p.precautions];
-                }
-              }
-              const precStr = precautions.length > 0 ? precautions.join(', ') : 'Ninguna';
-
-              // Format date
-              const formatDateTime = (isoString) => {
-                if (!isoString) return '—';
-                try {
-                  const date = new Date(isoString);
-                  if (isNaN(date.getTime())) return isoString;
-                  return date.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                } catch {
-                  return isoString;
-                }
-              };
-
-              // Discharge Date
-              const dischargeDateObj = p.cleaningAt ? new Date(p.cleaningAt) : new Date();
-              const fechaAlta = formatDateTime(p.cleaningAt || p.assignedAt);
-
-              // Calculate LOS (Days of Stay)
-              let estada = '—';
-              const admDate = p.admissionDate || p.assignedAt;
-              if (admDate) {
-                try {
-                  const date = new Date(admDate);
-                  if (!isNaN(date.getTime())) {
-                    const diffTime = Math.abs(dischargeDateObj - date);
-                    estada = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + ' días';
-                  }
-                } catch (e) {}
-              }
-
-              // Build Actualizacion (Evoluciones + Novedades)
-              let updates = [];
-              if (p.evolutions && Array.isArray(p.evolutions)) {
-                p.evolutions.forEach(ev => {
-                  if (ev.note) {
-                    updates.push({
-                      texto: `Evolución: ${ev.note}`,
-                      fecha: formatDateToDDMMYYYY(ev.timestamp),
-                      rawDate: parseEntryDate(ev)
-                    });
-                  }
+                extractAll(pp, depth + 1).forEach(r => {
+                  const notDup = !recs.some(x =>
+                    (x.cleaningAt || x.dischargeAt) === (r.cleaningAt || r.dischargeAt) &&
+                    (x.patient || x.patientName) === (r.patient || r.patientName)
+                  );
+                  if (notDup) recs.push(r);
                 });
               }
-              if (p.novedades && Array.isArray(p.novedades)) {
-                p.novedades.forEach(nov => {
-                  if (nov.contenido) {
-                    updates.push({
-                      texto: nov.contenido,
-                      fecha: formatDateToDDMMYYYY(nov.fecha),
-                      rawDate: parseEntryDate(nov)
-                    });
-                  }
-                });
+              if (bedObj.lastDischarge && !bedObj.previousPatient && !bedObj.lastDischarge._reverted) {
+                recs.push(bedObj.lastDischarge);
               }
-              // Sort descending by rawDate (newest first)
-              updates.sort((a, b) => b.rawDate - a.rawDate);
+              return recs;
+            };
 
-              if (updates.length === 0) {
-                const fallbackDate = p.updatedAt || p.assignedAt;
-                updates.push({
-                  texto: 'Ingreso registrado',
-                  fecha: formatDateToDDMMYYYY(fallbackDate),
-                  rawDate: fallbackDate ? new Date(fallbackDate) : new Date()
-                });
-              }
-
-              // Servicio de acueste is destination unit requested/saved (bed.destino) falling back to bed tag/type
-              let servicioAcueste = p.destino || bed.destino || bed.tag || bed.type || 'No definido';
-              if (p.destino === 'Otro establecimiento') {
-                const hosp = p.establecimientoRed === 'Otro' ? (p.otroEstablecimientoDetalle || 'Otro') : p.establecimientoRed;
-                servicioAcueste = `Traslado: ${hosp || 'Otro establecimiento'}`;
-              } else if (p.destino === 'Red Privada' && p.redPrivadaDetalle) {
-                servicioAcueste = `Privado: ${p.redPrivadaDetalle}`;
-              }
-
-              data.push({
-                rawBedData: p,
-                rawDischargeDate: dischargeDateObj,
-                servicio: servicioAcueste,
-                estada: estada,
-                sala: room.roomId,
-                cama: bed.id,
-                fechaIngreso: formatDateTime(admDate),
-                fechaAlta: fechaAlta,
-                precauciones: precStr,
-                nombre: p.patient || p.patientName || p.nombre || 'Desconocido',
-                run: p.rut || '—',
-                edad: formatAgeDetailed(p.fechaNacimiento, p.age || p.edad),
-                diagnosticos: uniqueDx || 'No registrado',
-                especialidades: uniqueSpecs || 'No asignada',
-                actualizacion: updates,
-                comuna: p.comuna || '—'
-              });
-            }
+            extractAll(bed).forEach(p => {
+              const nombre = p.patient || p.patientName || p.nombre || '';
+              const ts     = p.cleaningAt || p.dischargeAt || '';
+              const key    = dupKey(nombre, ts);
+              // Saltar si ya fue agregado desde dischargesLog
+              if (seenKeys.has(key)) return;
+              seenKeys.add(key);
+              data.push(buildRow(p, {
+                sala:    room.roomId,
+                cama:    bed.id,
+                bedType: bed.tag || bed.type || '',
+                source:  'legacy_bed'
+              }));
+            });
           });
         });
       });
     });
 
-    // Include waiting list discharges
+    // ── FUENTE 3: waitingListDischarges — altas desde lista de espera (legacy) ──
+    // Las nuevas ya van al dischargesLog; esto cubre las anteriores.
     if (Array.isArray(waitingListDischarges)) {
       waitingListDischarges.forEach(p => {
+        const nombre = p.patient || p.patientName || p.nombre || '';
+        const ts     = p.dischargeAt || '';
+        const key    = dupKey(nombre, ts);
+        if (seenKeys.has(key)) return;
+        seenKeys.add(key);
+
+        let servicioDischarge = p.destino || 'Lista de Espera';
+        if (p.destino === 'Otro establecimiento') {
+          const hosp = p.establecimientoRed === 'Otro' ? (p.otroEstablecimientoDetalle || 'Otro') : p.establecimientoRed;
+          servicioDischarge = `Traslado: ${hosp || 'Otro establecimiento'}`;
+        } else if (p.destino === 'Red Privada' && p.redPrivadaDetalle) {
+          servicioDischarge = `Privado: ${p.redPrivadaDetalle}`;
+        }
+
+        const dischargeDateObj = p.dischargeAt ? new Date(p.dischargeAt) : null;
         let dxList = [];
         if (p.diagnosis) {
-          if (Array.isArray(p.diagnosis)) {
-            dxList = [...dxList, ...p.diagnosis];
-          } else {
-            dxList.push(p.diagnosis);
-          }
+          if (Array.isArray(p.diagnosis)) dxList = [...p.diagnosis];
+          else dxList.push(p.diagnosis);
         }
         const uniqueDx = [...new Set(dxList.filter(Boolean))].join(' | ');
-
-        const formatDateTime = (isoString) => {
-          if (!isoString) return '—';
-          try {
-            const date = new Date(isoString);
-            if (isNaN(date.getTime())) return isoString;
-            return date.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-          } catch {
-            return isoString;
-          }
-        };
-
-        const dischargeDateObj = p.dischargeAt ? new Date(p.dischargeAt) : new Date();
-        const fechaAlta = formatDateTime(p.dischargeAt);
-
-        let servicioDischarge = 'Lista de Espera';
-        if (p.destino) {
-          if (p.destino === 'Otro establecimiento') {
-            const hosp = p.establecimientoRed === 'Otro' ? (p.otroEstablecimientoDetalle || 'Otro') : p.establecimientoRed;
-            servicioDischarge = `Traslado: ${hosp || 'Otro establecimiento'}`;
-          } else if (p.destino === 'Red Privada' && p.redPrivadaDetalle) {
-            servicioDischarge = `Privado: ${p.redPrivadaDetalle}`;
-          } else {
-            servicioDischarge = p.destino;
-          }
-        }
 
         data.push({
           rawBedData: p,
@@ -391,28 +384,23 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
           sala: 'Espera',
           cama: '—',
           fechaIngreso: formatDateTime(p.requestedAt),
-          fechaAlta: fechaAlta,
+          fechaAlta: formatDateTime(p.dischargeAt),
           precauciones: 'Ninguna',
-          nombre: p.patient || p.patientName || p.nombre || 'Desconocido',
+          nombre: nombre || 'Desconocido',
           run: p.rut || '—',
           edad: formatAgeDetailed(p.fechaNacimiento, p.age || p.edad),
           diagnosticos: uniqueDx || 'No registrado',
           especialidades: 'No asignada',
-          actualizacion: [
-            {
-              texto: 'Alta previa a asignación de cama',
-              fecha: formatDateToDDMMYYYY(p.dischargeAt),
-              rawDate: p.dischargeAt ? new Date(p.dischargeAt) : new Date()
-            }
-          ],
+          actualizacion: [{ texto: 'Alta previa a asignación de cama', fecha: formatDateToDDMMYYYY(p.dischargeAt), rawDate: p.dischargeAt ? new Date(p.dischargeAt) : new Date() }],
           comuna: p.comuna || '—',
-          isWaitingListDischarge: true
+          isWaitingListDischarge: true,
+          _source: 'waitingListDischarges'
         });
       });
     }
 
     return data;
-  }, [bedsData, waitingListDischarges]);
+  }, [bedsData, waitingListDischarges, dischargesLog]);
 
   const filteredData = useMemo(() => {
     let result = patientsData;
@@ -426,6 +414,8 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
 
       result = result.filter(row => {
         const dDate = row.rawDischargeDate;
+        // Si no hay fecha de alta registrada, incluir el registro siempre (no filtrarlo)
+        if (!dDate) return true;
         return dDate >= start && dDate <= end;
       });
     }
@@ -551,9 +541,10 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
     setBedsData(prev => {
       const next = JSON.parse(JSON.stringify(prev));
       let handled = false;
-      for (const f of ['piso4', 'piso3', 'piso2']) {
-        if (!next[f]) continue;
+      for (const f of Object.keys(next)) {
+        if (!next[f] || typeof next[f] !== 'object' || Array.isArray(next[f])) continue;
         for (const s in next[f]) {
+          if (!Array.isArray(next[f][s])) continue;
           next[f][s] = next[f][s].map(room => {
             if (room.roomId === roomId) {
               return {
@@ -569,6 +560,10 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
                       delete restoredBed.previousPatient;
                       delete restoredBed.lastDischarge;
                       if (!restoredBed.interconsultas) restoredBed.interconsultas = [];
+                      // Marcar el alta más reciente como revertida; el historial se conserva pero se oculta en el panel
+                      restoredBed.dischargeHistory = (b.dischargeHistory || []).map((rec, idx) =>
+                        idx === 0 ? { ...rec, _reverted: true, _revertedAt: new Date().toISOString() } : rec
+                      );
                       handled = true;
                       return restoredBed;
                     }
@@ -614,27 +609,52 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
 
     setBedsData(prev => {
       const next = JSON.parse(JSON.stringify(prev));
-      for (const f of ['piso4', 'piso3', 'piso2']) {
-        if (!next[f]) continue;
+      // Identificar el _dischargeId del registro que se está editando (si tiene)
+      const targetDischargeId = editingRow?.rawBedData?._dischargeId;
+
+      for (const f of Object.keys(next)) {
+        if (!next[f] || typeof next[f] !== 'object' || Array.isArray(next[f])) continue;
         for (const s in next[f]) {
+          if (!Array.isArray(next[f][s])) continue;
           next[f][s] = next[f][s].map(room => {
             if (room.roomId === roomId) {
               return {
                 ...room,
                 beds: room.beds.map(b => {
                   if (b.id === bedId) {
-                    const target = b.previousPatient || b.lastDischarge;
-                    if (target) {
-                       target.patient = updatedData.nombre;
-                       target.rut = updatedData.run;
-                       target.diagnosis = updatedData.diagnosticos;
-                       target.destino = updatedData.destino;
-                       target.establecimientoRed = updatedData.establecimientoRed;
-                       target.redPrivadaDetalle = updatedData.redPrivadaDetalle;
-                       target.observaciones = updatedData.observaciones;
-                       if (b.previousPatient) b.previousPatient = target;
-                       if (b.lastDischarge) b.lastDischarge = target;
+                    const applyEdit = (rec) => ({
+                      ...rec,
+                      patient: updatedData.nombre,
+                      rut: updatedData.run,
+                      diagnosis: updatedData.diagnosticos,
+                      destino: updatedData.destino,
+                      establecimientoRed: updatedData.establecimientoRed,
+                      otroEstablecimientoDetalle: updatedData.otroEstablecimientoDetalle || rec.otroEstablecimientoDetalle || '',
+                      redPrivadaDetalle: updatedData.redPrivadaDetalle,
+                      observaciones: updatedData.observaciones,
+                    });
+
+                    // 1. Actualizar dentro de dischargeHistory[] (formato acumulativo)
+                    if (Array.isArray(b.dischargeHistory) && b.dischargeHistory.length > 0) {
+                      b.dischargeHistory = b.dischargeHistory.map(rec => {
+                        // Coincidir por _dischargeId si existe, de lo contrario actualizar el primero no revertido
+                        if (targetDischargeId) {
+                          return rec._dischargeId === targetDischargeId ? applyEdit(rec) : rec;
+                        }
+                        // Fallback: editar el primer registro no revertido
+                        if (!rec._reverted && !rec._edited) {
+                          rec._edited = true; // marcar para no editar dos veces en la misma pasada
+                          return applyEdit(rec);
+                        }
+                        return rec;
+                      });
+                      // Limpiar la bandera temporal _edited
+                      b.dischargeHistory = b.dischargeHistory.map(r => { delete r._edited; return r; });
                     }
+
+                    // 2. Actualizar previousPatient / lastDischarge (formato legacy)
+                    if (b.previousPatient) b.previousPatient = applyEdit(b.previousPatient);
+                    if (b.lastDischarge)   b.lastDischarge   = applyEdit(b.lastDischarge);
                   }
                   return b;
                 })
@@ -678,6 +698,52 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
               onChange={e => setEndDate(e.target.value)}
               style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
             />
+            <span style={{ width: '1px', height: '20px', background: 'var(--border-subtle)', margin: '0 4px' }} />
+            <button
+              onClick={() => { setStartDate(todayStr); setEndDate(todayStr); }}
+              title="Ver solo las altas de hoy"
+              style={{
+                background: startDate === todayStr && endDate === todayStr
+                  ? 'linear-gradient(135deg, #10b981, #059669)'
+                  : 'rgba(16,185,129,0.12)',
+                color: '#10b981',
+                border: '1px solid rgba(16,185,129,0.35)',
+                borderRadius: '6px',
+                padding: '2px 10px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s'
+              }}
+            >
+              Hoy
+            </button>
+            <button
+              onClick={() => {
+                const now = new Date();
+                const y = now.getFullYear();
+                const m = String(now.getMonth() + 1).padStart(2, '0');
+                const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+                setStartDate(`${y}-${m}-01`);
+                setEndDate(`${y}-${m}-${lastDay}`);
+              }}
+              title="Ver altas de este mes"
+              style={{
+                background: 'rgba(16,185,129,0.08)',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '6px',
+                padding: '2px 10px',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s'
+              }}
+            >
+              Este mes
+            </button>
           </div>
           <div className="search-container" style={{ margin: 0 }}>
             <Search size={16} color="var(--text-secondary)" />

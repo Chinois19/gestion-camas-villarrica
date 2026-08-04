@@ -760,8 +760,8 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
                   <circle cx="60" cy="60" r="50" fill="transparent" 
                     stroke={
                       stats.globalOccupancy >= 95 ? '#ef4444' : 
-                      stats.globalOccupancy >= 85 ? '#f97316' : 
-                      stats.globalOccupancy >= 70 ? '#eab308' : '#22c55e'
+                      stats.globalOccupancy >= 85 ? 'var(--color-warn, #f97316)' : 
+                      stats.globalOccupancy >= 70 ? 'var(--color-caution, #eab308)' : 'var(--accent, #22c55e)'
                     } 
                     strokeWidth="8" 
                     strokeDasharray="314" 
@@ -814,16 +814,16 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
             <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '14px', minHeight: '220px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Lock size={20} color="#a855f7" />
+                  <Lock size={20} color="var(--color-blocked, #a855f7)" />
                   <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>Camas Bloqueadas</h4>
                 </div>
-                <span style={{ fontSize: '1.8rem', fontWeight: 800, color: '#a855f7' }}>{stats.blockedBeds}</span>
+                <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-blocked, #a855f7)' }}>{stats.blockedBeds}</span>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', background: 'var(--inset-bg)', borderRadius: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Tasa de Bloqueo:</span>
-                  <strong style={{ color: stats.blockedRate > 10 ? '#a855f7' : 'var(--text-primary)' }}>{stats.blockedRate}% del total</strong>
+                  <strong style={{ color: stats.blockedRate > 10 ? 'var(--color-blocked, #a855f7)' : 'var(--text-primary)' }}>{stats.blockedRate}% del total</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Camas en Aseo activo:</span>
@@ -832,7 +832,7 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
               </div>
 
               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <AlertCircle size={14} color="#a855f7" />
+                <AlertCircle size={14} color="var(--color-blocked, #a855f7)" />
                 <span>Causa principal: <strong>Infraestructura / RRHH</strong></span>
               </div>
             </div>
@@ -875,7 +875,7 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
                     <div style={{ display: 'flex', gap: '10px', marginTop: '14px', background: 'var(--inset-bg)', padding: '10px', borderRadius: '8px' }}>
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Oferta (Disp.)</span>
-                        <strong style={{ fontSize: '1.1rem', color: m.available > 0 ? '#22c55e' : 'var(--text-muted)' }}>{m.available}</strong>
+                        <strong style={{ fontSize: '1.1rem', color: m.available > 0 ? 'var(--accent)' : 'var(--text-muted)' }}>{m.available}</strong>
                       </div>
                       <div style={{ width: '1px', background: 'var(--border-subtle)' }}></div>
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -895,7 +895,7 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
                           className="progress-bar-fill" 
                           style={{ 
                             width: `${m.occupancy}%`, 
-                            background: m.occupancy >= 95 ? '#ef4444' : m.occupancy >= 80 ? '#f97316' : 'var(--accent)'
+                            background: m.occupancy >= 95 ? '#ef4444' : m.occupancy >= 80 ? 'var(--color-warn, #f97316)' : 'var(--accent)'
                           }}
                         />
                       </div>

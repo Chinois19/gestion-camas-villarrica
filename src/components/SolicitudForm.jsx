@@ -335,11 +335,13 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   const [aislamiento, setAislamiento] = useState(() => {
     if (patientData && patientData.aislamiento !== undefined) {
       if (typeof patientData.aislamiento === 'boolean') {
-        // Formato antiguo booleano: true => requiere aislamiento, false => sin precauciones (array vacío)
-        return patientData.aislamiento ? ['Requiere Aislamiento'] : [];
+        return patientData.aislamiento ? ['Precaución de contacto'] : [];
       }
-      // Formato nuevo (array): retornar tal cual
-      return Array.isArray(patientData.aislamiento) ? patientData.aislamiento : [];
+      if (Array.isArray(patientData.aislamiento)) {
+        // Filtrar valores legacy
+        return patientData.aislamiento.filter(a => a && a !== 'Sin Precauciones' && a !== 'Requiere Aislamiento');
+      }
+      return [];
     }
     return [];
   });
@@ -968,15 +970,47 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                       <div>
                         <FieldLabel>Aislamiento / Precauciones</FieldLabel>
                         <div style={{
-                          padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border-subtle)',
-                          background: (Array.isArray(aislamiento) && aislamiento.some(a => a !== 'Sin Precauciones')) || aislamiento === true ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)',
-                          color: (Array.isArray(aislamiento) && aislamiento.some(a => a !== 'Sin Precauciones')) || aislamiento === true ? '#ef4444' : '#10b981',
-                          fontWeight: 700, fontSize: '0.8rem', width: 'fit-content',
-                          borderColor: (Array.isArray(aislamiento) && aislamiento.some(a => a !== 'Sin Precauciones')) || aislamiento === true ? '#ef4444' : '#10b981',
+                          display: 'flex', flexWrap: 'wrap', gap: 6, padding: '6px 0',
+                          minHeight: 20,
                         }}>
-                          {Array.isArray(aislamiento) && aislamiento.length > 0
-                            ? aislamiento.join(', ')
-                            : aislamiento === true ? 'REQUIERE AISLAMIENTO ⚠️' : aislamiento === false ? 'SIN AISLAMIENTO ✅' : 'No Especificado'}
+                          {Array.isArray(aislamiento) && aislamiento.length > 0 ? (
+                            aislamiento.map((item, i) => {
+                              // Color según tipo de aislamiento
+                              const isContact = item === 'Precaución de contacto';
+                              const isGotitas = item === 'Precaución de gotitas';
+                              const isAereo = item === 'Precaución aérea';
+                              const isEstandar = item === 'Precaución estándar';
+                              const isProtector = item === 'Aislamiento protector';
+                              let bg, color, border;
+                              if (isContact || isGotitas || isAereo) {
+                                bg = 'rgba(245,158,11,0.15)';
+                                color = '#f59e0b';
+                                border = 'rgba(245,158,11,0.5)';
+                              } else if (isProtector) {
+                                bg = 'rgba(239,68,68,0.15)';
+                                color = '#ef4444';
+                                border = 'rgba(239,68,68,0.5)';
+                              } else {
+                                bg = 'rgba(100,116,139,0.15)';
+                                color = '#94a3b8';
+                                border = 'rgba(100,116,139,0.4)';
+                              }
+                              return (
+                                <span key={i} style={{
+                                  padding: '4px 10px', borderRadius: 6, fontWeight: 700,
+                                  fontSize: '0.78rem', background: bg, color, border: `1px solid ${border}`,
+                                  display: 'inline-flex', alignItems: 'center', gap: '3px',
+                                }}>
+                                  <span style={isProtector ? { filter: 'grayscale(1) sepia(1) saturate(20) hue-rotate(330deg)' } : {}}>
+                                    {(isContact || isGotitas || isAereo) ? '⚠️' : isProtector ? '🛡️' : 'ℹ️'}
+                                  </span>
+                                  {' '}{item}
+                                </span>
+                              );
+                            })
+                          ) : (
+                            <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>Sin precauciones especiales</span>
+                          )}
                         </div>
                       </div>
                       <div>
@@ -1008,12 +1042,13 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                         <div style={{ zIndex: 50, position: 'relative' }}>
                           <MultiSearchableSelect
                             options={[
-                              { value: 'Precaución Estandar', label: 'Precaución Estandar' },
-                              { value: 'Aislamiento Protector', label: 'Aislamiento Protector' },
-                              { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
-                              { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' },
+                              { value: 'Precaución estándar', label: 'Precaución estándar' },
+                              { value: 'Precaución de contacto', label: 'Precaución de contacto' },
+                              { value: 'Precaución de gotitas', label: 'Precaución de gotitas' },
+                              { value: 'Precaución aérea', label: 'Precaución aérea' },
+                              { value: 'Aislamiento protector', label: 'Aislamiento protector' },
                             ]}
-                            value={Array.isArray(aislamiento) ? aislamiento : (aislamiento === true ? ['Requiere Aislamiento'] : (aislamiento === false ? ['Sin Precauciones'] : []))}
+                            value={Array.isArray(aislamiento) ? aislamiento.filter(a => a && a !== 'Sin Precauciones' && a !== 'Requiere Aislamiento') : []}
                             onChange={(val) => setAislamiento(val)}
                             placeholder="Seleccionar precauciones..."
                           />

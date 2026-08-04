@@ -70,18 +70,20 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
     especialidadTratante: Array.isArray(bed.especialidadTratante) ? bed.especialidadTratante : (bed.especialidadTratante ? [bed.especialidadTratante] : []),
     aislamiento: (() => {
       if (Array.isArray(bed.aislamiento)) {
-        return bed.aislamiento;
+        // Filtrar valores legacy
+        const cleaned = bed.aislamiento.filter(a => a && a !== 'Sin Precauciones' && a !== 'Requiere Aislamiento');
+        return cleaned;
       }
       if (bed.aislamiento === true) {
-        return ['Requiere Aislamiento'];
+        return ['Precaución de contacto'];
       }
-      if (bed.aislamiento === false || bed.aislamiento === 'Sin Precauciones') {
-        return ['Sin Precauciones'];
+      if (bed.aislamiento === false || bed.aislamiento === 'Sin Precauciones' || !bed.aislamiento) {
+        return [];
       }
       if (typeof bed.aislamiento === 'string') {
         return [bed.aislamiento];
       }
-      return ['Sin Precauciones'];
+      return [];
     })(),
     novedades: bed.novedades || [],
     destino: bed.destino || 'Cuidados Medios',
@@ -396,14 +398,15 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                     </div>
                     <MultiSearchableSelect
                       options={[
-                        { value: 'Precaución Estandar', label: 'Precaución Estandar' },
-                        { value: 'Aislamiento Protector', label: 'Aislamiento Protector' },
-                        { value: 'Precauciones de Gotitas', label: 'Precauciones de Gotitas' },
-                        { value: 'Precauciones Aéreas', label: 'Precauciones Aéreas' },
+                        { value: 'Precaución estándar', label: 'Precaución estándar' },
+                        { value: 'Precaución de contacto', label: 'Precaución de contacto' },
+                        { value: 'Precaución de gotitas', label: 'Precaución de gotitas' },
+                        { value: 'Precaución aérea', label: 'Precaución aérea' },
+                        { value: 'Aislamiento protector', label: 'Aislamiento protector' },
                       ]}
                       value={formData.aislamiento}
                       onChange={(val) => setFormData(prev => ({ ...prev, aislamiento: val }))}
-                      placeholder="Seleccionar..."
+                      placeholder="Seleccionar precaución..."
                     />
                   </div>
                 )}

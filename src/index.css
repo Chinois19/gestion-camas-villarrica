@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
-/* ═══════════════════════════════════════════════════════════════
-   ANTIGRAVITY DESIGN SYSTEM — Token Layer
-   Glassmorphism puro · Modo oscuro · Zero-gravity
-═══════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   ANTIGRAVITY DESIGN SYSTEM â€” Token Layer
+   Glassmorphism puro Â· Modo oscuro Â· Zero-gravity
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 :root {
   /* Base */
   --bg-void:        #05060a;
@@ -14,7 +14,7 @@
   --text-secondary: rgba(255, 255, 255, 0.45);
   --text-muted:     rgba(255, 255, 255, 0.22);
 
-  /* Glass layers — opacidades escalonadas */
+  /* Glass layers â€” opacidades escalonadas */
   --glass-0:        rgba(255, 255, 255, 0.02);  /* fondo base */
   --glass-1:        rgba(255, 255, 255, 0.04);  /* paneles */
   --glass-2:        rgba(255, 255, 255, 0.07);  /* tarjetas */
@@ -33,17 +33,19 @@
   --shadow-inset:   inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.2);
   --shadow-glow:    0 0 24px rgba(0, 212, 255, 0.18), 0 0 8px rgba(0, 212, 255, 0.08);
 
-  /* Acento — Electric Cyan exclusivo */
+  /* Acento â€” Electric Cyan exclusivo */
   --accent:         #00d4ff;
   --accent-dim:     rgba(0, 212, 255, 0.12);
   --accent-border:  rgba(0, 212, 255, 0.28);
   --accent-glow:    rgba(0, 212, 255, 0.20);
+  --color-warn:     #f59e0b;   /* ámbar/naranja para tiempos de espera */
+  --color-blocked:  #a855f7;   /* púrpura para camas bloqueadas */
 
-  /* Acento secundario — Violeta */
+  /* Acento secundario â€” Violeta */
   --violet:         rgba(139, 92, 246, 0.7);
   --violet-dim:     rgba(139, 92, 246, 0.08);
 
-  /* Estados clínicos */
+  /* Estados clÃ­nicos */
   --status-available: #22c55e;
   --status-occupied:  #ef4444;
   --status-cleaning:  #f59e0b;
@@ -53,7 +55,7 @@
   --blur-md: blur(16px);
   --blur-lg: blur(28px);
 
-  /* Tipografía */
+  /* TipografÃ­a */
   --font: 'Outfit', system-ui, -apple-system, sans-serif;
   --font-size-xs:   0.68rem;
   --font-size-sm:   0.8rem;
@@ -71,7 +73,7 @@
   --shadow-drop:    var(--shadow-float);
 }
 
-/* ── Reset ──────────────────────────────────────────────────── */
+/* â”€â”€ Reset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; }
@@ -100,7 +102,7 @@ body::before {
   pointer-events: none;
 }
 
-/* ── Theme Light Palette — Maximum Contrast ─────────────────── */
+/* â”€â”€ Theme Light Palette â€” Maximum Contrast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body.theme-light {
   --bg-void:        #b8cfe8;
   --bg-color:       #b8cfe8;
@@ -129,9 +131,11 @@ body.theme-light {
   --accent-dim:     rgba(0, 95, 138, 0.12);
   --accent-border:  rgba(0, 95, 138, 0.40);
   --accent-glow:    rgba(0, 174, 182, 0.28);
+  --color-warn:     #b45309;   /* ámbar oscuro, legible sobre fondo claro */
+  --color-blocked:  #7c3aed;   /* violeta, legible sobre fondo claro */
 
   --inset-bg:       rgba(0, 0, 0, 0.05);
-  /* Form and panel backgrounds — override dark-mode rgba(0,0,0,X) values */
+  /* Form and panel backgrounds â€” override dark-mode rgba(0,0,0,X) values */
   --panel-bg:       #ffffff;
   --form-inset:     #f2f4f7;
   --form-inset-alt: #e8eaed;
@@ -275,7 +279,7 @@ body.theme-light .modal-actions {
   border-top-color: rgba(18, 39, 71, 0.16) !important;
 }
 
-/* ── High-Contrast Bed Cards ─────────────────────────────────── */
+/* â”€â”€ High-Contrast Bed Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body.theme-light .bed-card {
   background: #ffffff !important;
   border: 2px solid rgba(18, 39, 71, 0.18) !important;
@@ -300,7 +304,7 @@ body.theme-light .bed-type-badge {
   font-weight: 700 !important;
 }
 
-/* ── Room Container ───────────────────────────────────────────── */
+/* â”€â”€ Room Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body.theme-light .room-container {
   background: #ffffff !important;
   border: 2px solid rgba(18, 39, 71, 0.16) !important;
@@ -317,7 +321,7 @@ body.theme-light .room-title {
   font-weight: 800 !important;
 }
 
-/* ── Sidebar ─────────────────────────────────────────────────── */
+/* â”€â”€ Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body.theme-light .sidebar .glass-panel,
 body.theme-light .sidebar-section {
   background: #ffffff !important;
@@ -331,7 +335,7 @@ body.theme-light .sidebar-title {
   font-size: 0.68rem !important;
   letter-spacing: 0.12em !important;
 }
-/* ── Sidebar buttons: neutral grey scale, NOT blue ───────────── */
+/* â”€â”€ Sidebar buttons: neutral grey scale, NOT blue â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body.theme-light .stack-btn {
   background: #f0f2f5 !important;
   border: 1.5px solid rgba(18, 39, 71, 0.18) !important;
@@ -382,7 +386,7 @@ body.theme-light .bed-status-toggle.active {
   border-color: #005f8a !important;
 }
 
-/* ── Selects / Dropdowns: white + dark border, NOT heavy blue ── */
+/* â”€â”€ Selects / Dropdowns: white + dark border, NOT heavy blue â”€â”€ */
 body.theme-light .glass-input,
 body.theme-light select,
 body.theme-light select.glass-input {
@@ -410,7 +414,7 @@ body.theme-light select.glass-input {
   background-position: right 14px center !important;
 }
 
-/* ── SolicitudForm light mode — convert dark rgba to grey ──────── */
+/* â”€â”€ SolicitudForm light mode â€” convert dark rgba to grey â”€â”€â”€â”€â”€â”€â”€â”€ */
 /* Override --inset-bg so GInput / GTextarea look grey not white-on-white */
 body.theme-light {
   --inset-bg: #f2f4f7;
@@ -424,7 +428,7 @@ body.theme-light [style*="rgba(10,18,30"] {
   border-color: rgba(18, 39, 71, 0.16) !important;
   box-shadow: 0 4px 16px rgba(6,16,31,0.10) !important;
 }
-/* Vital input boxes: dark grey in dark mode → light grey in light mode */
+/* Vital input boxes: dark grey in dark mode â†’ light grey in light mode */
 body.theme-light [style*="rgba(0,0,0,0.2"],
 body.theme-light [style*="rgba(0, 0, 0, 0.2"] {
   background: #f2f4f7 !important;
@@ -442,7 +446,7 @@ body.theme-light [style*="rgba(10,18,30,0.4"] {
   background: linear-gradient(135deg, #1a3a5c 0%, #0d2340 100%) !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
-/* FieldLabel — make uppercase labels dark not washed */
+/* FieldLabel â€” make uppercase labels dark not washed */
 body.theme-light [style*="text-muted"] {
   color: #2e4a6a !important;
 }
@@ -452,7 +456,7 @@ body.theme-light [style*="var(--text-secondary)"][style*="uppercase"] {
   font-weight: 800 !important;
 }
 
-/* ── Waiting list: grey tones NOT blue ───────────────────────── */
+/* â”€â”€ Waiting list: grey tones NOT blue â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body.theme-light .waiting-list-section .glass-panel {
   background: #ffffff !important;
   border: 2px solid rgba(18, 39, 71, 0.15) !important;
@@ -485,7 +489,7 @@ body.theme-light .summary-item .label {
   color: #1e3a5f !important;
 }
 
-/* ── Section/floor labels ────────────────────────────────────── */
+/* â”€â”€ Section/floor labels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body.theme-light .floor-label,
 body.theme-light .sector-label {
   color: #1e3a5f !important;
@@ -499,10 +503,571 @@ body.theme-light .text-gradient {
   background-clip: text;
 }
 
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   TEMA ZAFIRO â€” Azul ocÃ©ano premium
+   Azul profundo Â· Blanco hielo Â· Acentos Ã­ndigo vibrante
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+body.theme-emerald {
+  /* Base â€” fondos blanco hielo/azul muy pÃ¡lido */
+  --bg-void:        #eff6ff;
+  --bg-color:       #eff6ff;
 
-#root { display: flex; flex-direction: column; min-height: 100vh; }
+  /* Texto oscuro de alto contraste */
+  --text-primary:   #0f172a;
+  --text-secondary: #1e3a5f;
+  --text-muted:     #93c5fd;
 
-/* ── Glass Panel — clase base ───────────────────────────────── */
+  /* Glass â€” capas blancas con leve tono azul */
+  --glass-0:        rgba(255, 255, 255, 0.65);
+  --glass-1:        #ffffff;
+  --glass-2:        #eff6ff;
+  --glass-3:        #dbeafe;
+  --glass-4:        #bfdbfe;
+
+  /* Bordes */
+  --border-subtle:  rgba(30, 58, 95, 0.12);
+  --border-light:   rgba(30, 58, 95, 0.25);
+  --border-glow:    rgba(37, 99, 235, 0.45);
+
+  /* Sombras */
+  --shadow-float:   0 2px 10px rgba(15, 23, 42, 0.10), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-lift:    0 8px 28px rgba(15, 23, 42, 0.14), 0 3px 8px rgba(15, 23, 42, 0.09);
+  --shadow-high:    0 18px 50px rgba(15, 23, 42, 0.18), 0 6px 14px rgba(15, 23, 42, 0.11);
+  --shadow-inset:   inset 0 2px 5px rgba(15, 23, 42, 0.08);
+  --shadow-glow:    0 0 20px rgba(37, 99, 235, 0.28), 0 0 8px rgba(37, 99, 235, 0.14);
+
+  /* Acento â€” Azul Ã­ndigo vibrante */
+  --accent:         #2563eb;
+  --accent-dim:     rgba(37, 99, 235, 0.10);
+  --accent-border:  rgba(37, 99, 235, 0.38);
+  --accent-hover:   #1d4ed8;
+  --accent-glow:    rgba(37, 99, 235, 0.25);
+
+  /* Legados */
+  --glass-bg:       var(--glass-1);
+  --glass-border:   var(--border-subtle);
+  --glass-highlight:var(--glass-3);
+  --accent-color:   var(--accent);
+  --panel-bg:       #ffffff;
+  --inset-bg:       #eff6ff;
+  --shadow-drop:    var(--shadow-float);
+  --form-inset:     #eff6ff;
+  --form-inset-alt: #dbeafe;
+
+  background: linear-gradient(160deg, #eff6ff 0%, #dbeafe 60%, #e0e7ff 100%) !important;
+
+  /* Variables semánticas para componentes con colores funcionales */
+  --color-warn:    #3b82f6;   /* naranja → azul medio */
+  --color-caution: #60a5fa;   /* amarillo → azul claro */
+  --color-blocked: #2563eb;   /* púrpura → azul índigo */
+}
+
+body.theme-emerald::before { background: none; }
+
+/* ══ OVERRIDE GLOBAL: texto blanco → oscuro (fuera del header) ══
+   Captura los color: #fff hardcodeados en JSX que son ilegibles
+   sobre fondos blancos/azul pálido del tema Zafiro.
+   El header queda excluido porque sus hijos ya tienen color blanco
+   declarado con !important en las reglas de header más abajo.
+════════════════════════════════════════════════════════════════ */
+
+/* Regla base: todo el body en tema zafiro usa texto oscuro por defecto */
+body.theme-emerald { color: #0f172a; }
+
+/* Captura inline style="color: #fff" (y variantes) en el área de contenido */
+body.theme-emerald .glass-panel:not(header) [style*="color: #fff"],
+body.theme-emerald .glass-panel:not(header) [style*="color:#fff"],
+body.theme-emerald .glass-panel:not(header) [style*="color: white"],
+body.theme-emerald .glass-panel:not(header) [style*="color: rgb(255, 255, 255)"],
+body.theme-emerald .modal-content [style*="color: #fff"],
+body.theme-emerald .modal-content [style*="color:#fff"],
+body.theme-emerald .alert-card [style*="color: #fff"],
+body.theme-emerald .alert-card [style*="color:#fff"] {
+  color: #0f172a !important;
+}
+
+/* Títulos h2/h3/h4/h5 y strong/span con color blanco → azul marino */
+body.theme-emerald h1[style*="color: #fff"],
+body.theme-emerald h2[style*="color: #fff"],
+body.theme-emerald h3[style*="color: #fff"],
+body.theme-emerald h4[style*="color: #fff"],
+body.theme-emerald h5[style*="color: #fff"],
+body.theme-emerald span[style*="color: #fff"],
+body.theme-emerald strong[style*="color: #fff"],
+body.theme-emerald p[style*="color: #fff"] {
+  color: #0f172a !important;
+}
+
+/* Re-permitir blanco en el header y sus descendientes */
+body.theme-emerald header.glass-panel [style*="color: #fff"],
+body.theme-emerald header.glass-panel [style*="color:#fff"],
+body.theme-emerald header.glass-panel span,
+body.theme-emerald header.glass-panel strong,
+body.theme-emerald header.glass-panel h1,
+body.theme-emerald header.glass-panel h2,
+body.theme-emerald header.glass-panel h3,
+body.theme-emerald header.glass-panel h4 {
+  color: #ffffff !important;
+}
+
+/* Re-permitir blanco en headers de modal (gradiente azul oscuro) */
+body.theme-emerald .modal-header [style*="color: #fff"],
+body.theme-emerald .modal-header span,
+body.theme-emerald .modal-header h2,
+body.theme-emerald .modal-header h3,
+body.theme-emerald .modal-header p {
+  color: #ffffff !important;
+}
+
+/* Re-permitir blanco en las alert-cards de estado NEGRO/NARANJA (fondo oscuro) */
+body.theme-emerald .alert-card-negro [style*="color: #fff"],
+body.theme-emerald .alert-card-negro h3,
+body.theme-emerald .alert-card-naranja [style*="color: #fff"],
+body.theme-emerald .alert-card-naranja h3 {
+  color: #ffffff !important;
+}
+
+/* Alert cards NORMAL/AMARILLA — fondo claro, texto oscuro */
+body.theme-emerald .alert-card-normal h3,
+body.theme-emerald .alert-card-normal [style*="color: #fff"],
+body.theme-emerald .alert-card-amarilla h3,
+body.theme-emerald .alert-card-amarilla [style*="color: #fff"] {
+  color: #0f172a !important;
+}
+
+/* Texto secundario claro (--text-secondary sobrescrito a azul oscuro legible) */
+body.theme-emerald [style*="var(--text-secondary)"] { color: #1e3a5f !important; }
+body.theme-emerald [style*="color: var(--text-secondary)"] { color: #1e3a5f !important; }
+
+/* Números grandes de KPIs: usar azul vibrante */
+body.theme-emerald [style*="fontWeight: 800"][style*="color: #fff"],
+body.theme-emerald [style*="font-weight: 800"][style*="color: #fff"] {
+  color: #1d4ed8 !important;
+}
+
+/* â”€â”€ Header zafiro â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+body.theme-emerald header.glass-panel {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.20) !important;
+  box-shadow: 0 4px 20px rgba(29, 78, 216, 0.30) !important;
+}
+body.theme-emerald header.glass-panel .text-gradient {
+  background: none !important;
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+}
+body.theme-emerald header.glass-panel .icon-logo { color: #bfdbfe !important; }
+body.theme-emerald header.glass-panel .user-info span { color: #ffffff !important; }
+body.theme-emerald header.glass-panel .avatar {
+  background: rgba(255,255,255,0.20) !important;
+  border-color: rgba(255,255,255,0.30) !important;
+  color: #ffffff !important;
+}
+body.theme-emerald header.glass-panel .glass-button {
+  background: rgba(255,255,255,0.16) !important;
+  border-color: rgba(255,255,255,0.25) !important;
+  color: #ffffff !important;
+}
+body.theme-emerald header.glass-panel .glass-button:hover {
+  background: rgba(255,255,255,0.26) !important;
+  border-color: rgba(255,255,255,0.40) !important;
+}
+
+/* ── Navbar items sobre header azul — texto blanco ────────────── */
+body.theme-emerald .navbar-item,
+body.theme-emerald .navbar-group-header {
+  color: rgba(255,255,255,0.85) !important;
+  border-color: transparent !important;
+}
+body.theme-emerald .navbar-item-icon,
+body.theme-emerald .navbar-group-header .navbar-item-icon {
+  color: rgba(255,255,255,0.65) !important;
+}
+body.theme-emerald .navbar-item:hover,
+body.theme-emerald .navbar-group-header:hover,
+body.theme-emerald .navbar-group:hover .navbar-group-header {
+  color: #ffffff !important;
+  background: rgba(255,255,255,0.14) !important;
+  border-color: rgba(255,255,255,0.22) !important;
+}
+body.theme-emerald .navbar-item:hover .navbar-item-icon,
+body.theme-emerald .navbar-group-header:hover .navbar-item-icon {
+  color: #ffffff !important;
+}
+body.theme-emerald .navbar-item.active {
+  color: #ffffff !important;
+  background: rgba(255,255,255,0.20) !important;
+  border-color: rgba(255,255,255,0.40) !important;
+}
+body.theme-emerald .navbar-item.active .navbar-item-icon {
+  color: #ffffff !important;
+}
+
+/* ── Dropdown del navbar — fondo blanco, texto azul oscuro ───── */
+body.theme-emerald .navbar-dropdown {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(30,58,95,0.18) !important;
+  box-shadow: 0 12px 36px rgba(15,23,42,0.18) !important;
+}
+body.theme-emerald .navbar-dropdown .navbar-item {
+  color: #1e3a5f !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+body.theme-emerald .navbar-dropdown .navbar-item .navbar-item-icon {
+  color: #2563eb !important;
+}
+body.theme-emerald .navbar-dropdown .navbar-item:hover {
+  color: #0f172a !important;
+  background: #eff6ff !important;
+  border-color: transparent !important;
+}
+body.theme-emerald .navbar-dropdown .navbar-item:hover .navbar-item-icon {
+  color: #1d4ed8 !important;
+}
+
+
+/* ── InsightsDashboard — overrides tema Zafiro ───────────────── */
+body.theme-emerald .stats-badge-warning {
+  background: rgba(37, 99, 235, 0.10) !important;
+  border-color: rgba(37, 99, 235, 0.30) !important;
+  color: #1d4ed8 !important;
+}
+body.theme-emerald .stats-badge-success {
+  background: rgba(37, 99, 235, 0.12) !important;
+  border-color: rgba(37, 99, 235, 0.35) !important;
+  color: #2563eb !important;
+}
+body.theme-emerald .progress-bar-track {
+  background: rgba(30, 58, 95, 0.10) !important;
+}
+body.theme-emerald .progress-bar-fill {
+  background: #2563eb !important;
+}
+body.theme-emerald .alert-card-normal {
+  border: 1px solid rgba(37, 99, 235, 0.28) !important;
+  background: linear-gradient(135deg, rgba(37,99,235,0.07) 0%, rgba(15,23,42,0.03) 100%) !important;
+}
+body.theme-emerald .timeline-node {
+  background: #eff6ff !important;
+  border-color: rgba(37, 99, 235, 0.22) !important;
+  color: #1e3a5f !important;
+}
+body.theme-emerald .timeline-step.active .timeline-node {
+  border-color: #2563eb !important;
+  color: #2563eb !important;
+  box-shadow: 0 0 14px rgba(37,99,235,0.22) !important;
+}
+body.theme-emerald .timeline-container::before {
+  background: rgba(30, 58, 95, 0.10) !important;
+}
+
+/* â”€â”€ Ãrea de contenido principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+body.theme-emerald .main-layout > main,
+body.theme-emerald .main-layout > div[style*="flex: 1"],
+body.theme-emerald .app-container > div[style*="maxWidth: 1350"] {
+  background: #eff6ff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.10), 0 3px 10px rgba(15, 23, 42, 0.06);
+  border: 1.5px solid rgba(30, 58, 95, 0.12);
+  margin-top: 10px;
+
+  --text-primary:   #0f172a;
+  --text-secondary: #1e3a5f;
+  --text-muted:     #93c5fd;
+  --glass-0:        #eff6ff;
+  --glass-1:        #ffffff;
+  --glass-2:        #eff6ff;
+  --glass-3:        #dbeafe;
+  --glass-4:        #bfdbfe;
+  --border-subtle:  rgba(30, 58, 95, 0.12);
+  --border-light:   rgba(30, 58, 95, 0.25);
+  --shadow-float:   0 2px 10px rgba(15, 23, 42, 0.09), 0 1px 3px rgba(15, 23, 42, 0.05);
+  --shadow-lift:    0 8px 28px rgba(15, 23, 42, 0.13), 0 3px 8px rgba(15, 23, 42, 0.08);
+  --accent:         #2563eb;
+  --accent-dim:     rgba(37, 99, 235, 0.10);
+  --accent-border:  rgba(37, 99, 235, 0.35);
+  --inset-bg:       #eff6ff;
+  color: #0f172a;
+}
+
+/* â”€â”€ Modales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+body.theme-emerald .modal-content {
+  background: #ffffff !important;
+  box-shadow: 0 28px 72px rgba(30, 58, 95, 0.22) !important;
+  border: 2px solid rgba(30, 58, 95, 0.12) !important;
+}
+body.theme-emerald .modal-header {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  border-bottom: 2px solid rgba(30, 58, 95, 0.12) !important;
+  border-radius: 22px 22px 0 0 !important;
+}
+body.theme-emerald .modal-header h2,
+body.theme-emerald .modal-header h3,
+body.theme-emerald .modal-header span,
+body.theme-emerald .modal-header p {
+  color: #ffffff !important;
+}
+body.theme-emerald .modal-header .close-btn {
+  background: rgba(255,255,255,0.18) !important;
+  border-color: rgba(255,255,255,0.28) !important;
+  color: #ffffff !important;
+}
+body.theme-emerald .modal-header .close-btn:hover {
+  background: rgba(239,68,68,0.20) !important;
+  color: #ef4444 !important;
+}
+body.theme-emerald .modal-body { background: #f8faff !important; }
+body.theme-emerald .form-section {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(30, 58, 95, 0.14) !important;
+  box-shadow: 0 2px 10px rgba(30, 58, 95, 0.06) !important;
+}
+body.theme-emerald .modal-content .glass-panel {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(30, 58, 95, 0.14) !important;
+}
+body.theme-emerald .section-title {
+  color: #0f172a !important;
+  border-bottom-color: rgba(30, 58, 95, 0.14) !important;
+}
+body.theme-emerald .modal-actions {
+  border-top-color: rgba(30, 58, 95, 0.12) !important;
+}
+
+/* â”€â”€ Inputs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+body.theme-emerald input.glass-input,
+body.theme-emerald textarea.glass-input,
+body.theme-emerald .glass-input,
+body.theme-emerald select,
+body.theme-emerald select.glass-input {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(30, 58, 95, 0.30) !important;
+  color: #0f172a !important;
+  font-weight: 500 !important;
+}
+body.theme-emerald input.glass-input::placeholder,
+body.theme-emerald textarea.glass-input::placeholder { color: #93c5fd !important; }
+body.theme-emerald input.glass-input:focus,
+body.theme-emerald textarea.glass-input:focus,
+body.theme-emerald .glass-input:focus,
+body.theme-emerald select.glass-input:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+  outline: none !important;
+}
+body.theme-emerald select.glass-input option,
+body.theme-emerald select option {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+body.theme-emerald select.glass-input {
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D'http%3A//www.w3.org/2000/svg' width%3D'12' height%3D'12'%3E%3Cpath fill%3D'%23064e3b' d%3D'M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+}
+
+/* â”€â”€ Camas (Bed Cards) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+body.theme-emerald .bed-card {
+  background: #ffffff !important;
+  border: 2px solid rgba(30, 58, 95, 0.13) !important;
+  box-shadow: 0 4px 16px rgba(30, 58, 95, 0.09), 0 1px 4px rgba(30, 58, 95, 0.06) !important;
+}
+body.theme-emerald .bed-card:hover {
+  box-shadow: 0 10px 32px rgba(30, 58, 95, 0.16), 0 3px 8px rgba(30, 58, 95, 0.09) !important;
+  transform: translateY(-4px) !important;
+  border-color: rgba(37, 99, 235, 0.35) !important;
+}
+body.theme-emerald .bed-card .patient-name { color: #0f172a !important; font-weight: 700 !important; }
+body.theme-emerald .bed-card .patient-meta { color: #1e3a5f !important; }
+body.theme-emerald .bed-type-badge {
+  background: #dbeafe !important;
+  color: #0f172a !important;
+  border-color: rgba(30, 58, 95, 0.20) !important;
+  font-weight: 700 !important;
+}
+
+/* Droppable emerald */
+body.theme-emerald .droppable-over {
+  background: rgba(37, 99, 235, 0.10) !important;
+  border-color: rgba(37, 99, 235, 0.40) !important;
+  box-shadow: var(--shadow-float), 0 0 24px rgba(37, 99, 235, 0.20) !important;
+}
+body.theme-emerald .compatible-highlight {
+  border-color: rgba(37, 99, 235, 0.32) !important;
+  box-shadow: var(--shadow-float), 0 0 18px rgba(37, 99, 235, 0.18) !important;
+  animation: pulse-sapphire 2.5s ease-in-out infinite;
+}
+@keyframes pulse-sapphire {
+  0%, 100% { box-shadow: var(--shadow-float), 0 0 18px rgba(37, 99, 235, 0.15); }
+  50%       { box-shadow: var(--shadow-lift), 0 0 30px rgba(37, 99, 235, 0.30); }
+}
+
+/* â”€â”€ Habitaciones â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+body.theme-emerald .room-container {
+  background: #ffffff !important;
+  border: 2px solid rgba(30, 58, 95, 0.13) !important;
+  box-shadow: 0 6px 24px rgba(30, 58, 95, 0.10) !important;
+  border-radius: 16px !important;
+}
+body.theme-emerald .room-header {
+  background: linear-gradient(90deg, #dbeafe 0%, #bfdbfe 100%) !important;
+  border-bottom: 2px solid rgba(30, 58, 95, 0.12) !important;
+  border-radius: 16px 16px 0 0 !important;
+}
+body.theme-emerald .room-title { color: #0f172a !important; font-weight: 800 !important; }
+body.theme-emerald .floor-label,
+body.theme-emerald .sector-label { color: #1e3a5f !important; font-weight: 700 !important; }
+
+/* â”€â”€ Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+body.theme-emerald .sidebar .glass-panel,
+body.theme-emerald .sidebar-section {
+  background: #ffffff !important;
+  border: 2px solid rgba(30, 58, 95, 0.12) !important;
+  box-shadow: 0 8px 28px rgba(30, 58, 95, 0.10), 0 2px 6px rgba(30, 58, 95, 0.07) !important;
+  border-radius: 16px !important;
+}
+body.theme-emerald .sidebar-title { color: #1e3a5f !important; font-weight: 800 !important; font-size: 0.65rem !important; letter-spacing: 0.10em !important; }
+
+body.theme-emerald .stack-btn {
+  background: #eff6ff !important;
+  border: 1.5px solid rgba(30, 58, 95, 0.15) !important;
+  color: #1e3a5f !important;
+  font-weight: 600 !important;
+}
+body.theme-emerald .stack-btn:hover {
+  background: #dbeafe !important;
+  color: #0f172a !important;
+  border-color: rgba(37, 99, 235, 0.30) !important;
+}
+body.theme-emerald .stack-btn.active {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+}
+body.theme-emerald .toggle-btn {
+  background: #eff6ff !important;
+  border: 1.5px solid rgba(30, 58, 95, 0.14) !important;
+  color: #1e3a5f !important;
+  font-weight: 600 !important;
+}
+body.theme-emerald .toggle-btn:hover { background: #dbeafe !important; color: #0f172a !important; }
+body.theme-emerald .toggle-btn.active {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 12px rgba(37, 99, 235, 0.35) !important;
+}
+body.theme-emerald .status-filter-btn,
+body.theme-emerald .bed-status-toggle {
+  background: #eff6ff !important;
+  border: 1.5px solid rgba(30, 58, 95, 0.14) !important;
+  color: #1e3a5f !important;
+  font-weight: 600 !important;
+}
+body.theme-emerald .status-filter-btn.active,
+body.theme-emerald .bed-status-toggle.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+/* â”€â”€ Lista de espera â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+body.theme-emerald .waiting-list-section .glass-panel {
+  background: #ffffff !important;
+  border: 2px solid rgba(30, 58, 95, 0.12) !important;
+  box-shadow: 0 6px 24px rgba(30, 58, 95, 0.10) !important;
+  border-radius: 16px !important;
+}
+body.theme-emerald .waiting-card {
+  background: #eff6ff !important;
+  border: 1.5px solid rgba(30, 58, 95, 0.12) !important;
+}
+body.theme-emerald .waiting-card:hover {
+  background: #dbeafe !important;
+  box-shadow: 0 6px 20px rgba(30, 58, 95, 0.12) !important;
+  transform: translateY(-2px) translateX(-2px) !important;
+}
+body.theme-emerald .waiting-card.selected {
+  border-color: rgba(37, 99, 235, 0.40) !important;
+  background: rgba(37, 99, 235, 0.08) !important;
+  box-shadow: var(--shadow-float), 0 0 16px rgba(37, 99, 235, 0.18) !important;
+}
+body.theme-emerald .summary-item {
+  background: #eff6ff !important;
+  border: 1.5px solid rgba(30, 58, 95, 0.10) !important;
+}
+body.theme-emerald .summary-item:hover,
+body.theme-emerald .summary-item.active-filter {
+  background: rgba(37, 99, 235, 0.10) !important;
+  border-color: rgba(37, 99, 235, 0.30) !important;
+}
+body.theme-emerald .summary-item .count { color: #0f172a !important; }
+body.theme-emerald .summary-item .label { color: #1e3a5f !important; }
+
+/* â”€â”€ glass-button genÃ©rico â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+body.theme-emerald .glass-button {
+  background: #eff6ff !important;
+  border: 1.5px solid rgba(30, 58, 95, 0.18) !important;
+  color: #1e3a5f !important;
+}
+body.theme-emerald .glass-button:hover {
+  background: #dbeafe !important;
+  border-color: rgba(37, 99, 235, 0.32) !important;
+  color: #0f172a !important;
+}
+body.theme-emerald .glass-button.primary {
+  background: rgba(37, 99, 235, 0.12) !important;
+  border-color: rgba(37, 99, 235, 0.38) !important;
+  color: #2563eb !important;
+}
+body.theme-emerald .glass-button.primary:hover {
+  background: rgba(37, 99, 235, 0.20) !important;
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.25) !important;
+}
+
+/* â”€â”€ Gradiente de texto â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+body.theme-emerald .text-gradient {
+  background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* â”€â”€ Campos inline dark â†’ emerald â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+body.theme-emerald [style*="rgba(10, 18, 30"],
+body.theme-emerald [style*="rgba(10,18,30"],
+body.theme-emerald [style*="panel-bg"] {
+  background: #ffffff !important;
+  border-color: rgba(30, 58, 95, 0.14) !important;
+  box-shadow: 0 4px 16px rgba(30, 58, 95, 0.08) !important;
+}
+body.theme-emerald [style*="rgba(0,0,0,0.2"],
+body.theme-emerald [style*="rgba(0, 0, 0, 0.2"] {
+  background: #eff6ff !important;
+  border-color: rgba(30, 58, 95, 0.14) !important;
+}
+body.theme-emerald [style*="rgba(0,0,0,0.35"],
+body.theme-emerald [style*="rgba(0, 0, 0, 0.35"] {
+  background: #ffffff !important;
+  border-color: rgba(30, 58, 95, 0.18) !important;
+  color: #0f172a !important;
+}
+body.theme-emerald [style*="rgba(10, 18, 30, 0.4"],
+body.theme-emerald [style*="rgba(10,18,30,0.4"] {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  border-color: rgba(255,255,255,0.15) !important;
+}
+body.theme-emerald {
+  --inset-bg: #eff6ff;
+  --panel-bg: #ffffff;
+}
+
+
+
+/* â”€â”€ Glass Panel â€” clase base â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .glass-panel {
   background: var(--glass-1);
   backdrop-filter: var(--blur-md);
@@ -528,7 +1093,7 @@ body.theme-light .text-gradient {
   box-shadow: var(--shadow-lift);
 }
 
-/* ── Glass Button ───────────────────────────────────────────── */
+/* â”€â”€ Glass Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .glass-button {
   background: var(--glass-2);
   backdrop-filter: var(--blur-sm);
@@ -581,7 +1146,7 @@ body.theme-light .text-gradient {
   background: var(--glass-2);
 }
 
-/* ── Glass Input ────────────────────────────────────────────── */
+/* â”€â”€ Glass Input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .glass-input {
   background: var(--inset-bg);
   backdrop-filter: var(--blur-sm);
@@ -615,7 +1180,7 @@ select.glass-input option { background: #0d0f1a; color: var(--text-primary); }
 
 textarea.glass-input { resize: vertical; min-height: 80px; line-height: 1.5; }
 
-/* ── Form Labels ────────────────────────────────────────────── */
+/* â”€â”€ Form Labels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -629,7 +1194,7 @@ textarea.glass-input { resize: vertical; min-height: 80px; line-height: 1.5; }
   letter-spacing: 0.06em;
 }
 
-/* ── Text Gradient ──────────────────────────────────────────── */
+/* â”€â”€ Text Gradient â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .text-gradient {
   background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.55) 100%);
   -webkit-background-clip: text;
@@ -637,7 +1202,7 @@ textarea.glass-input { resize: vertical; min-height: 80px; line-height: 1.5; }
   background-clip: text;
 }
 
-/* ── Close button ───────────────────────────────────────────── */
+/* â”€â”€ Close button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .close-btn {
   background: var(--glass-2);
   border: 1px solid var(--border-subtle);
@@ -658,7 +1223,7 @@ textarea.glass-input { resize: vertical; min-height: 80px; line-height: 1.5; }
   color: #ef4444;
 }
 
-/* ── Modal ──────────────────────────────────────────────────── */
+/* â”€â”€ Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -723,7 +1288,7 @@ textarea.glass-input { resize: vertical; min-height: 80px; line-height: 1.5; }
   border-bottom: 1px solid var(--border-subtle);
 }
 
-/* ── Assignment Form ────────────────────────────────────────── */
+/* â”€â”€ Assignment Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .assignment-fields {
   display: flex;
   flex-direction: column;
@@ -736,7 +1301,7 @@ textarea.glass-input { resize: vertical; min-height: 80px; line-height: 1.5; }
   padding: 20px;
 }
 
-/* ── Severity Selector ──────────────────────────────────────── */
+/* â”€â”€ Severity Selector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .severity-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .severity-btn {
   padding: 10px;
@@ -755,7 +1320,7 @@ textarea.glass-input { resize: vertical; min-height: 80px; line-height: 1.5; }
 .severity-btn.active.s-2 { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.35); color: #f59e0b; }
 .severity-btn.active.s-3 { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.35); color: #ef4444; }
 
-/* ── LOS Progress Bar ───────────────────────────────────────── */
+/* â”€â”€ LOS Progress Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .los-progress-bar { margin-top: 10px; width: 100%; }
 .los-progress-bar .progress-fill {
   height: 3px;
@@ -771,7 +1336,7 @@ textarea.glass-input { resize: vertical; min-height: 80px; line-height: 1.5; }
   line-height: 1.3;
 }
 
-/* ── Tooltips ───────────────────────────────────────────────── */
+/* â”€â”€ Tooltips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .has-tooltip { position: relative; }
 .custom-tooltip {
   position: absolute;
@@ -798,7 +1363,7 @@ textarea.glass-input { resize: vertical; min-height: 80px; line-height: 1.5; }
 }
 .has-tooltip:hover .custom-tooltip { opacity: 1; visibility: visible; }
 
-/* ── Light Theme ────────────────────────────────────────────── */
+/* â”€â”€ Light Theme â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body.theme-light {
   --bg-color: #eef0f5;
   --bg-void: #e4e6ed;
@@ -846,19 +1411,19 @@ body.theme-light .text-gradient {
   background-clip: text;
 }
 
-/* ── Scrollbar ──────────────────────────────────────────────── */
+/* â”€â”€ Scrollbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
 ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 
-/* Para Firefox y estandarización global */
+/* Para Firefox y estandarizaciÃ³n global */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--border-light) transparent;
 }
 
-/* ── Utility ────────────────────────────────────────────────── */
+/* â”€â”€ Utility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .floor-label {
   font-size: 0.7rem;
   font-weight: 700;
@@ -878,7 +1443,7 @@ body.theme-light .text-gradient {
   padding-left: 4px;
 }
 
-/* ── Custom Grd Modal Header ───────────────────────────────── */
+/* â”€â”€ Custom Grd Modal Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body.theme-light .modal-header.grd-modal-header,
 body.theme-dark .modal-header.grd-modal-header,
 .grd-modal-header {
@@ -886,7 +1451,7 @@ body.theme-dark .modal-header.grd-modal-header,
   border-bottom: 1.5px solid rgba(255, 255, 255, 0.15) !important;
 }
 
-/* ── MultiSearchableSelect Chips ────────────────────────────── */
+/* â”€â”€ MultiSearchableSelect Chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .select-chip {
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
@@ -915,7 +1480,7 @@ body.theme-light .select-chip.principal {
   border: 1px solid rgba(0, 95, 138, 0.35) !important;
 }
 
-/* ── Outlier Warning Banner ──────────────────────────────────── */
+/* â”€â”€ Outlier Warning Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .outlier-warning {
   padding: 10px 14px;
   border-radius: 8px;
@@ -937,7 +1502,7 @@ body.theme-light .outlier-warning {
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.08) !important;
 }
 
-/* ── Severity Button Light Mode Overrides ───────────────────── */
+/* â”€â”€ Severity Button Light Mode Overrides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body.theme-light .severity-btn {
   background: #ffffff !important;
   border: 1.5px solid rgba(18, 39, 71, 0.45) !important;
@@ -959,7 +1524,7 @@ body.theme-light .severity-btn.active.s-3 {
   color: #b91c1c !important;
 }
 
-/* ── Discharge Modal Header (Theme Specific) ───────────────── */
+/* â”€â”€ Discharge Modal Header (Theme Specific) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body.theme-light .modal-header.discharge-modal-header {
   background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
   border-bottom: 1.5px solid rgba(255, 255, 255, 0.15) !important;
@@ -1001,7 +1566,7 @@ body.theme-dark .discharge-modal-header .header-avatar {
   color: var(--accent-color) !important;
 }
 
-/* ── View Interconsulta Modal ──────────────────────────────── */
+/* â”€â”€ View Interconsulta Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .ic-view-overlay {
   position: fixed;
   top: 0;
@@ -1053,7 +1618,7 @@ body.theme-dark .discharge-modal-header .header-avatar {
 
 /* Light mode specific header title override */
 body.theme-light .ic-view-title {
-  color: #4c1d95 !important; /* El color más oscuro de los violetas */
+  color: #4c1d95 !important; /* El color mÃ¡s oscuro de los violetas */
 }
 
 .ic-view-badge-urgente {
@@ -1285,3 +1850,4 @@ body.theme-light .ic-view-footer {
   background: #f8fafc;
   border-top: 1px solid rgba(18, 39, 71, 0.12);
 }
+
