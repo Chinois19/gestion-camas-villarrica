@@ -1642,8 +1642,8 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
             </div>
 
             {/* SVG DYNAMIC LINE CHART */}
-            <div style={{ position: 'relative', width: '100%', height: '220px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid var(--border-subtle)', padding: '16px' }}>
-              <svg width="100%" height="100%" viewBox="0 0 800 180" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
+            <div style={{ position: 'relative', width: '100%', height: '240px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid var(--border-subtle)', padding: '16px 16px 36px 16px' }}>
+              <svg width="100%" height="100%" viewBox="0 0 800 190" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
                 {/* Horizontal Risk Level Threshold Lines */}
                 <line x1="0" y1="36" x2="800" y2="36" stroke="#ef4444" strokeWidth="1" strokeDasharray="4 4" opacity="0.3" />
                 <text x="795" y="32" fill="#ef4444" fontSize="10" textAnchor="end" fontWeight="700">80 pts (Estado Negro)</text>
@@ -1674,13 +1674,20 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
                   );
                 })}
 
-                {/* Point Nodes */}
+                {/* Point Nodes & Clickable X-Axis Labels */}
                 {temporalAnalyticsData.points.map((p, idx, arr) => {
                   const cx = (idx / (arr.length - 1)) * 780 + 10;
                   const cy = 170 - (p.score / 100) * 150;
 
+                  const handleAxisClick = () => {
+                    if (temporalGranularity === 'year') setTemporalGranularity('month');
+                    else if (temporalGranularity === 'month') setTemporalGranularity('day');
+                    else if (temporalGranularity === 'day') setTemporalGranularity('hours');
+                    else setTemporalGranularity('day');
+                  };
+
                   return (
-                    <g key={`pt-${idx}`} style={{ cursor: 'pointer' }}>
+                    <g key={`pt-${idx}`} style={{ cursor: 'pointer' }} onClick={handleAxisClick}>
                       <circle 
                         cx={cx} 
                         cy={cy} 
@@ -1699,19 +1706,84 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
                       >
                         {p.score}
                       </text>
-                      <text 
-                        x={cx} 
-                        y="178" 
-                        fill="var(--text-secondary)" 
-                        fontSize="9" 
-                        textAnchor="middle"
-                      >
-                        {p.label}
-                      </text>
+                      
+                      {/* Clickable X-Axis Label Node */}
+                      <g className="x-axis-label-group">
+                        <rect 
+                          x={cx - 14} 
+                          y="166" 
+                          width="28" 
+                          height="18" 
+                          rx="4" 
+                          fill="rgba(255,255,255,0.06)" 
+                          stroke="rgba(255,255,255,0.15)"
+                          strokeWidth="1"
+                        />
+                        <text 
+                          x={cx} 
+                          y="178" 
+                          fill="#38bdf8" 
+                          fontSize="9" 
+                          textAnchor="middle"
+                          fontWeight="700"
+                        >
+                          {p.label}
+                        </text>
+                      </g>
                     </g>
                   );
                 })}
               </svg>
+
+              {/* INTERACTIVE COLLAPSE / EXPAND AXIS BAR */}
+              <div style={{
+                position: 'absolute',
+                bottom: '6px',
+                left: '16px',
+                right: '16px',
+                display: 'flex',
+                justify: 'space-between',
+                alignItems: 'center',
+                background: 'rgba(0,0,0,0.4)',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                borderRadius: '8px',
+                padding: '4px 12px',
+                fontSize: '0.75rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 700 }}>
+                  <Clock size={13} />
+                  <span>Eje X ({temporalGranularity === 'year' ? 'AÑOS / MESES' : temporalGranularity === 'month' ? 'DÍAS DE AGOSTO' : temporalGranularity === 'day' ? 'DÍAS SEMANA' : 'HORAS 00:00 - 23:00'})</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 400 }}>(Haz clic en las etiquetas del eje X para alternar nivel)</span>
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button
+                    onClick={() => {
+                      if (temporalGranularity === 'hours') setTemporalGranularity('day');
+                      else if (temporalGranularity === 'day') setTemporalGranularity('month');
+                      else if (temporalGranularity === 'month') setTemporalGranularity('year');
+                    }}
+                    disabled={temporalGranularity === 'year'}
+                    className="glass-button secondary"
+                    style={{ fontSize: '0.72rem', padding: '3px 10px', opacity: temporalGranularity === 'year' ? 0.4 : 1, display: 'flex', alignItems: 'center', gap: 4 }}
+                  >
+                    <span>➖ Colapsar Nivel</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (temporalGranularity === 'year') setTemporalGranularity('month');
+                      else if (temporalGranularity === 'month') setTemporalGranularity('day');
+                      else if (temporalGranularity === 'day') setTemporalGranularity('hours');
+                    }}
+                    disabled={temporalGranularity === 'hours'}
+                    className="glass-button primary"
+                    style={{ fontSize: '0.72rem', padding: '3px 10px', opacity: temporalGranularity === 'hours' ? 0.4 : 1, display: 'flex', alignItems: 'center', gap: 4 }}
+                  >
+                    <span>➕ Descolapsar / Agrupar</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* STACKED BAR CHART FOR BED STATE DISTRIBUTION */}
