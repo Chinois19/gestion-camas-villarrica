@@ -262,7 +262,7 @@ function App() {
     setCurrentView('solicitud');
   };
 
-  const handleAddNewPatient = (newPatient) => {
+  const handleAddNewPatient = async (newPatient) => {
     const cleanRut = (rut) => (rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
     const newRut = cleanRut(newPatient.rut);
 
@@ -271,7 +271,7 @@ function App() {
       const duplicateInWaiting = waitingList.find(p => cleanRut(p.rut) === newRut);
       if (duplicateInWaiting) {
         alert(`⚠️ PACIENTE DUPLICADO\n\n${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra en la lista de espera con el ticket ${duplicateInWaiting.ticket || duplicateInWaiting.id}.\n\nNo es posible ingresar el mismo paciente dos veces.`);
-        return;
+        return false;
       }
 
       // Verificar si ya está acostado
@@ -295,11 +295,12 @@ function App() {
       }
       if (foundInBed) {
         alert(`⚠️ PACIENTE YA ACOSTADO\n\n${newPatient.name} (RUT: ${newPatient.rut}) ya figura como paciente acostado en ${bedInfo}.\n\nNo es posible ingresar a lista de espera a un paciente que ya se encuentra hospitalizado.`);
-        return;
+        return false;
       }
     }
 
-    setWaitingList(prev => [newPatient, ...prev]);
+    const res = await setWaitingList(prev => [newPatient, ...prev]);
+    return res !== false;
   };
 
   // Pending counts for nav badges
@@ -347,17 +348,18 @@ function App() {
     return (
       <div className="app-container" style={{ padding: '24px 0', minHeight: '100vh', overflowY: 'auto' }}>
         <SolicitudForm
-          onSubmit={(newPatient) => {
+          onSubmit={async (newPatient) => {
             const cleanRut = (rut) => (rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
             const newRut = cleanRut(newPatient.rut);
             if (newRut) {
               const dup = waitingList.find(p => cleanRut(p.rut) === newRut);
               if (dup) {
                 alert(`⚠️ PACIENTE DUPLICADO\n\n${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra en la lista de espera.\n\nNo es posible ingresar el mismo paciente dos veces.`);
-                return;
+                return false;
               }
             }
-            setWaitingList(prev => [newPatient, ...prev]);
+            const res = await setWaitingList(prev => [newPatient, ...prev]);
+            return res !== false;
           }}
           currentUser={{ name: "Usuario Remoto (Web)", role: "public", username: "public" }}
         />
@@ -504,11 +506,15 @@ function App() {
           viewingPatient={viewingPatient}
           currentUser={currentUser}
           onRequestIC={() => setRequestingWaitingIC(editingPatient || viewingPatient)}
-          onUpdatePatient={(updated) => {
-            setWaitingList(prev => prev.map(p => p.id === updated.id ? updated : p));
-            setEditingPatient(null);
-            setViewingPatient(null);
-            setCurrentView('dashboard');
+          onUpdatePatient={async (updated) => {
+            const res = await setWaitingList(prev => prev.map(p => p.id === updated.id ? updated : p));
+            if (res !== false) {
+              setEditingPatient(null);
+              setViewingPatient(null);
+              setCurrentView('dashboard');
+              return true;
+            }
+            return false;
           }}
           onClose={() => {
             setEditingPatient(null);

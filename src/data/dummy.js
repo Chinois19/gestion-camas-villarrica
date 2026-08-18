@@ -15,6 +15,8 @@ const RAW_DUMMY_DATA = {
           { id: '8', type: 'UTI', status: 'occupied', patient: 'Iris Antipichun Salas', info: 'Transición', tag: 'UTI' },
           { id: '9', type: 'UTI', status: 'cleaning', patient: null, info: 'Aseo concurrente', tag: 'UTI' },
           { id: '10', type: 'UTI', status: 'available', patient: null, info: null, tag: 'UTI' },
+          { id: '11', type: 'UTI', status: 'occupied', patient: 'Marcelo Fuentes Castro', info: 'Estable', tag: 'UTI' },
+          { id: '12', type: 'UTI', status: 'occupied', patient: 'Elena Sepulveda Rios', info: 'Monitoreo', tag: 'UTI' },
         ]
       }
     ],
@@ -230,7 +232,16 @@ const RAW_DUMMY_DATA = {
         ]
       }
     ],
-    oriente: []
+    oriente: [
+      { roomId: '411', roomType: 'Oriente', beds: [{ id: '1', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '2', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '3', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '4', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }] },
+      { roomId: '412', roomType: 'Oriente', beds: [{ id: '1', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '2', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '3', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '4', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }] },
+      { roomId: '413', roomType: 'Oriente', beds: [{ id: '1', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '2', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '3', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '4', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }] },
+      { roomId: '414', roomType: 'Oriente', beds: [{ id: '1', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '2', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '3', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '4', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }] },
+      { roomId: '415', roomType: 'Oriente', beds: [{ id: '1', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '2', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '3', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '4', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }] },
+      { roomId: '416', roomType: 'Oriente', beds: [{ id: '1', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '2', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '3', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '4', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }] },
+      { roomId: '417', roomType: 'Oriente', beds: [{ id: '1', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '2', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '3', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '4', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }] },
+      { roomId: '418', roomType: 'Oriente', beds: [{ id: '1', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '2', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '3', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }, { id: '4', type: 'Cuidados medios', status: 'available', tag: 'Cuidados Medios' }] }
+    ]
   }
 };
 

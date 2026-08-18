@@ -233,18 +233,28 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
       });
     }
 
-    // Escritura directa con setDoc — más rápido que runTransaction (evita round-trip de lectura).
-    // Los checks de integridad arriba ya validan con datos locales frescos del onSnapshot.
-    try {
-      await setDoc(docRef, { data: localNewData });
-      return true;
-    } catch (writeError) {
-      console.error(`[useFirebaseSync] Error al sincronizar ${documentId}:`, writeError);
-      // Revert local state on critical failure
-      setData(currentData);
-      dataRef.current = currentData;
-      return false;
+    // Escritura con reintentos automáticos (máximo 3 intentos) para garantizar la persistencia
+    let attempts = 0;
+    let writeSuccess = false;
+    while (attempts < 3 && !writeSuccess) {
+      try {
+        attempts++;
+        await setDoc(docRef, { data: localNewData });
+        writeSuccess = true;
+      } catch (err) {
+        console.warn(`[useFirebaseSync] ⚠️ Reintento de escritura ${attempts}/3 para "${documentId}":`, err);
+        if (attempts >= 3) {
+          console.error(`[useFirebaseSync] ❌ Escritura fallida definitivamente tras 3 intentos en ${documentId}:`, err);
+          // Revert local state on critical failure
+          setData(currentData);
+          dataRef.current = currentData;
+          return false;
+        }
+        // Esperar 500ms * número de intento antes de reintentar
+        await new Promise(res => setTimeout(res, 500 * attempts));
+      }
     }
+    return true;
   }, [collectionName, documentId]);
 
 

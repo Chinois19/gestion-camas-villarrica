@@ -9,6 +9,7 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
   const [activeTab, setActiveTab] = useState('summary'); // summary, traceability, audit
   const [auditFilter, setAuditFilter] = useState('all'); // all, long_stay, waiting_risk, blocked
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSaturationModal, setShowSaturationModal] = useState(false);
 
   // 1. CALCULATE CORE STATS FROM BEDS DATA & WAITING LIST
   const stats = useMemo(() => {
@@ -705,17 +706,38 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', fontWeight: 600 }}>Estado Clínico del Establecimiento</span>
-                  <span style={{ 
-                    fontSize: '0.85rem', 
-                    padding: '4px 10px', 
-                    borderRadius: '8px', 
-                    fontWeight: 700,
-                    background: 'rgba(0,0,0,0.3)',
-                    border: '1px solid var(--border-subtle)',
-                    color: '#fff'
-                  }}>
-                    Índice de Alerta: {stats.alertScore} / 100
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowSaturationModal(true)}
+                      style={{
+                        background: 'rgba(56, 189, 248, 0.15)',
+                        border: '1px solid rgba(56, 189, 248, 0.4)',
+                        color: '#38bdf8',
+                        padding: '4px 10px',
+                        borderRadius: '8px',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}
+                    >
+                      <AlertCircle size={14} /> ℹ️ Definición e Índice de Saturación
+                    </button>
+                    <span style={{ 
+                      fontSize: '0.85rem', 
+                      padding: '4px 10px', 
+                      borderRadius: '8px', 
+                      fontWeight: 700,
+                      background: 'rgba(0,0,0,0.3)',
+                      border: '1px solid var(--border-subtle)',
+                      color: '#fff'
+                    }}>
+                      Índice de Alerta: {stats.alertScore} / 100
+                    </span>
+                  </div>
                 </div>
                 
                 <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '4px', color: '#fff' }}>
@@ -1166,6 +1188,143 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
             </table>
           </div>
 
+        </div>
+      )}
+
+      {/* MODAL DEFINICIÓN E ÍNDICE DE SATURACIÓN */}
+      {showSaturationModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)',
+          zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }}>
+          <div className="glass-panel" style={{
+            maxWidth: '750px', width: '100%', maxHeight: '85vh', overflowY: 'auto',
+            background: 'var(--panel-bg, #0f172a)', border: '1px solid var(--border-light, #334155)',
+            borderRadius: '20px', padding: '28px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', position: 'relative'
+          }}>
+            <button
+              onClick={() => setShowSaturationModal(false)}
+              style={{
+                position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,0.1)',
+                border: 'none', color: '#fff', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
+                fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >
+              ✕
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ padding: 10, borderRadius: 12, background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}>
+                <Activity size={24} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff', margin: 0 }}>
+                  Definición e Índice de Saturación Hospitalaria
+                </h3>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  Metodología de cálculo y categorización de alertas del establecimiento
+                </p>
+              </div>
+            </div>
+
+            <hr style={{ borderColor: 'var(--border-subtle, rgba(255,255,255,0.1))', margin: '16px 0' }} />
+
+            {/* 1. DEFINICIÓN */}
+            <div style={{ marginBottom: 20 }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#38bdf8', marginBottom: 6 }}>
+                1. ¿Qué es el Indicador de Saturación?
+              </h4>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.5, margin: 0 }}>
+                El <strong>Índice de Alerta de Saturación (0 a 100 Puntos)</strong> mide la tensión asistencial global del establecimiento. No se limita al porcentaje de camas ocupadas, sino que evalúa de forma dinámica la relación entre la oferta de camas activas, la demanda reprimida en lista de espera y las demoras críticas de acueste.
+              </p>
+            </div>
+
+            {/* 2. CÓMO SE CALCULA */}
+            <div style={{ marginBottom: 20 }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#38bdf8', marginBottom: 8 }}>
+                2. ¿Cómo se calcula? (Ponderación por Factores)
+              </h4>
+              <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 12, padding: '14px', border: '1px solid var(--border-subtle)' }}>
+                <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.83rem', color: 'var(--text-primary)' }}>
+                  <li>
+                    <strong>Ocupación Global (Hasta 55 pts + Bonificación):</strong> % Ocupación Camas Activas x 0.55. Se suman +10 pts si supera 85% y otros +10 pts si supera 95%.
+                  </li>
+                  <li>
+                    <strong>Cuidados Críticos / UPC (Hasta 20 pts):</strong> +10 pts si UPC supera 95% de ocupación; +10 pts si existen pacientes esperando cama UCI/UTI sin disponibilidad.
+                  </li>
+                  <li>
+                    <strong>Cuellos de Botella en Espera (Hasta 15 pts):</strong> +10 pts si hay pacientes con &gt;24 hrs de espera de acueste; +5 pts si hay déficit acumulado de camas.
+                  </li>
+                  <li>
+                    <strong>Inhabilitación de Camas (Hasta 5 pts):</strong> +5 pts si &gt;10% del total de camas hospitalarias están inhabilitadas/bloqueadas.
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 3. CATEGORÍAS Y UMBRALES */}
+            <div style={{ marginBottom: 16 }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#38bdf8', marginBottom: 8 }}>
+                3. Categorías del Índice según Niveles de Saturación
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                
+                <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontWeight: 800, color: '#22c55e', fontSize: '0.88rem' }}>✅ ESTADO OPERATIVO NORMAL</span>
+                    <span style={{ fontSize: '0.78rem', background: 'rgba(34, 197, 94, 0.2)', padding: '2px 8px', borderRadius: 6, color: '#22c55e', fontWeight: 700 }}>Puntaje &lt; 35 pts | Ocupación &lt; 85%</span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                    Capacidad operativa óptima y flujo equilibrado entre ingresos y egresos. Operación estándar.
+                  </p>
+                </div>
+
+                <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontWeight: 800, color: '#eab308', fontSize: '0.88rem' }}>⚠️ ALERTA PREVENTIVA AMARILLA</span>
+                    <span style={{ fontSize: '0.78rem', background: 'rgba(234, 179, 8, 0.2)', padding: '2px 8px', borderRadius: 6, color: '#eab308', fontWeight: 700 }}>Puntaje 35 - 59 pts</span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                    Carga operacional moderada. Se aconseja agilizar altas médicas, revisar candidatos a Hospitalización Domiciliaria (HODOM) y dar seguimiento al tiempo de aseo de camas.
+                  </p>
+                </div>
+
+                <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.3)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontWeight: 800, color: '#f97316', fontSize: '0.88rem' }}>⚡ ALERTA OPERATIVA NARANJA</span>
+                    <span style={{ fontSize: '0.78rem', background: 'rgba(249, 115, 22, 0.2)', padding: '2px 8px', borderRadius: 6, color: '#f97316', fontWeight: 700 }}>Puntaje 60 - 79 pts | Ocupación ≥ 85%</span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                    Saturación alta. Riesgo inminente de indisponibilidad ante emergencias complejas. Priorizar egresos matutinos y acelerar el tiempo de aseo de camas (turnaround).
+                  </p>
+                </div>
+
+                <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontWeight: 800, color: '#ef4444', fontSize: '0.88rem' }}>⚠️ ESTADO NEGRO (Saturación Extrema)</span>
+                    <span style={{ fontSize: '0.78rem', background: 'rgba(239, 68, 68, 0.25)', padding: '2px 8px', borderRadius: 6, color: '#ef4444', fontWeight: 700 }}>Puntaje ≥ 80 pts | Ocupación ≥ 95%</span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                    Bloqueo crítico de flujo hospitalario. Imposibilidad de absorber demandas vitales. Requiere activar egresos exprés (HODOM), derivaciones secundarias UGCC y posponer ingresos selectivos no urgentes.
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
+              <button
+                type="button"
+                className="glass-button primary"
+                onClick={() => setShowSaturationModal(false)}
+                style={{ padding: '8px 20px', fontSize: '0.85rem' }}
+              >
+                Entendido
+              </button>
+            </div>
+
+          </div>
         </div>
       )}
 

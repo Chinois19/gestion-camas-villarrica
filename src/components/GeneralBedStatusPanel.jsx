@@ -1,9 +1,35 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Bed, Ban } from 'lucide-react';
 import './GeneralBedStatusPanel.css';
 
 export default function GeneralBedStatusPanel({ bedsData }) {
   
+  const counts = useMemo(() => {
+    let occupied = 0;
+    let cleaning = 0;
+    let available = 0;
+    let blocked = 0;
+    let totalHabilitadas = 0;
+
+    if (bedsData) {
+      Object.keys(bedsData).forEach(floor => {
+        Object.keys(bedsData[floor] || {}).forEach(sector => {
+          (bedsData[floor][sector] || []).forEach(room => {
+            (room.beds || []).forEach(bed => {
+              totalHabilitadas++;
+              if (bed.status === 'occupied' || bed.status === 'pending_hodom') occupied++;
+              else if (bed.status === 'cleaning') cleaning++;
+              else if (bed.status === 'blocked' || bed.status === 'inhabilitada') blocked++;
+              else available++;
+            });
+          });
+        });
+      });
+    }
+
+    return { occupied, cleaning, available, blocked, totalHabilitadas };
+  }, [bedsData]);
+
   const getBedColorClass = (status) => {
     switch(status) {
       case 'occupied': return 'occupied-color';
@@ -27,24 +53,30 @@ export default function GeneralBedStatusPanel({ bedsData }) {
 
   return (
     <div className="general-status-panel animate-fade-in">
-      <div className="general-status-header glass-panel">
-        <h2 className="text-gradient" style={{ fontSize: '1.8rem', marginBottom: '16px' }}>Resumen Hospital</h2>
-        <div className="status-legend">
-          <div className="legend-item">
+      <div className="general-status-header glass-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', padding: '8px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2 className="text-gradient" style={{ fontSize: '1.3rem', margin: 0, fontWeight: 800 }}>Resumen Hospital</h2>
+          <span style={{ background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.4)', color: '#38bdf8', padding: '3px 10px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 800 }}>
+            {counts.totalHabilitadas} / 125 Camas en App
+          </span>
+        </div>
+
+        <div className="status-legend" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+          <div className="legend-item" style={{ background: 'rgba(234, 179, 8, 0.15)', border: '1px solid rgba(234, 179, 8, 0.4)', padding: '3px 10px', borderRadius: '10px', fontWeight: 700, fontSize: '0.8rem', color: '#eab308' }}>
             <span className="legend-color occupied-color"></span>
-            <span>Ocupada "Amarillo"</span>
+            <span>Ocupadas: <strong>{counts.occupied}</strong></span>
           </div>
-          <div className="legend-item">
+          <div className="legend-item" style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', padding: '3px 10px', borderRadius: '10px', fontWeight: 700, fontSize: '0.8rem', color: '#ef4444' }}>
             <span className="legend-color cleaning-color"></span>
-            <span>En Aseo "Rojo"</span>
+            <span>En Aseo: <strong>{counts.cleaning}</strong></span>
           </div>
-          <div className="legend-item">
+          <div className="legend-item" style={{ background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.4)', padding: '3px 10px', borderRadius: '10px', fontWeight: 700, fontSize: '0.8rem', color: '#22c55e' }}>
             <span className="legend-color available-color"></span>
-            <span>Disponible "Verde"</span>
+            <span>Disponibles: <strong>{counts.available}</strong></span>
           </div>
-          <div className="legend-item">
+          <div className="legend-item" style={{ background: 'rgba(148, 163, 184, 0.15)', border: '1px solid rgba(148, 163, 184, 0.4)', padding: '3px 10px', borderRadius: '10px', fontWeight: 700, fontSize: '0.8rem', color: '#94a3b8' }}>
             <span className="legend-color blocked-color"></span>
-            <span>Bloqueada "Gris"</span>
+            <span>Bloqueadas: <strong>{counts.blocked}</strong></span>
           </div>
         </div>
       </div>
@@ -64,10 +96,31 @@ export default function GeneralBedStatusPanel({ bedsData }) {
               const hasRooms = sectorsOrder.some(s => floorData[s] && floorData[s].length > 0);
               if (!hasRooms) return null;
 
+              // Calculate floor level stats
+              let fTotal = 0, fOccupied = 0, fAvailable = 0, fCleaning = 0, fBlocked = 0;
+              sectorsOrder.forEach(s => {
+                (floorData[s] || []).forEach(r => {
+                  (r.beds || []).forEach(b => {
+                    fTotal++;
+                    if (b.status === 'occupied' || b.status === 'pending_hodom') fOccupied++;
+                    else if (b.status === 'cleaning') fCleaning++;
+                    else if (b.status === 'blocked' || b.status === 'inhabilitada') fBlocked++;
+                    else fAvailable++;
+                  });
+                });
+              });
+
               return (
                 <div key={floorKey} className="floor-row">
-                  <div className="floor-title-container">
+                  <div className="floor-title-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 className="floor-title">{getFloorName(floorKey)}</h3>
+                    <div style={{ display: 'flex', gap: '8px', fontSize: '0.72rem', fontWeight: 700 }}>
+                      <span style={{ color: '#eab308' }}>🔴 {fOccupied} Ocupadas</span>
+                      <span style={{ color: '#22c55e' }}>🟢 {fAvailable} Disp.</span>
+                      {fCleaning > 0 && <span style={{ color: '#ef4444' }}>🟡 {fCleaning} Aseo</span>}
+                      {fBlocked > 0 && <span style={{ color: '#94a3b8' }}>🔘 {fBlocked} Bloq.</span>}
+                      <span style={{ color: 'var(--text-secondary)', opacity: 0.8 }}>({fTotal} Camas)</span>
+                    </div>
                   </div>
                   
                   <div className="sectors-wrapper">

@@ -259,6 +259,8 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   const isEditMode = !!editingPatient;
   const isNewMode = !editingPatient && !viewingPatient;
   const [submitted, setSubmitted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   // Superadmin: campos editables de fecha/hora para ingresos retroactivos
   const getInitialDateTime = () => {
@@ -484,9 +486,10 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     setEvolNote('');
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isViewMode) return;
+    if (isViewMode || isSaving) return;
+    setSaveError(null);
 
     const missingFields = [];
     const getVal = (val) => String(val ?? '').trim();
@@ -513,134 +516,149 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       return;
     }
 
-
-    // Helper para parsear la fecha de forma segura y evitar RangeError
-    const getParsedEffectiveDate = () => {
-      if (!canEditDateTime) {
-        return (isEditMode && patientData?.requestedAt) ? new Date(patientData.requestedAt) : new Date();
-      }
-      if (!customDate || !customTime) {
-        const fallback = (isEditMode && patientData?.requestedAt) ? new Date(patientData.requestedAt) : new Date();
-        return isNaN(fallback.getTime()) ? new Date() : fallback;
-      }
-      const parsed = new Date(`${customDate}T${customTime}:00`);
-      if (isNaN(parsed.getTime())) {
-        const fallback = (isEditMode && patientData?.requestedAt) ? new Date(patientData.requestedAt) : new Date();
-        return isNaN(fallback.getTime()) ? new Date() : fallback;
-      }
-      return parsed;
-    };
-
-    const effectiveDate = getParsedEffectiveDate();
-
-    if (isEditMode && onUpdatePatient) {
-      const evolWithSave = [{
-        id: Date.now().toString(),
-        timestamp: new Date().toLocaleString('es-CL'),
-        user: currentUser?.name || 'Usuario',
-        role: currentUser?.roleName || currentUser?.role || 'Profesional',
-        note: '✏️ Datos de solicitud actualizados'
-      }, ...evolutions];
-
-      const updatedDiagnosisCodes = (() => {
-        const codes = [];
-        if (formData.dxCie10) {
-          const desc = cie10Data.find(c => c.code === formData.dxCie10)?.desc || '';
-          codes.push(`${formData.dxCie10} - ${desc}`);
+    setIsSaving(true);
+    try {
+      // Helper para parsear la fecha de forma segura y evitar RangeError
+      const getParsedEffectiveDate = () => {
+        if (!canEditDateTime) {
+          return (isEditMode && patientData?.requestedAt) ? new Date(patientData.requestedAt) : new Date();
         }
-        secondaryCodes.forEach(code => {
-          const desc = cie10Data.find(c => c.code === code)?.desc || '';
-          codes.push(`${code} - ${desc}`);
-        });
-        return codes.length > 0 ? codes : (formData.dxPrincipal ? [formData.dxPrincipal] : patientData.diagnosis || []);
-      })();
-
-      onUpdatePatient({
-        ...patientData, ...formData, secondaryCodes, evolutions: evolWithSave,
-        name: formData.nombre?.toUpperCase(), age: parseInt(formData.edad) || 0, origin: formData.servicioSol,
-        bedTypeRequired: formData.destino, updatedAt: new Date().toISOString(),
-        updatedBy: currentUser?.name || 'Usuario',
-        requestedAt: effectiveDate.toISOString(),
-        diagnosis: updatedDiagnosisCodes,
-        fechaNacimiento: formData.fechaNacimiento,
-        aislamiento: aislamiento
-      });
-      return;
-    }
-
-    // Determine priority based on selected destination and conditions
-    let calculatedPriority = 3;
-    if (formData.destino === 'UCI') calculatedPriority = 1;
-    else if (formData.destino === 'UTI') calculatedPriority = 2;
-
-    const generatedTicket = `REQ-${effectiveDate.toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900) + 100}`;
-    setTicketNumber(generatedTicket);
-
-    const newPatient = {
-      id: `W-${Date.now()}`,
-      name: formData.nombre?.toUpperCase() || 'PACIENTE SIN NOMBRE',
-      age: parseInt(formData.edad) || 0,
-      fechaNacimiento: formData.fechaNacimiento,
-      requestedAt: effectiveDate.toISOString(),
-      diagnosis: (() => {
-        const codes = [];
-        if (formData.dxCie10) {
-          const desc = cie10Data.find(c => c.code === formData.dxCie10)?.desc || '';
-          codes.push(`${formData.dxCie10} - ${desc}`);
+        if (!customDate || !customTime) {
+          const fallback = (isEditMode && patientData?.requestedAt) ? new Date(patientData.requestedAt) : new Date();
+          return isNaN(fallback.getTime()) ? new Date() : fallback;
         }
-        secondaryCodes.forEach(code => {
-          const desc = cie10Data.find(c => c.code === code)?.desc || '';
-          codes.push(`${code} - ${desc}`);
-        });
-        return codes.length > 0 ? codes : (formData.dxPrincipal ? [formData.dxPrincipal] : ['Sin diagnóstico principal']);
-      })(),
-      priority: calculatedPriority,
-      origin: formData.servicioSol || 'Urgencia',
-      bedTypeRequired: formData.destino || 'Cuidados Medios',
-      ticket: generatedTicket,
-      rut: formData.rut,
-      sexo: formData.sexo,
-      prevision: formData.prevision,
-      comuna: formData.comuna,
-      medicoSol: formData.medicoSol,
-      especialidadMedico: formData.especialidadMedico,
-      especialidadTratante: formData.especialidadTratante,
-      requisitosUGP: formData.requisitosUGP,
-      reqEnfermeria: formData.reqEnfermeria,
-      procedimientosPendientes: formData.procedimientosPendientes,
-      hodom: formData.hodom,
-      trr: formData.trr,
-      hfc: formData.hfc,
-      ugcc: formData.ugcc,
-      paSist: formData.paSist,
-      paDiast: formData.paDiast,
-      frecCard: formData.frecCard,
-      frecResp: formData.frecResp,
-      temp: formData.temp,
-      satO2: formData.satO2,
-      glicemia: formData.glicemia,
-      evaDolor: formData.evaDolor,
-      secondaryCodes: secondaryCodes,
-      dxCie10: formData.dxCie10,
-      dxGrupo: formData.dxGrupo,
-      aislamiento: aislamiento,
-      evolutions: [
-        {
+        const parsed = new Date(`${customDate}T${customTime}:00`);
+        if (isNaN(parsed.getTime())) {
+          const fallback = (isEditMode && patientData?.requestedAt) ? new Date(patientData.requestedAt) : new Date();
+          return isNaN(fallback.getTime()) ? new Date() : fallback;
+        }
+        return parsed;
+      };
+
+      const effectiveDate = getParsedEffectiveDate();
+
+      if (isEditMode && onUpdatePatient) {
+        const evolWithSave = [{
           id: Date.now().toString(),
-          timestamp: (canEditDateTime ? effectiveDate : new Date()).toLocaleString('es-CL'),
-          user: currentUser?.name || 'Sistema',
-          role: currentUser?.role || 'Médico',
-          note: canEditDateTime && effectiveDate.toDateString() !== new Date().toDateString()
-            ? `🆕 Solicitud de cama ingresada al sistema (ingreso retroactivo: ${effectiveDate.toLocaleString('es-CL')})`
-            : '🆕 Solicitud de cama ingresada al sistema.'
-        }
-      ]
-    };
+          timestamp: new Date().toLocaleString('es-CL'),
+          user: currentUser?.name || 'Usuario',
+          role: currentUser?.roleName || currentUser?.role || 'Profesional',
+          note: '✏️ Datos de solicitud actualizados'
+        }, ...evolutions];
 
-    if (onSubmit) {
-      onSubmit(newPatient);
+        const updatedDiagnosisCodes = (() => {
+          const codes = [];
+          if (formData.dxCie10) {
+            const desc = cie10Data.find(c => c.code === formData.dxCie10)?.desc || '';
+            codes.push(`${formData.dxCie10} - ${desc}`);
+          }
+          secondaryCodes.forEach(code => {
+            const desc = cie10Data.find(c => c.code === code)?.desc || '';
+            codes.push(`${code} - ${desc}`);
+          });
+          return codes.length > 0 ? codes : (formData.dxPrincipal ? [formData.dxPrincipal] : patientData.diagnosis || []);
+        })();
+
+        const updateRes = await onUpdatePatient({
+          ...patientData, ...formData, secondaryCodes, evolutions: evolWithSave,
+          name: formData.nombre?.toUpperCase(), age: parseInt(formData.edad) || 0, origin: formData.servicioSol,
+          bedTypeRequired: formData.destino, updatedAt: new Date().toISOString(),
+          updatedBy: currentUser?.name || 'Usuario',
+          requestedAt: effectiveDate.toISOString(),
+          diagnosis: updatedDiagnosisCodes,
+          fechaNacimiento: formData.fechaNacimiento,
+          aislamiento: aislamiento
+        });
+
+        if (updateRes === false) {
+          setSaveError('⚠️ Error de sincronización: No se pudieron guardar las modificaciones en el servidor. Intente nuevamente.');
+        }
+        return;
+      }
+
+      // Determine priority based on selected destination and conditions
+      let calculatedPriority = 3;
+      if (formData.destino === 'UCI') calculatedPriority = 1;
+      else if (formData.destino === 'UTI') calculatedPriority = 2;
+
+      const generatedTicket = `REQ-${effectiveDate.toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900) + 100}`;
+      setTicketNumber(generatedTicket);
+
+      const newPatient = {
+        id: `W-${Date.now()}`,
+        name: formData.nombre?.toUpperCase() || 'PACIENTE SIN NOMBRE',
+        age: parseInt(formData.edad) || 0,
+        fechaNacimiento: formData.fechaNacimiento,
+        requestedAt: effectiveDate.toISOString(),
+        diagnosis: (() => {
+          const codes = [];
+          if (formData.dxCie10) {
+            const desc = cie10Data.find(c => c.code === formData.dxCie10)?.desc || '';
+            codes.push(`${formData.dxCie10} - ${desc}`);
+          }
+          secondaryCodes.forEach(code => {
+            const desc = cie10Data.find(c => c.code === code)?.desc || '';
+            codes.push(`${code} - ${desc}`);
+          });
+          return codes.length > 0 ? codes : (formData.dxPrincipal ? [formData.dxPrincipal] : ['Sin diagnóstico principal']);
+        })(),
+        priority: calculatedPriority,
+        origin: formData.servicioSol || 'Urgencia',
+        bedTypeRequired: formData.destino || 'Cuidados Medios',
+        ticket: generatedTicket,
+        rut: formData.rut,
+        sexo: formData.sexo,
+        prevision: formData.prevision,
+        comuna: formData.comuna,
+        medicoSol: formData.medicoSol,
+        especialidadMedico: formData.especialidadMedico,
+        especialidadTratante: formData.especialidadTratante,
+        requisitosUGP: formData.requisitosUGP,
+        reqEnfermeria: formData.reqEnfermeria,
+        procedimientosPendientes: formData.procedimientosPendientes,
+        hodom: formData.hodom,
+        trr: formData.trr,
+        hfc: formData.hfc,
+        ugcc: formData.ugcc,
+        paSist: formData.paSist,
+        paDiast: formData.paDiast,
+        frecCard: formData.frecCard,
+        frecResp: formData.frecResp,
+        temp: formData.temp,
+        satO2: formData.satO2,
+        glicemia: formData.glicemia,
+        evaDolor: formData.evaDolor,
+        secondaryCodes: secondaryCodes,
+        dxCie10: formData.dxCie10,
+        dxGrupo: formData.dxGrupo,
+        aislamiento: aislamiento,
+        evolutions: [
+          {
+            id: Date.now().toString(),
+            timestamp: (canEditDateTime ? effectiveDate : new Date()).toLocaleString('es-CL'),
+            user: currentUser?.name || 'Sistema',
+            role: currentUser?.role || 'Médico',
+            note: canEditDateTime && effectiveDate.toDateString() !== new Date().toDateString()
+              ? `🆕 Solicitud de cama ingresada al sistema (ingreso retroactivo: ${effectiveDate.toLocaleString('es-CL')})`
+              : '🆕 Solicitud de cama ingresada al sistema.'
+          }
+        ]
+      };
+
+      if (onSubmit) {
+        const submitSuccess = await onSubmit(newPatient);
+        if (submitSuccess === false) {
+          setSaveError('⚠️ Error de conexión: No se pudo guardar la solicitud en la base de datos del servidor. Por favor verifique su señal e intente nuevamente.');
+          return;
+        }
+      }
+      setSubmitted(true);
+    } catch (err) {
+      console.error('Error al guardar solicitud:', err);
+      setSaveError('⚠️ Error inesperado al guardar la solicitud. Por favor intente nuevamente.');
+    } finally {
+      setIsSaving(false);
     }
-    setSubmitted(true);
   };
 
   const now = new Date();
@@ -775,6 +793,25 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       </div>
 
       <form onSubmit={handleSubmit}>
+        {saveError && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.4)',
+            borderRadius: 12,
+            padding: '12px 16px',
+            marginBottom: 16,
+            color: '#ef4444',
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)'
+          }}>
+            <span>{saveError}</span>
+            <button type="button" onClick={() => setSaveError(null)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 12 }}>
           {/* Fila 1: 1. Datos del Paciente | 3. Gestión de la Derivación */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start', position: 'relative', zIndex: 10 }}>
@@ -1127,20 +1164,20 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
             </>
           ) : isEditMode ? (
             <>
-              {onClose && <button type="button" className="glass-button" onClick={onClose} style={{ padding: '8px 16px', fontSize: '0.82rem' }}>Cancelar</button>}
-              <button type="submit" className="glass-button primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg, #0ea5e9, #2563eb)', padding: '8px 16px', fontSize: '0.82rem' }}>
-                <Send size={14} /> Guardar Cambios
+              {onClose && <button type="button" className="glass-button" onClick={onClose} disabled={isSaving} style={{ padding: '8px 16px', fontSize: '0.82rem', opacity: isSaving ? 0.5 : 1 }}>Cancelar</button>}
+              <button type="submit" className="glass-button primary" disabled={isSaving} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg, #0ea5e9, #2563eb)', padding: '8px 16px', fontSize: '0.82rem', opacity: isSaving ? 0.7 : 1, cursor: isSaving ? 'wait' : 'pointer' }}>
+                <Send size={14} /> {isSaving ? 'Guardando en Servidor...' : 'Guardar Cambios'}
               </button>
             </>
           ) : (
             <>
               {onClose ? (
-                <button type="button" className="glass-button" onClick={onClose} style={{ padding: '8px 16px', fontSize: '0.82rem' }}>Cancelar</button>
+                <button type="button" className="glass-button" onClick={onClose} disabled={isSaving} style={{ padding: '8px 16px', fontSize: '0.82rem', opacity: isSaving ? 0.5 : 1 }}>Cancelar</button>
               ) : (
-                <button type="button" className="glass-button" onClick={() => window.history.back()} style={{ padding: '8px 16px', fontSize: '0.82rem' }}>Cancelar</button>
+                <button type="button" className="glass-button" onClick={() => window.history.back()} disabled={isSaving} style={{ padding: '8px 16px', fontSize: '0.82rem', opacity: isSaving ? 0.5 : 1 }}>Cancelar</button>
               )}
-              <button type="submit" className="glass-button primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg, #06b6d4, #0891b2)', padding: '8px 16px', fontSize: '0.82rem' }}>
-                <Send size={14} /> Enviar Solicitud Segura
+              <button type="submit" className="glass-button primary" disabled={isSaving} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg, #06b6d4, #0891b2)', padding: '8px 16px', fontSize: '0.82rem', opacity: isSaving ? 0.7 : 1, cursor: isSaving ? 'wait' : 'pointer' }}>
+                <Send size={14} /> {isSaving ? 'Guardando en Servidor...' : 'Enviar Solicitud Segura'}
               </button>
             </>
           )}
