@@ -587,7 +587,7 @@ function App() {
         <InfrastructureManagement bedsData={bedsData} setBedsData={setBedsData} />
       )}
       {currentView === 'insights' && (
-        <InsightsDashboard bedsData={bedsData} waitingList={waitingList} transferHistory={transferHistory} />
+        <InsightsDashboard bedsData={bedsData} waitingList={waitingList} transferHistory={transferHistory} blockLog={blockLog} dischargesLog={dischargesLog} />
       )}
       {currentView === 'general_status' && (
         <GeneralBedStatusPanel bedsData={bedsData} />

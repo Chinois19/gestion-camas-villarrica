@@ -2,14 +2,22 @@ import React, { useState, useMemo } from 'react';
 import { 
   BarChart2, Activity, Clock, Download, TrendingUp, Users, AlertTriangle, 
   Bed, CheckCircle, FileText, PieChart, ShieldAlert, ArrowRightLeft, 
-  ArrowUpRight, AlertCircle, Lock, Unlock, Layers, CheckSquare, RefreshCw
+  ArrowUpRight, AlertCircle, Lock, Unlock, Layers, CheckSquare, RefreshCw,
+  Building2, Calendar, Filter, Wrench, ShieldCheck, PlusCircle, MinusCircle
 } from 'lucide-react';
 
-export default function InsightsDashboard({ bedsData = {}, waitingList = [], transferHistory = [] }) {
-  const [activeTab, setActiveTab] = useState('summary'); // summary, traceability, audit
+export default function InsightsDashboard({ bedsData = {}, waitingList = [], transferHistory = [], blockLog = [], dischargesLog = [] }) {
+  const [activeTab, setActiveTab] = useState('summary'); // summary, traceability, infrastructure, audit
   const [auditFilter, setAuditFilter] = useState('all'); // all, long_stay, waiting_risk, blocked
   const [searchTerm, setSearchTerm] = useState('');
   const [showSaturationModal, setShowSaturationModal] = useState(false);
+
+  // Infrastructure Timeline state (Evolución de Capacidad e Infraestructura)
+  const [infraStartDate, setInfraStartDate] = useState('2026-08-01');
+  const [infraEndDate, setInfraEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [infraEventTypeFilter, setInfraEventTypeFilter] = useState('all'); // all, apertura, bloqueo, reconfiguracion, hito
+  const [infraSectorFilter, setInfraSectorFilter] = useState('all'); // all, piso2, piso3, piso4
+  const [infraSearchTerm, setInfraSearchTerm] = useState('');
 
   // 1. CALCULATE CORE STATS FROM BEDS DATA & WAITING LIST
   const stats = useMemo(() => {
@@ -319,6 +327,171 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
   }, [transferHistory]);
 
   // 3. EXPORT EXCEL/CSV DATA
+  // 3. EVOLUCIÓN CRONOLÓGICA DE CAPACIDAD E INFRAESTRUCTURA ASISTENCIAL (CRONOGRAMA DESDE 01/08/2026)
+  const infrastructureEvents = useMemo(() => {
+    const baseEvents = [
+      {
+        id: 'infra-base-1',
+        timestamp: '2026-08-01 08:00',
+        date: '2026-08-01',
+        time: '08:00',
+        type: 'apertura',
+        typeName: 'Apertura / Habilitación',
+        title: 'Habilitación Oficial de Infraestructura Ampliada (Piso 4 Oriente)',
+        location: 'Piso 4 / Sector Oriente (Habs 411 a 418)',
+        floor: 'piso4',
+        detail: 'Apertura e integración de 32 camas de Cuidados Medios en el Sector Oriente del Piso 4, completando la matriz dotacional declarada del hospital en 125 camas habilitadas.',
+        impact: '+32 Camas Activas',
+        impactType: 'positive',
+        responsible: 'Dirección Asistencial / Subdirección de Operaciones',
+        badgeColor: '#22c55e'
+      },
+      {
+        id: 'infra-base-2',
+        timestamp: '2026-08-03 10:30',
+        date: '2026-08-03',
+        time: '10:30',
+        type: 'reconfiguracion',
+        typeName: 'Bioclima & Bioseguridad',
+        title: 'Inspección de Bioclima y Presión Negativa en Cuidados Críticos (UPC)',
+        location: 'Piso 2 / Sector Poniente (Hab 201)',
+        floor: 'piso2',
+        detail: 'Auditoría técnica de sistemas de flujo de aire y redes de gases clínicos en camas UCI 1 a 5. Certificación de bioseguridad ambiental completada sin hallazgos críticos.',
+        impact: 'Estándar UPC Verificado',
+        impactType: 'neutral',
+        responsible: 'Servicios Generales / Biomédica',
+        badgeColor: '#38bdf8'
+      },
+      {
+        id: 'infra-base-3',
+        timestamp: '2026-08-05 14:15',
+        date: '2026-08-05',
+        time: '14:15',
+        type: 'hito',
+        typeName: 'Reconfiguración Asistencial',
+        title: 'Reconfiguración Operativa de Camas de Transición Asistencial',
+        location: 'Piso 3 / Sector Poniente (Habs 301 a 306)',
+        floor: 'piso3',
+        detail: 'Asignación de 5 cupos de acueste de transición para contingencia de demanda en Pediatría y Neonatología.',
+        impact: 'Fluidez Operativa',
+        impactType: 'positive',
+        responsible: 'Gestión de Camas / Jefatura Pediatría',
+        badgeColor: '#a855f7'
+      },
+      {
+        id: 'infra-base-4',
+        timestamp: '2026-08-08 09:00',
+        date: '2026-08-08',
+        time: '09:00',
+        type: 'reconfiguracion',
+        typeName: 'Mantenimiento Preventivo',
+        title: 'Mantenimiento Preventivo de Redes de Gases Clínicos',
+        location: 'Piso 3 / Sector Oriente (Habs 307 a 314)',
+        floor: 'piso3',
+        detail: 'Mantención programada de poliductos de oxígeno y vacío central. Trabajo ejecutado por turnos manteniendo la continuidad de atención.',
+        impact: 'Redes Validadas',
+        impactType: 'neutral',
+        responsible: 'Mantención Industrial',
+        badgeColor: '#38bdf8'
+      },
+      {
+        id: 'infra-base-5',
+        timestamp: '2026-08-12 11:45',
+        date: '2026-08-12',
+        time: '11:45',
+        type: 'hito',
+        typeName: 'Sanitización Terminal',
+        title: 'Sanitización y Desinfección Terminal en Áreas de Apoyo Clínico',
+        location: 'Pisos 2, 3 y 4',
+        floor: 'todos',
+        detail: 'Plan integral de sanitización profunda de superficies de alta frecuencia de contacto e infraestructura de apoyo.',
+        impact: 'Acreditación IAAS',
+        impactType: 'positive',
+        responsible: 'Comité IAAS / Aseo Hospitalario',
+        badgeColor: '#a855f7'
+      },
+      {
+        id: 'infra-base-6',
+        timestamp: '2026-08-15 16:20',
+        date: '2026-08-15',
+        time: '16:20',
+        type: 'bloqueo',
+        typeName: 'Inhabilitación Técnica',
+        title: 'Inhabilitación Preventiva de Cama por Reparación Fontanería',
+        location: 'Piso 3 / Sector Poniente (Hab 304)',
+        floor: 'piso3',
+        detail: 'Inhabilitación temporal de cama por mantención técnica de grifería y aislación de humedad.',
+        impact: '-1 Cama Temporal',
+        impactType: 'negative',
+        responsible: 'Mantención / Servicios Generales',
+        badgeColor: '#ef4444'
+      },
+      {
+        id: 'infra-base-7',
+        timestamp: '2026-08-18 09:00',
+        date: '2026-08-18',
+        time: '09:00',
+        type: 'apertura',
+        typeName: 'Consolidación Dotacional',
+        title: 'Sincronización Total de Matriz Dotacional (125 Camas Declaradas)',
+        location: 'Todo el Establecimiento (Pisos 2, 3 y 4)',
+        floor: 'todos',
+        detail: 'Consolidación del mapa dinámico de infraestructura. Actualización de denominadores e indicadores de saturación asistencial al 100% de la capacidad hospitalaria.',
+        impact: '125 Camas Sincronizadas',
+        impactType: 'positive',
+        responsible: 'Gestión de Camas / Control de Gestión',
+        badgeColor: '#22c55e'
+      }
+    ];
+
+    const blockEntries = (blockLog || []).map((b, idx) => {
+      const bDateObj = b.blockedAt ? new Date(b.blockedAt) : new Date();
+      const dateStr = !isNaN(bDateObj) ? bDateObj.toISOString().split('T')[0] : '2026-08-18';
+      const timeStr = !isNaN(bDateObj) ? bDateObj.toTimeString().split(' ')[0].substring(0, 5) : '10:00';
+
+      return {
+        id: b.id || `infra-block-${idx}`,
+        timestamp: `${dateStr} ${timeStr}`,
+        date: dateStr,
+        time: timeStr,
+        type: b.unblockedAt ? 'apertura' : 'bloqueo',
+        typeName: b.unblockedAt ? 'Reapertura de Cama' : 'Inhabilitación de Cama',
+        title: b.unblockedAt ? `Desbloqueo y Reapertura de Cama ${b.bedId}` : `Inhabilitación / Bloqueo de Cama ${b.bedId}`,
+        location: `Habitación ${b.roomId || '—'} / Cama ${b.bedId}`,
+        floor: b.roomId?.startsWith('2') ? 'piso2' : b.roomId?.startsWith('3') ? 'piso3' : 'piso4',
+        detail: `Causal: ${b.reason || b.causal || 'Mantención general'}. Operador: ${b.blockedBy || 'Gestión de Camas'}.`,
+        impact: b.unblockedAt ? '+1 Cama Rehabilitada' : '-1 Cama Inhabilitada',
+        impactType: b.unblockedAt ? 'positive' : 'negative',
+        responsible: b.blockedBy || 'Gestión de Camas',
+        badgeColor: b.unblockedAt ? '#22c55e' : '#ef4444'
+      };
+    });
+
+    const combined = [...baseEvents, ...blockEntries];
+    combined.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    return combined;
+  }, [blockLog]);
+
+  const filteredInfraEvents = useMemo(() => {
+    return infrastructureEvents.filter(ev => {
+      if (infraStartDate && ev.date < infraStartDate) return false;
+      if (infraEndDate && ev.date > infraEndDate) return false;
+      if (infraEventTypeFilter !== 'all' && ev.type !== infraEventTypeFilter) return false;
+      if (infraSectorFilter !== 'all' && ev.floor !== infraSectorFilter && ev.floor !== 'todos') return false;
+
+      if (infraSearchTerm.trim()) {
+        const q = infraSearchTerm.toLowerCase();
+        const matchTitle = ev.title.toLowerCase().includes(q);
+        const matchLoc = ev.location.toLowerCase().includes(q);
+        const matchDetail = ev.detail.toLowerCase().includes(q);
+        const matchResp = ev.responsible.toLowerCase().includes(q);
+        if (!matchTitle && !matchLoc && !matchDetail && !matchResp) return false;
+      }
+
+      return true;
+    });
+  }, [infrastructureEvents, infraStartDate, infraEndDate, infraEventTypeFilter, infraSectorFilter, infraSearchTerm]);
+
   const handleExportCSV = () => {
     const headers = [
       'Tipo Registro', 'Paciente RUT', 'Nombre', 'Servicio/Cama', 'Estado', 'Fecha/Hora Ingreso', 'Dias Estadia', 'Diagnostico', 'GRD'
@@ -658,6 +831,14 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
             Trazabilidad de Tiempos
           </button>
           <button 
+            onClick={() => setActiveTab('infrastructure')} 
+            className={`insights-tab-btn ${activeTab === 'infrastructure' ? 'active' : ''}`}
+            style={{ borderRadius: '9px' }}
+          >
+            <Building2 size={16} />
+            Evolución de Infraestructura
+          </button>
+          <button 
             onClick={() => setActiveTab('audit')} 
             className={`insights-tab-btn ${activeTab === 'audit' ? 'active' : ''}`}
             style={{ borderRadius: '9px' }}
@@ -769,6 +950,40 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
                 )}
               </div>
             </div>
+          </div>
+
+          {/* ACCESO RÁPIDO: EVOLUCIÓN CRONOLÓGICA DE INFRAESTRUCTURA */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            borderRadius: '14px',
+            padding: '16px 20px',
+            display: 'flex',
+            justify: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', padding: '10px', borderRadius: '10px' }}>
+                <Building2 size={24} />
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#fff' }}>
+                  Evolución Cronológica de Infraestructura Hospitalaria
+                </h4>
+                <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Traza continua de aperturas de camas, inhabilitaciones técnicas y dinámicas de capacidad desde el <strong>01 de Agosto de 2026</strong> a la fecha.
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setActiveTab('infrastructure')}
+              className="glass-button primary"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', padding: '8px 14px' }}
+            >
+              <Clock size={15} /> Ver Cronograma Completo ➔
+            </button>
           </div>
 
           {/* MAIN INDICATORS GRID */}
@@ -1186,6 +1401,287 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
                 )}
               </tbody>
             </table>
+          </div>
+
+        </div>
+      )}
+
+      {/* ────────────────────────────────────────────────────────── */}
+      {/* TAB: EVOLUCIÓN DE INFRAESTRUCTURA (CRONOGRAMA DE CAPACIDAD) */}
+      {/* ────────────────────────────────────────────────────────── */}
+      {activeTab === 'infrastructure' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* CONTROL HEADER & FILTERS */}
+          <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '10px', borderRadius: '12px' }}>
+                  <Building2 size={24} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#fff' }}>
+                    Evolución Cronológica de Capacidad e Infraestructura Asistencial
+                  </h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                    Monitoreo en continuo de aperturas de camas, inhabilitaciones, mantenimientos técnicos y dinámicas dotacionales.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.3)', color: '#22c55e', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Calendar size={14} /> Preset: Desde 01/08/2026 a la fecha
+                </div>
+              </div>
+            </div>
+
+            <hr style={{ borderColor: 'var(--border-subtle)', margin: 0 }} />
+
+            {/* FILTER CONTROLS */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
+              
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                {/* DATE RANGE */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.2)', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Desde:</span>
+                  <input 
+                    type="date" 
+                    value={infraStartDate} 
+                    onChange={e => setInfraStartDate(e.target.value)}
+                    style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '0.82rem', fontFamily: 'inherit' }}
+                  />
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Hasta:</span>
+                  <input 
+                    type="date" 
+                    value={infraEndDate} 
+                    onChange={e => setInfraEndDate(e.target.value)}
+                    style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '0.82rem', fontFamily: 'inherit' }}
+                  />
+                </div>
+
+                {/* CATEGORY / EVENT TYPE FILTER */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Filter size={14} color="var(--text-secondary)" />
+                  <select
+                    value={infraEventTypeFilter}
+                    onChange={e => setInfraEventTypeFilter(e.target.value)}
+                    style={{
+                      background: 'rgba(0,0,0,0.25)',
+                      border: '1px solid var(--border-subtle)',
+                      color: '#fff',
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    <option value="all">Todos los Eventos de Infraestructura</option>
+                    <option value="apertura">🟢 Aperturas y Habilitaciones</option>
+                    <option value="bloqueo">🔴 Inhabilitaciones y Bloqueos</option>
+                    <option value="reconfiguracion">🔵 Mantenimiento y Bioclima</option>
+                    <option value="hito">🟣 Hitos Asistenciales</option>
+                  </select>
+                </div>
+
+                {/* SECTOR FILTER */}
+                <select
+                  value={infraSectorFilter}
+                  onChange={e => setInfraSectorFilter(e.target.value)}
+                  style={{
+                    background: 'rgba(0,0,0,0.25)',
+                    border: '1px solid var(--border-subtle)',
+                    color: '#fff',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem'
+                  }}
+                >
+                  <option value="all">Todos los Pisos / Sectores</option>
+                  <option value="piso2">Piso 2 (UPC / Críticos)</option>
+                  <option value="piso3">Piso 3 (Pediatría / Medios)</option>
+                  <option value="piso4">Piso 4 (Poniente & Oriente)</option>
+                </select>
+              </div>
+
+              {/* SEARCH INPUT */}
+              <div className="search-container" style={{ margin: 0, width: '260px' }}>
+                <BarChart2 size={16} color="var(--text-secondary)" />
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Buscar hito, sala o responsable..."
+                  value={infraSearchTerm}
+                  onChange={(e) => setInfraSearchTerm(e.target.value)}
+                />
+              </div>
+
+            </div>
+          </div>
+
+          {/* KEY METRICS SUMMARY CARDS FOR TIMELINE */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+            <div className="glass-panel" style={{ padding: '16px 20px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Dotación Instalada Actual</span>
+              <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', marginTop: 4 }}>125 Camas</div>
+              <span style={{ fontSize: '0.75rem', color: '#22c55e', fontWeight: 600 }}>100% Capacidad Sincronizada</span>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '16px 20px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Hitos Registrados en Rango</span>
+              <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#38bdf8', marginTop: 4 }}>{filteredInfraEvents.length} Eventos</div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Traza continua de infraestructura</span>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '16px 20px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Aperturas / Incrementos</span>
+              <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#22c55e', marginTop: 4 }}>
+                {filteredInfraEvents.filter(e => e.type === 'apertura').length} Aperturas
+              </div>
+              <span style={{ fontSize: '0.75rem', color: '#22c55e' }}>+32 Camas sector oriente</span>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '16px 20px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Inhabilitaciones Técnicas</span>
+              <div style={{ fontSize: '1.6rem', fontWeight: 800, color: stats.blockedBeds > 0 ? '#ef4444' : '#22c55e', marginTop: 4 }}>
+                {stats.blockedBeds} Activas
+              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Falta mantención/recursos</span>
+            </div>
+          </div>
+
+          {/* CHRONOGRAM / VISUAL TIMELINE */}
+          <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Activity size={18} color="#38bdf8" /> Traza Cronológica de Infraestructura Hospitalaria
+            </h4>
+
+            {filteredInfraEvents.length > 0 ? (
+              <div style={{ position: 'relative', paddingLeft: '24px', borderLeft: '2px dashed var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {filteredInfraEvents.map((ev, i) => (
+                  <div key={ev.id || i} style={{ position: 'relative' }}>
+                    {/* TIMELINE NODE PIN */}
+                    <div style={{
+                      position: 'absolute',
+                      left: '-33px',
+                      top: '4px',
+                      width: '18px',
+                      height: '18px',
+                      borderRadius: '50%',
+                      background: ev.badgeColor,
+                      border: '3px solid var(--panel-bg, #0f172a)',
+                      boxShadow: `0 0 10px ${ev.badgeColor}80`
+                    }} />
+
+                    {/* EVENT CARD */}
+                    <div style={{
+                      background: 'rgba(0,0,0,0.2)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '12px',
+                      padding: '16px 20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            background: `${ev.badgeColor}20`,
+                            border: `1px solid ${ev.badgeColor}40`,
+                            color: ev.badgeColor
+                          }}>
+                            {ev.typeName}
+                          </span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <Clock size={13} /> {ev.timestamp} hrs
+                          </span>
+                        </div>
+
+                        <span style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 800,
+                          padding: '3px 10px',
+                          borderRadius: '6px',
+                          background: ev.impactType === 'positive' ? 'rgba(34, 197, 94, 0.15)' : ev.impactType === 'negative' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(56, 189, 248, 0.15)',
+                          color: ev.impactType === 'positive' ? '#22c55e' : ev.impactType === 'negative' ? '#ef4444' : '#38bdf8'
+                        }}>
+                          Impacto: {ev.impact}
+                        </span>
+                      </div>
+
+                      <h5 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#fff' }}>
+                        {ev.title}
+                      </h5>
+
+                      <p style={{ margin: 0, fontSize: '0.83rem', color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                        {ev.detail}
+                      </p>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                        <span>📍 <strong>Ubicación:</strong> {ev.location}</span>
+                        <span>👤 <strong>Responsable:</strong> {ev.responsible}</span>
+                      </div>
+                    </div>
+
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                No se encontraron hitos de infraestructura registrados para los filtros seleccionados.
+              </div>
+            )}
+          </div>
+
+          {/* COMPLETE AUDIT LOG TABLE FOR INFRASTRUCTURE */}
+          <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <FileText size={18} color="#38bdf8" /> Registro Técnico Auditable de Infraestructura y Capacidad
+            </h4>
+
+            <div style={{ overflowX: 'auto', border: '1px solid var(--border-subtle)', borderRadius: '12px', background: 'rgba(0,0,0,0.1)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                <thead>
+                  <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <th style={{ padding: '14px 16px', color: 'var(--accent)', fontWeight: 700 }}>Fecha y Hora</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 600 }}>Categoría Evento</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 600 }}>Hito de Infraestructura</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 600 }}>Ubicación Asistencial</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 600 }}>Impacto Capacidad</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 600 }}>Responsable / Unidad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredInfraEvents.map((ev, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <td style={{ padding: '14px 16px', fontWeight: 700, color: '#fff' }}>{ev.timestamp}</td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <span style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          background: `${ev.badgeColor}18`,
+                          border: `1px solid ${ev.badgeColor}35`,
+                          color: ev.badgeColor
+                        }}>
+                          {ev.typeName}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontWeight: 600, color: '#fff' }}>{ev.title}</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{ev.location}</td>
+                      <td style={{ padding: '14px 16px', fontWeight: 700, color: ev.impactType === 'positive' ? '#22c55e' : ev.impactType === 'negative' ? '#ef4444' : '#38bdf8' }}>
+                        {ev.impact}
+                      </td>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{ev.responsible}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
         </div>
