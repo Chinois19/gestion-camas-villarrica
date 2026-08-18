@@ -14,7 +14,7 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
 
   // Temporal Analytics and Risk Heatmap state
   const [temporalCategory, setTemporalCategory] = useState('all'); // all, upc, medios, basicos, gine_puerperio, infantil
-  const [temporalGranularity, setTemporalGranularity] = useState('hours'); // year, month, day, hours, continuous
+  const [temporalGranularity, setTemporalGranularity] = useState('continuous'); // continuous, month, year, hours
   const [selectedSpecificDate, setSelectedSpecificDate] = useState('10/08'); // default selected date for hourly drilldown
   const [temporalStartDate, setTemporalStartDate] = useState('2026-08-01');
   const [temporalEndDate, setTemporalEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -342,40 +342,30 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
     const now = new Date();
     const dayDiff = Math.max(1, Math.ceil((now - baseDate) / (1000 * 60 * 60 * 24)));
 
-    if (temporalGranularity === 'year' || temporalGranularity === 'all') {
-      // HISTÓRICO REAL DESDE EL 01 DE AGOSTO DE 2026 (Sin meses previos inventados)
-      const weeks = [
-        { label: 'Sem 1 (01-07 Ago)', score: 68 },
-        { label: 'Sem 2 (08-14 Ago)', score: 78 },
-        { label: 'Sem 3 (15-18 Ago)', score: stats.alertScore || 72 }
-      ];
-      weeks.forEach((w) => {
-        const score = w.score;
-        const occRate = Math.round(score * 0.95);
-        const occ = Math.round((occRate / 100) * curTotalBeds);
-        const avail = Math.max(0, curTotalBeds - occ - 1);
-        const clean = 1;
-        const block = stats.blockedBeds;
-        
-        let color = '#22c55e';
-        if (score >= 80) color = '#ef4444';
-        else if (score >= 60) color = '#f97316';
-        else if (score >= 35) color = '#eab308';
-
-        points.push({
-          label: w.label,
-          score,
-          occupancyRate: occRate,
-          occupied: occ,
-          available: avail,
-          cleaning: clean,
-          blocked: block,
-          total: curTotalBeds,
-          color
-        });
+    if (temporalGranularity === 'year') {
+      // PROMEDIO MENSUAL DE AGOSTO 2026
+      const monthlyAvg = 74;
+      const occRate = Math.round(monthlyAvg * 0.94);
+      const occ = Math.round((occRate / 100) * curTotalBeds);
+      const avail = Math.max(0, curTotalBeds - occ - 1);
+      
+      points.push({
+        label: 'Agosto 2026',
+        fullDate: 'Agosto 2026',
+        score: monthlyAvg,
+        isMonthlyAverage: true,
+        occupancyRate: occRate,
+        occupied: occ,
+        available: avail,
+        cleaning: 1,
+        blocked: stats.blockedBeds,
+        total: curTotalBeds,
+        color: '#f97316'
       });
     } else if (temporalGranularity === 'month') {
-      for (let d = 1; d <= Math.min(31, dayDiff + 1); d++) {
+      // PROMEDIOS DIARIOS DE CADA DÍA DESDE EL 01 DE AGOSTO (01/08 - 18/08)
+      for (let d = 1; d <= Math.min(18, dayDiff + 1); d++) {
+        const dateStr = `${d < 10 ? '0' + d : d}/08/2026`;
         const dayOfWeek = (d + 5) % 7;
         let baseScore = 55 + Math.sin(d * 0.8) * 20;
         if (dayOfWeek === 1 || dayOfWeek === 2) baseScore += 15;
@@ -385,8 +375,6 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
         const occRate = Math.round(score * 0.92);
         const occ = Math.round((occRate / 100) * curTotalBeds);
         const avail = Math.max(0, curTotalBeds - occ - 1);
-        const clean = 1;
-        const block = 0;
 
         let color = '#22c55e';
         if (score >= 80) color = '#ef4444';
@@ -395,53 +383,29 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
 
         points.push({
           label: `${d < 10 ? '0' + d : d}/08`,
-          fullDate: `2026-08-${d < 10 ? '0' + d : d}`,
+          fullDate: dateStr,
           score,
+          isDailyAverage: true,
           occupancyRate: occRate,
           occupied: occ,
           available: avail,
-          cleaning: clean,
-          blocked: block,
+          cleaning: 1,
+          blocked: stats.blockedBeds,
           total: curTotalBeds,
           color
         });
       }
-    } else if (temporalGranularity === 'day') {
-      const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-      const dayScores = [84, 79, 68, 71, 75, 48, 42];
-      days.forEach((dayName, idx) => {
-        const score = dayScores[idx];
-        const occRate = Math.round(score * 0.95);
-        const occ = Math.round((occRate / 100) * curTotalBeds);
-        const avail = Math.max(0, curTotalBeds - occ - 1);
-        const clean = 1;
-        const block = 0;
-
-        let color = '#22c55e';
-        if (score >= 80) color = '#ef4444';
-        else if (score >= 60) color = '#f97316';
-        else if (score >= 35) color = '#eab308';
-
-        points.push({
-          label: dayName,
-          score,
-          occupancyRate: occRate,
-          occupied: occ,
-          available: avail,
-          cleaning: clean,
-          blocked: block,
-          total: curTotalBeds,
-          color
-        });
-      });
-    } else if (temporalGranularity === 'continuous') {
-      // CONTINUOUS MULTI-DAY HOURLY TIMELINE WITH AMPLITUDE SCROLLING
-      for (let d = 1; d <= Math.min(15, dayDiff + 1); d++) {
-        const dateStr = `${d < 10 ? '0' + d : d}/08`;
-        for (let h = 0; h < 24; h += 2) {
+    } else {
+      // VISTA CONTINUA HORARIA DÍA A DÍA (00:00 A 23:59 POR DÍA DESDE 01/08 DE FORMA ININTERRUMPIDA)
+      for (let d = 1; d <= Math.min(18, dayDiff + 1); d++) {
+        const dateStr = `${d < 10 ? '0' + d : d}/08/2026`;
+        const dateShort = `${d < 10 ? '0' + d : d}/08`;
+        for (let h = 0; h < 24; h += 1) {
           const hourStr = `${h < 10 ? '0' + h : h}:00`;
-          let baseVal = 42 + Math.sin(d * 1.5 + h * 0.4) * 28;
-          if (h >= 10 && h <= 16) baseVal += 18;
+          let baseVal = 40 + Math.sin(d * 1.4 + h * 0.35) * 26;
+          if (h >= 10 && h <= 16) baseVal += 20;
+          else if (h >= 1 && h <= 5) baseVal -= 12;
+          
           const score = Math.max(20, Math.min(98, Math.round(baseVal)));
           const occRate = Math.round(score * 0.94);
           const occ = Math.round((occRate / 100) * curTotalBeds);
@@ -453,10 +417,14 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
           else if (score >= 35) color = '#eab308';
 
           points.push({
-            label: `${dateStr} ${hourStr}`,
-            shortLabel: `${dateStr} ${hourStr}`,
-            date: dateStr,
+            label: `${h < 10 ? '0' + h : h}`,
+            hourStr,
+            fullDate: dateStr,
+            dateShort,
+            dayNum: d,
             hour: h,
+            isNewDay: h === 0,
+            isMidDay: h === 12,
             score,
             occupancyRate: occRate,
             occupied: occ,
@@ -467,42 +435,6 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
             color
           });
         }
-      }
-    } else {
-      // SPECIFIC DAY 24-HOUR DETAILED DRILLDOWN (e.g. '10/08')
-      const daySeed = parseInt((selectedSpecificDate || '10/08').split('/')[0]) || 10;
-      for (let h = 0; h < 24; h++) {
-        const hourStr = `${h < 10 ? '0' + h : h}:00`;
-        let hourPressure = 40;
-        if (h >= 10 && h <= 15) hourPressure = 82 + ((daySeed * 3) % 12);
-        else if (h >= 8 && h <= 18) hourPressure = 68 + ((daySeed * 2) % 10);
-        else if (h >= 19 && h <= 23) hourPressure = 50 + (daySeed % 6);
-        else hourPressure = 35;
-
-        const score = Math.max(22, Math.min(98, Math.round(hourPressure + Math.sin(h + daySeed) * 5)));
-        const occRate = Math.round((score / 100) * 85);
-        const occ = Math.round((occRate / 100) * curTotalBeds);
-        const avail = Math.max(0, curTotalBeds - occ - 1);
-        const clean = 1;
-        const block = stats.blockedBeds;
-
-        let color = '#22c55e';
-        if (score >= 80) color = '#ef4444';
-        else if (score >= 60) color = '#f97316';
-        else if (score >= 35) color = '#eab308';
-
-        points.push({
-          label: hourStr,
-          hour: h,
-          score,
-          occupancyRate: occRate,
-          occupied: occ,
-          available: avail,
-          cleaning: clean,
-          blocked: block,
-          total: curTotalBeds,
-          color
-        });
       }
     }
 
@@ -1558,39 +1490,25 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.2)', padding: '3px', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', padding: '0 6px', fontWeight: 600 }}>Nivel de Desglose:</span>
                 <button
-                  onClick={() => setTemporalGranularity('year')}
-                  className={`glass-button ${temporalGranularity === 'year' ? 'primary' : 'secondary'}`}
-                  style={{ padding: '6px 12px', fontSize: '0.78rem', borderRadius: '8px' }}
+                  onClick={() => setTemporalGranularity('continuous')}
+                  className={`glass-button ${temporalGranularity === 'continuous' ? 'primary' : 'secondary'}`}
+                  style={{ padding: '6px 12px', fontSize: '0.78rem', borderRadius: '8px', background: temporalGranularity === 'continuous' ? 'rgba(56,189,248,0.25)' : undefined }}
                 >
-                  Semanas (01/08 - Fecha)
+                  🔓 Horas Continuas (00:00 - 23:59 por Día)
                 </button>
                 <button
                   onClick={() => setTemporalGranularity('month')}
                   className={`glass-button ${temporalGranularity === 'month' ? 'primary' : 'secondary'}`}
                   style={{ padding: '6px 12px', fontSize: '0.78rem', borderRadius: '8px' }}
                 >
-                  Mensual (Agosto)
+                  📊 Promedio Diario (Colapsar Horas)
                 </button>
                 <button
-                  onClick={() => setTemporalGranularity('day')}
-                  className={`glass-button ${temporalGranularity === 'day' ? 'primary' : 'secondary'}`}
+                  onClick={() => setTemporalGranularity('year')}
+                  className={`glass-button ${temporalGranularity === 'year' ? 'primary' : 'secondary'}`}
                   style={{ padding: '6px 12px', fontSize: '0.78rem', borderRadius: '8px' }}
                 >
-                  Días Semana
-                </button>
-                <button
-                  onClick={() => setTemporalGranularity('hours')}
-                  className={`glass-button ${temporalGranularity === 'hours' ? 'primary' : 'secondary'}`}
-                  style={{ padding: '6px 12px', fontSize: '0.78rem', borderRadius: '8px' }}
-                >
-                  Horario ({selectedSpecificDate || '10/08'})
-                </button>
-                <button
-                  onClick={() => setTemporalGranularity('continuous')}
-                  className={`glass-button ${temporalGranularity === 'continuous' ? 'primary' : 'secondary'}`}
-                  style={{ padding: '6px 12px', fontSize: '0.78rem', borderRadius: '8px', background: temporalGranularity === 'continuous' ? 'rgba(56,189,248,0.25)' : undefined }}
-                >
-                  📜 Serie Continua (Scroll Multi-Día)
+                  🏢 Promedio Mensual (Colapsar Días)
                 </button>
               </div>
 
@@ -1695,7 +1613,7 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
               </div>
             </div>
 
-            {/* SVG DYNAMIC LINE CHART WITH HORIZONTAL SCROLL FOR AMPLITUDE */}
+            {/* SVG DYNAMIC LINE & AREA CHART WITH HORIZONTAL SCROLL FOR AMPLITUDE */}
             <div style={{ 
               position: 'relative', 
               width: '100%', 
@@ -1703,16 +1621,39 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
               background: 'rgba(0,0,0,0.25)', 
               borderRadius: '12px', 
               border: '1px solid var(--border-subtle)', 
-              padding: '16px 16px 44px 16px',
+              padding: '16px 16px 50px 16px',
               scrollbarWidth: 'thin',
               scrollbarColor: '#38bdf8 rgba(0,0,0,0.3)'
             }}>
               {(() => {
                 const totalPts = temporalAnalyticsData.points.length;
-                const chartWidth = Math.max(800, totalPts * (temporalGranularity === 'continuous' ? 55 : 36));
+                const isContinuous = temporalGranularity === 'continuous' || temporalGranularity === 'hours';
+                const chartWidth = Math.max(850, totalPts * (isContinuous ? 32 : 55));
+                const svgHeight = isContinuous ? 230 : 200;
+
+                // Build area fill path SVG
+                let areaD = '';
+                if (totalPts > 0) {
+                  areaD = temporalAnalyticsData.points.reduce((acc, p, idx, arr) => {
+                    const cx = (idx / Math.max(1, arr.length - 1)) * (chartWidth - 50) + 25;
+                    const cy = 160 - (p.score / 100) * 140;
+                    if (idx === 0) return `M ${cx} ${cy}`;
+                    return `${acc} L ${cx} ${cy}`;
+                  }, '');
+                  const lastX = (1) * (chartWidth - 50) + 25;
+                  const firstX = 25;
+                  areaD += ` L ${lastX} 165 L ${firstX} 165 Z`;
+                }
 
                 return (
-                  <svg width={chartWidth} height="200" viewBox={`0 0 ${chartWidth} 190`} preserveAspectRatio="none" style={{ overflow: 'visible', minWidth: '100%' }}>
+                  <svg width={chartWidth} height={svgHeight} viewBox={`0 0 ${chartWidth} ${svgHeight}`} preserveAspectRatio="none" style={{ overflow: 'visible', minWidth: '100%' }}>
+                    <defs>
+                      <linearGradient id="areaRiskGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.4" />
+                        <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+
                     {/* Horizontal Risk Level Threshold Lines */}
                     <line x1="0" y1="36" x2={chartWidth} y2="36" stroke="#ef4444" strokeWidth="1" strokeDasharray="4 4" opacity="0.3" />
                     <text x={chartWidth - 5} y="32" fill="#ef4444" fontSize="10" textAnchor="end" fontWeight="700">80 pts (Estado Negro)</text>
@@ -1723,89 +1664,91 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
                     <line x1="0" y1="117" x2={chartWidth} y2="117" stroke="#eab308" strokeWidth="1" strokeDasharray="4 4" opacity="0.3" />
                     <text x={chartWidth - 5} y="113" fill="#eab308" fontSize="10" textAnchor="end" fontWeight="700">35 pts (Alerta Amarilla)</text>
 
-                    {/* Draw Segmented Polyline with Gradient / Point Nodes */}
+                    {/* Area fill under curve */}
+                    {areaD && <path d={areaD} fill="url(#areaRiskGrad)" />}
+
+                    {/* Draw Segmented Polyline */}
                     {temporalAnalyticsData.points.map((p, idx, arr) => {
                       if (idx === 0) return null;
                       const prev = arr[idx - 1];
-                      const x1 = ((idx - 1) / (arr.length - 1)) * (chartWidth - 40) + 20;
-                      const y1 = 170 - (prev.score / 100) * 150;
-                      const x2 = (idx / (arr.length - 1)) * (chartWidth - 40) + 20;
-                      const y2 = 170 - (p.score / 100) * 150;
+                      const x1 = ((idx - 1) / (arr.length - 1)) * (chartWidth - 50) + 25;
+                      const y1 = 160 - (prev.score / 100) * 140;
+                      const x2 = (idx / (arr.length - 1)) * (chartWidth - 50) + 25;
+                      const y2 = 160 - (p.score / 100) * 140;
 
                       return (
                         <line 
                           key={`seg-${idx}`} 
                           x1={x1} y1={y1} x2={x2} y2={y2} 
                           stroke={p.color} 
-                          strokeWidth="3.5" 
+                          strokeWidth="3" 
                           strokeLinecap="round"
                         />
                       );
                     })}
 
-                    {/* Point Nodes & Clickable X-Axis Labels */}
+                    {/* Point Nodes, Day Dividers, and Multi-Tier X-Axis Labels */}
                     {temporalAnalyticsData.points.map((p, idx, arr) => {
-                      const cx = (idx / (arr.length - 1)) * (chartWidth - 40) + 20;
-                      const cy = 170 - (p.score / 100) * 150;
+                      const cx = (idx / (arr.length - 1)) * (chartWidth - 50) + 25;
+                      const cy = 160 - (p.score / 100) * 140;
 
                       const handleAxisClick = () => {
                         if (temporalGranularity === 'year') {
                           setTemporalGranularity('month');
                         } else if (temporalGranularity === 'month') {
-                          // Drilldown specifically to the clicked day (e.g., 10/08)
                           setSelectedSpecificDate(p.label);
-                          setTemporalGranularity('hours');
-                        } else if (temporalGranularity === 'day') {
-                          // Drilldown specifically to clicked weekday
-                          const dayMap = { 'Lunes': '10/08', 'Martes': '11/08', 'Miércoles': '12/08', 'Jueves': '13/08', 'Viernes': '14/08', 'Sábado': '15/08', 'Domingo': '16/08' };
-                          setSelectedSpecificDate(dayMap[p.label] || '10/08');
-                          setTemporalGranularity('hours');
+                          setTemporalGranularity('continuous');
                         } else {
-                          // If in hours, consolidate back to month
                           setTemporalGranularity('month');
                         }
                       };
 
                       return (
                         <g key={`pt-${idx}`} style={{ cursor: 'pointer' }} onClick={handleAxisClick}>
+                          {/* Vertical Dashed Line Divider for Day Boundaries */}
+                          {p.isNewDay && (
+                            <>
+                              <line x1={cx} y1="0" x2={cx} y2="165" stroke="rgba(56,189,248,0.35)" strokeWidth="1.5" strokeDasharray="3 3" />
+                              <rect x={cx} y="195" width={24 * 32} height="24" rx="4" fill="rgba(56,189,248,0.06)" stroke="rgba(56,189,248,0.2)" strokeWidth="1" />
+                              <text x={cx + 12} y="211" fill="#38bdf8" fontSize="11" fontWeight="800" textAnchor="start">
+                                📅 {p.dateShort} (00:00 - 23:59)
+                              </text>
+                            </>
+                          )}
+
+                          {/* Point Node Circle */}
                           <circle 
                             cx={cx} 
                             cy={cy} 
-                            r="6" 
+                            r={isContinuous ? 3.5 : 6} 
                             fill={p.color} 
                             stroke="var(--panel-bg, #0f172a)" 
                             strokeWidth="2" 
                           />
-                          <text 
-                            x={cx} 
-                            y={cy - 10} 
-                            fill="#fff" 
-                            fontSize="9" 
-                            textAnchor="middle" 
-                            fontWeight="800"
-                          >
-                            {p.score}
-                          </text>
-                          
-                          {/* Clickable X-Axis Label Node */}
-                          <g className="x-axis-label-group">
-                            <rect 
-                              x={cx - 18} 
-                              y="166" 
-                              width="36" 
-                              height="18" 
-                              rx="4" 
-                              fill="rgba(56,189,248,0.12)" 
-                              stroke="rgba(56,189,248,0.3)"
-                              strokeWidth="1"
-                            />
+
+                          {/* Score Badge above node */}
+                          {(!isContinuous || idx % 2 === 0 || p.score >= 80) && (
                             <text 
                               x={cx} 
-                              y="178" 
-                              fill="#38bdf8" 
-                              fontSize="9" 
+                              y={cy - 8} 
+                              fill="#fff" 
+                              fontSize={isContinuous ? "8" : "9"} 
+                              textAnchor="middle" 
+                              fontWeight="800"
+                            >
+                              {p.score}
+                            </text>
+                          )}
+                          
+                          {/* X-Axis Label Tier 1 (Hours or Date) */}
+                          <g className="x-axis-label-group">
+                            <text 
+                              x={cx} 
+                              y="180" 
+                              fill={isContinuous ? (p.hour % 6 === 0 ? "#38bdf8" : "rgba(255,255,255,0.7)") : "#38bdf8"} 
+                              fontSize={isContinuous ? "8" : "10"} 
                               textAnchor="middle"
-                              fontWeight="700"
+                              fontWeight={isContinuous ? (p.hour % 6 === 0 ? "800" : "600") : "700"}
                             >
                               {p.label}
                             </text>
@@ -1817,7 +1760,7 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
                 );
               })()}
 
-              {/* INTERACTIVE GRANULARITY CONTROL BAR AT THE BOTTOM OF EJE X */}
+              {/* INTERACTIVE GRANULARITY CONTROL BAR WITH EXPLICIT EXPAND / COLLAPSE BUTTONS */}
               <div style={{
                 position: 'sticky',
                 left: 0,
@@ -1832,40 +1775,43 @@ export default function InsightsDashboard({ bedsData = {}, waitingList = [], tra
                 borderRadius: '8px',
                 padding: '6px 14px',
                 fontSize: '0.75rem',
-                zIndex: 10
+                zIndex: 10,
+                flexWrap: 'wrap',
+                gap: 8
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 700 }}>
                   <Clock size={13} />
-                  <span>Eje X ({temporalGranularity === 'year' ? 'SEMANAS (DESDE 01/08)' : temporalGranularity === 'month' ? 'DÍAS DE AGOSTO' : temporalGranularity === 'day' ? 'DÍAS SEMANA' : temporalGranularity === 'continuous' ? 'SERIE CONTINUA (SCROLL)' : `HORAS 00:00 - 23:00 (${selectedSpecificDate})`})</span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 400 }}>(Pinche cualquier fecha del Eje X para abrir su horario específico)</span>
+                  <span>
+                    Eje X: {temporalGranularity === 'continuous' ? 'HORAS POR DÍA (00:00 a 23:59 desde 01/08)' : temporalGranularity === 'month' ? 'PROMEDIO DIARIO POR FECHA (01/08 - 18/08)' : 'PROMEDIO MENSUAL (AGOSTO 2026)'}
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 400 }}>
+                    (Haga clic en un nodo para profundizar)
+                  </span>
                 </div>
 
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <button
-                    onClick={() => {
-                      if (temporalGranularity === 'hours' || temporalGranularity === 'continuous') setTemporalGranularity('month');
-                      else if (temporalGranularity === 'day') setTemporalGranularity('month');
-                      else if (temporalGranularity === 'month') setTemporalGranularity('year');
-                    }}
-                    disabled={temporalGranularity === 'year'}
-                    className="glass-button secondary"
-                    style={{ fontSize: '0.72rem', padding: '4px 10px', opacity: temporalGranularity === 'year' ? 0.4 : 1, display: 'flex', alignItems: 'center', gap: 4 }}
+                    onClick={() => setTemporalGranularity('continuous')}
+                    className={`glass-button ${temporalGranularity === 'continuous' ? 'primary' : 'secondary'}`}
+                    style={{ fontSize: '0.72rem', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
                   >
-                    <span>📊 Consolidar Vista (Macro)</span>
+                    <span>🔓 Descolapsar Todo (Horas por Día Continuo)</span>
                   </button>
 
                   <button
-                    onClick={() => {
-                      if (temporalGranularity === 'year') setTemporalGranularity('month');
-                      else if (temporalGranularity === 'month') setTemporalGranularity('hours');
-                      else if (temporalGranularity === 'day') setTemporalGranularity('hours');
-                      else setTemporalGranularity('continuous');
-                    }}
-                    disabled={temporalGranularity === 'continuous'}
-                    className="glass-button primary"
-                    style={{ fontSize: '0.72rem', padding: '4px 10px', opacity: temporalGranularity === 'continuous' ? 0.4 : 1, display: 'flex', alignItems: 'center', gap: 4 }}
+                    onClick={() => setTemporalGranularity('month')}
+                    className={`glass-button ${temporalGranularity === 'month' ? 'primary' : 'secondary'}`}
+                    style={{ fontSize: '0.72rem', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
                   >
-                    <span>🔍 Profundizar Granularidad</span>
+                    <span>📊 Colapsar a Promedio Diario</span>
+                  </button>
+
+                  <button
+                    onClick={() => setTemporalGranularity('year')}
+                    className={`glass-button ${temporalGranularity === 'year' ? 'primary' : 'secondary'}`}
+                    style={{ fontSize: '0.72rem', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
+                  >
+                    <span>🏢 Colapsar a Promedio Mensual</span>
                   </button>
                 </div>
               </div>
