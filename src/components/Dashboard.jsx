@@ -399,6 +399,36 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         return;
       }
 
+      // Verificar si el paciente ya está acostado en alguna cama
+      const patientRut = (patient.rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
+      if (patientRut) {
+        let alreadyInBed = false;
+        let existingBedInfo = '';
+        for (const floor in bedsData) {
+          for (const sector in bedsData[floor]) {
+            for (const room of bedsData[floor][sector]) {
+              for (const b of room.beds) {
+                if (b.status === 'occupied' && b.rut) {
+                  const bRut = b.rut.replace(/[^0-9kK]/g, '').toLowerCase();
+                  if (bRut && bRut === patientRut) {
+                    alreadyInBed = true;
+                    existingBedInfo = `Hab ${room.roomId} — Cama ${b.id}`;
+                    break;
+                  }
+                }
+              }
+              if (alreadyInBed) break;
+            }
+            if (alreadyInBed) break;
+          }
+          if (alreadyInBed) break;
+        }
+        if (alreadyInBed) {
+          alert(`⚠️ ADVERTENCIA — Paciente ya acostado\n\nEl paciente ${patient.name} (RUT: ${patient.rut}) ya figura como acostado en ${existingBedInfo}.\n\nNo es posible acostar al mismo paciente dos veces. Si corresponde, primero realice el alta del paciente en la cama actual.`);
+          return;
+        }
+      }
+
       const serviceMismatch = !checkServiceMatch(targetBed, patient);
 
       // En lugar de asignar, abrimos el modal
