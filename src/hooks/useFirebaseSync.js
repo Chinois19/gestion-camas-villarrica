@@ -28,13 +28,7 @@ function countOccupiedBeds(data) {
 export function useFirebaseSync(collectionName, documentId, initialData, options = {}) {
   const { realtime = true, enabled = true } = options;
   const [data, setData] = useState(initialData);
-  const [loading, setLoading] = useState(enabled);
-
-  useEffect(() => {
-    if (!enabled) {
-      setLoading(false);
-    }
-  }, [enabled]);
+  const [loading, setLoading] = useState(() => enabled);
 
   // Keep a ref to the latest data so updater functions always see the current value
   const dataRef = useRef(data);
@@ -50,7 +44,6 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
       return;
     }
 
-    setLoading(true);
     const docRef = doc(db, collectionName, documentId);
 
     if (realtime) {
