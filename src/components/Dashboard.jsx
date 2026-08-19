@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Bed, User, LayoutDashboard, Map, Info, Layers, Search, X, Activity, Pencil, LogOut, CheckCircle, Filter, RotateCcw, Lock, Unlock } from 'lucide-react';
-import { getBedTypeClass, getIconColor } from '../data/dummy';
+import { Bed, User, LayoutDashboard, X, Pencil, LogOut, CheckCircle, Filter, RotateCcw, Lock, Unlock } from 'lucide-react';
+import { getBedTypeClass } from '../data/dummy';
 import WaitingList from './WaitingList';
 import AssignmentModal from './AssignmentModal';
 import EditGrdModal from './EditGrdModal';
@@ -56,7 +56,6 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
   });
 
   const styleTarget = bed.tag || bed.type;
-  const isAvailable = bed.status === 'available';
 
   let progress = 0;
   let remainingDays = 0;
@@ -344,8 +343,6 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   const userRole = user?.role || 'visor';
   const isVisor = userRole === 'visor';
   const isGestoraServicio = userRole === 'gestora_servicio';
-  // gestora_servicio no puede asignar pacientes ni interactuar con la lista de espera
-  const canAssignPatients = !isVisor && !isGestoraServicio;
 
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [pendingAssignment, setPendingAssignment] = useState(null); // { patient, bedId, roomId, serviceMismatch, bedType }
@@ -597,10 +594,11 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   const handleBlockConfirm = ({ reason, observation }) => {
     if (!blockingBed) return;
     const now = new Date();
+    const timestamp = now.getTime();
     const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
     const newNovedad = {
-      id: Date.now(),
+      id: timestamp,
       fecha: formattedDate,
       usuario: user?.name || 'Usuario',
       rol: user?.role || 'Desconocido',
@@ -622,7 +620,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       const bedInfo = blockingBed.bed;
       const servicio = bedInfo.tag || bedInfo.type || 'Sin servicio';
       const logEntry = {
-        id: `block-${Date.now()}`,
+        id: `block-${timestamp}`,
         causal: reason,
         observation: observation || '',
         cama: `Hab. ${blockingBed.roomId} — Cama ${bedInfo.id}`,
@@ -640,10 +638,11 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   const handleUnblockConfirm = ({ observation }) => {
     if (!unblockingBed) return;
     const now = new Date();
+    const timestamp = now.getTime();
     const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
     const newNovedad = {
-      id: Date.now(),
+      id: timestamp,
       fecha: formattedDate,
       usuario: user?.name || 'Usuario',
       rol: user?.role || 'Desconocido',
@@ -1181,7 +1180,9 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             const year = d.getFullYear();
             return `${day}-${month}-${year}`;
           }
-        } catch (e) { }
+        } catch (_err) {
+          // ignore invalid date
+        }
         return '—';
       };
 
@@ -1214,7 +1215,9 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             const diffTime = Math.abs(new Date() - date);
             estadaSource = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + ' días';
           }
-        } catch (e) { }
+        } catch (_err) {
+          // ignore invalid date
+        }
       }
 
       // Diagnostics source
@@ -1322,7 +1325,9 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
               const diffTime = Math.abs(new Date() - date);
               estadaTarget = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + ' días';
             }
-          } catch (e) { }
+          } catch (_err) {
+            // ignore invalid date
+          }
         }
 
         // Diagnostics target
@@ -1438,7 +1443,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             const bIndex = room.beds.findIndex(b => String(b.id) === String(sourceBedId));
             if (bIndex !== -1) {
               if (transferType === 'enroque') {
-                const { id, type, tag, novedades: _n, evolutions: _e, ...targetPatientData } = targetBedInfo;
+                const { id: _id, type: _t, tag: _tg, novedades: _n, evolutions: _e, ...targetPatientData } = targetBedInfo;
                 room.beds[bIndex] = {
                   id: room.beds[bIndex].id,
                   type: room.beds[bIndex].type,
@@ -1467,7 +1472,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
             const room = sectorRooms[tRoomIndex];
             const bIndex = room.beds.findIndex(b => String(b.id) === String(targetBedId));
             if (bIndex !== -1) {
-              const { id, type, tag, ...sourcePatientData } = sourceBedInfo;
+              const { id: _id, type: _t, tag: _tg, ...sourcePatientData } = sourceBedInfo;
               room.beds[bIndex] = {
                 id: room.beds[bIndex].id,
                 type: room.beds[bIndex].type,

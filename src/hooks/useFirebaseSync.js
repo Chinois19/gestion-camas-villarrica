@@ -30,9 +30,11 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(enabled);
 
-  if (!enabled && loading) {
-    setLoading(false);
-  }
+  useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+    }
+  }, [enabled]);
 
   // Keep a ref to the latest data so updater functions always see the current value
   const dataRef = useRef(data);
