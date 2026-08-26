@@ -1,6 +1,32 @@
 import { X, Clock, User, Activity, FileText, AlertTriangle, Info, Heart } from 'lucide-react';
 import { formatAgeDetailed } from '../utils/age';
 
+const CriticalBadge = ({ label, value }) => (
+  <div style={{
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    border: value ? '1px solid #ef4444' : '1px solid var(--border-subtle)',
+    borderRadius: '8px', padding: '10px 4px', width: '60px',
+    background: value ? 'rgba(239, 68, 68, 0.05)' : 'rgba(0,0,0,0.2)'
+  }}>
+    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '4px' }}>{label}</span>
+    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: value ? '#ef4444' : 'var(--text-primary)' }}>
+      {value ? 'SÍ' : 'NO'}
+    </span>
+  </div>
+);
+
+const VitalBox = ({ label, value, unit, color = 'var(--text-primary)' }) => (
+  <div style={{
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '8px 4px',
+    background: 'rgba(0,0,0,0.2)', minWidth: '60px'
+  }}>
+    <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '4px' }}>{label}</span>
+    <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color }}>{value || '-'}</span>
+    <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '2px' }}>{unit}</span>
+  </div>
+);
+
 export default function PatientDetailModal({ patient, onClose }) {
   const requestTime = new Date(patient.requestedAt || new Date());
   const currentTime = new Date();
@@ -12,32 +38,6 @@ export default function PatientDetailModal({ patient, onClose }) {
   // Format date
   const dateStr = requestTime.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const timeStr = requestTime.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: true });
-
-  const CriticalBadge = ({ label, value }) => (
-    <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      border: value ? '1px solid #ef4444' : '1px solid var(--border-subtle)',
-      borderRadius: '8px', padding: '10px 4px', width: '60px',
-      background: value ? 'rgba(239, 68, 68, 0.05)' : 'rgba(0,0,0,0.2)'
-    }}>
-      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '4px' }}>{label}</span>
-      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: value ? '#ef4444' : 'var(--text-primary)' }}>
-        {value ? 'SÍ' : 'NO'}
-      </span>
-    </div>
-  );
-
-  const VitalBox = ({ label, value, unit, color = 'var(--text-primary)' }) => (
-    <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '8px 4px',
-      background: 'rgba(0,0,0,0.2)', minWidth: '60px'
-    }}>
-      <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '4px' }}>{label}</span>
-      <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color }}>{value || '-'}</span>
-      <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '2px' }}>{unit}</span>
-    </div>
-  );
 
   return (
     <div className="modal-overlay">

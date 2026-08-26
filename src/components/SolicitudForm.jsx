@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, FileText, CheckCircle, User, Stethoscope, ArrowRightLeft, Activity, Heart, Thermometer, Droplets, Wind, Eye, BarChart2, Search, X } from 'lucide-react';
-import { getHospitalStats } from '../data/dummy';
+import { Send, FileText, CheckCircle, User, Stethoscope, ArrowRightLeft, Activity, Search, X } from 'lucide-react';
 import cie10Data from '../data/cie10.json';
 import { SERVICIOS_SOLICITANTES, PREVISIONES, ESPECIALIDADES, COMUNAS_CHILE } from '../data/formData';
 import { MEDICOS } from '../data/medicos';
@@ -21,11 +20,15 @@ const formatRut = (val) => {
 /* ── SearchableSelect ─────────────────────────────── */
 function SearchableSelect({ name, value, onChange, options, placeholder, allowFreeText }) {
   const [query, setQuery] = useState(value || '');
+  const [prevValue, setPrevValue] = useState(value);
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
-  // Keep query in sync if value changed externally
-  useEffect(() => { setQuery(value || ''); }, [value]);
+  // Sync state during render when value prop changes externally
+  if (value !== prevValue) {
+    setPrevValue(value);
+    setQuery(value || '');
+  }
 
   useEffect(() => {
     const fn = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
@@ -215,26 +218,6 @@ function Toggle({ label, checked, onChange }) {
   );
 }
 
-function VitalInput({ icon: Icon, label, unit, name, value, onChange, color }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(0,0,0,0.2)', borderRadius: 12, border: '1px solid var(--border-subtle)' }}>
-      <div style={{ width: 36, height: 36, borderRadius: '50%', background: `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon size={18} color={color} />
-      </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)' }}>{label}</div>
-        <div style={{ fontSize: '0.65rem', color }}>{unit}</div>
-      </div>
-      <input type="number" name={name} value={value} onChange={onChange}
-        style={{
-          width: 70, background: 'rgba(0,0,0,0.35)', border: '1px solid var(--border-subtle)',
-          borderRadius: 8, padding: '6px 10px', color: 'var(--text-primary)',
-          fontFamily: 'var(--font)', fontSize: '1rem', fontWeight: 700, outline: 'none', textAlign: 'center',
-        }} />
-    </div>
-  );
-}
-
 /* ── ReadOnly display field ─── */
 function ReadOnlyField({ label, value }) {
   return (
@@ -257,7 +240,6 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   const patientData = editingPatient || viewingPatient;
   const isViewMode = !!viewingPatient && !editingPatient;
   const isEditMode = !!editingPatient;
-  const isNewMode = !editingPatient && !viewingPatient;
   const [submitted, setSubmitted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -282,57 +264,6 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   const [customDate, setCustomDate] = useState(initialDT.date);
   const [customTime, setCustomTime] = useState(initialDT.time);
 
-  useEffect(() => {
-    let d = new Date();
-    if (patientData?.requestedAt) {
-      const parsed = new Date(patientData.requestedAt);
-      if (!isNaN(parsed.getTime())) {
-        d = parsed;
-      }
-    }
-    const pad = (num) => String(num).padStart(2, '0');
-    setCustomDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
-    setCustomTime(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
-
-    if (patientData) {
-      setAislamiento(patientData.aislamiento !== undefined ? patientData.aislamiento : null);
-      setSecondaryCodes(patientData.secondaryCodes || []);
-      setEvolutions(patientData.evolutions || []);
-      setFormData({
-        nombre: patientData.name || '', rut: formatRut(patientData.rut || ''),
-        edad: patientData.age || '', sexo: patientData.sexo || '',
-        fechaNacimiento: patientData.fechaNacimiento || '',
-        prevision: patientData.prevision || '', comuna: patientData.comuna || '',
-        dxPrincipal: patientData.dxPrincipal || '',
-        dxCie10: patientData.dxCie10 || '', dxGrupo: patientData.dxGrupo || '',
-        servicioSol: patientData.origin || '', medicoSol: patientData.medicoSol || '',
-        especialidadMedico: patientData.especialidadMedico || '',
-        especialidadTratante: Array.isArray(patientData.especialidadTratante) ? patientData.especialidadTratante : (patientData.especialidadTratante ? [patientData.especialidadTratante] : []),
-        destino: patientData.bedTypeRequired || 'Cuidados Medios',
-        requisitosUGP: patientData.requisitosUGP || '',
-        reqEnfermeria: patientData.reqEnfermeria || '',
-        procedimientosPendientes: patientData.procedimientosPendientes || '',
-        hodom: patientData.hodom || false, trr: patientData.trr || false,
-        hfc: patientData.hfc || false, ugcc: patientData.ugcc || false,
-        paSist: patientData.paSist || '', paDiast: patientData.paDiast || '',
-        frecCard: patientData.frecCard || '', frecResp: patientData.frecResp || '',
-        temp: patientData.temp || '', satO2: patientData.satO2 || '',
-        glicemia: patientData.glicemia || '', evaDolor: patientData.evaDolor || '',
-      });
-    } else {
-      setAislamiento(null);
-      setSecondaryCodes([]);
-      setEvolutions([]);
-      setFormData({
-        nombre: '', rut: '', edad: '', sexo: '', fechaNacimiento: '', prevision: '', comuna: '',
-        dxPrincipal: '', dxCie10: '', dxGrupo: '',
-        servicioSol: '', medicoSol: '', especialidadMedico: '', especialidadTratante: [], destino: 'Cuidados Medios',
-        requisitosUGP: '', reqEnfermeria: '', procedimientosPendientes: '',
-        hodom: false, trr: false, hfc: false, ugcc: false,
-        paSist: '', paDiast: '', frecCard: '', frecResp: '', temp: '', satO2: '', glicemia: '', evaDolor: '',
-      });
-    }
-  }, [patientData?.id]);
   const [ticketNumber, setTicketNumber] = useState('');
   const [aislamiento, setAislamiento] = useState(() => {
     if (patientData && patientData.aislamiento !== undefined) {
@@ -340,7 +271,6 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
         return patientData.aislamiento ? ['Precaución de contacto'] : [];
       }
       if (Array.isArray(patientData.aislamiento)) {
-        // Filtrar valores legacy
         return patientData.aislamiento.filter(a => a && a !== 'Sin Precauciones' && a !== 'Requiere Aislamiento');
       }
       return [];
@@ -351,7 +281,6 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const autocompleteRef = useRef(null);
-  const stats = getHospitalStats();
 
   const [formData, setFormData] = useState(() => patientData ? {
     nombre: patientData.name || '', rut: formatRut(patientData.rut || ''),
@@ -381,17 +310,68 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     hodom: false, trr: false, hfc: false, ugcc: false,
     paSist: '', paDiast: '', frecCard: '', frecResp: '', temp: '', satO2: '', glicemia: '', evaDolor: '',
   });
-  // Secondary CIE-10 codes (up to 5)
+
   const [secondaryCodes, setSecondaryCodes] = useState(
     patientData?.secondaryCodes || []
   );
-  const [secSearch, setSecSearch] = useState('');
-  const [secSuggestions, setSecSuggestions] = useState([]);
-  const [showSecSug, setShowSecSug] = useState(false);
-  const secRef = useRef(null);
-  // Clinical evolution log
   const [evolutions, setEvolutions] = useState(patientData?.evolutions || []);
   const [evolNote, setEvolNote] = useState('');
+
+  const [prevPatientData, setPrevPatientData] = useState(patientData);
+
+  if (patientData !== prevPatientData) {
+    setPrevPatientData(patientData);
+
+    let d = new Date();
+    if (patientData?.requestedAt) {
+      const parsed = new Date(patientData.requestedAt);
+      if (!isNaN(parsed.getTime())) {
+        d = parsed;
+      }
+    }
+    const pad = (num) => String(num).padStart(2, '0');
+    setCustomDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+    setCustomTime(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+
+    if (patientData) {
+      setAislamiento(patientData.aislamiento !== undefined ? (typeof patientData.aislamiento === 'boolean' ? (patientData.aislamiento ? ['Precaución de contacto'] : []) : (Array.isArray(patientData.aislamiento) ? patientData.aislamiento.filter(a => a && a !== 'Sin Precauciones' && a !== 'Requiere Aislamiento') : [])) : []);
+      setSecondaryCodes(patientData.secondaryCodes || []);
+      setEvolutions(patientData.evolutions || []);
+      setFormData({
+        nombre: patientData.name || '', rut: formatRut(patientData.rut || ''),
+        edad: patientData.age || '', sexo: patientData.sexo || '',
+        fechaNacimiento: patientData.fechaNacimiento || '',
+        prevision: patientData.prevision || '', comuna: patientData.comuna || '',
+        dxPrincipal: patientData.dxPrincipal || '',
+        dxCie10: patientData.dxCie10 || '', dxGrupo: patientData.dxGrupo || '',
+        servicioSol: patientData.origin || '', medicoSol: patientData.medicoSol || '',
+        especialidadMedico: patientData.especialidadMedico || '',
+        especialidadTratante: Array.isArray(patientData.especialidadTratante) ? patientData.especialidadTratante : (patientData.especialidadTratante ? [patientData.especialidadTratante] : []),
+        destino: patientData.bedTypeRequired || 'Cuidados Medios',
+        requisitosUGP: patientData.requisitosUGP || '',
+        reqEnfermeria: patientData.reqEnfermeria || '',
+        procedimientosPendientes: patientData.procedimientosPendientes || '',
+        hodom: patientData.hodom || false, trr: patientData.trr || false,
+        hfc: patientData.hfc || false, ugcc: patientData.ugcc || false,
+        paSist: patientData.paSist || '', paDiast: patientData.paDiast || '',
+        frecCard: patientData.frecCard || '', frecResp: patientData.frecResp || '',
+        temp: patientData.temp || '', satO2: patientData.satO2 || '',
+        glicemia: patientData.glicemia || '', evaDolor: patientData.evaDolor || '',
+      });
+    } else {
+      setAislamiento([]);
+      setSecondaryCodes([]);
+      setEvolutions([]);
+      setFormData({
+        nombre: '', rut: '', edad: '', sexo: '', fechaNacimiento: '', prevision: '', comuna: '',
+        dxPrincipal: '', dxCie10: '', dxGrupo: '',
+        servicioSol: '', medicoSol: '', especialidadMedico: '', especialidadTratante: [], destino: 'Cuidados Medios',
+        requisitosUGP: '', reqEnfermeria: '', procedimientosPendientes: '',
+        hodom: false, trr: false, hfc: false, ugcc: false,
+        paSist: '', paDiast: '', frecCard: '', frecResp: '', temp: '', satO2: '', glicemia: '', evaDolor: '',
+      });
+    }
+  }
 
   useEffect(() => {
     const fn = e => { if (autocompleteRef.current && !autocompleteRef.current.contains(e.target)) setShowSuggestions(false); };
@@ -441,7 +421,6 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     const val = e.target.value;
     setSearchTerm(val);
     if (val.length > 2) {
-      const lv = val.toLowerCase();
       const filtered = cie10Data.filter(i => matchesSearch(i.code, val) || matchesSearch(i.desc, val)).slice(0, 10);
       setSuggestions(filtered);
       setShowSuggestions(true);
@@ -1016,7 +995,6 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                               const isContact = item === 'Precaución de contacto';
                               const isGotitas = item === 'Precaución de gotitas';
                               const isAereo = item === 'Precaución aérea';
-                              const isEstandar = item === 'Precaución estándar';
                               const isProtector = item === 'Aislamiento protector';
                               let bg, color, border;
                               if (isContact || isGotitas || isAereo) {

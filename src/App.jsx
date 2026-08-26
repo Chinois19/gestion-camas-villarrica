@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
-  Activity, Search, User, Sun, Moon, LogOut, KeyRound, Leaf
+  Activity, Search, User, LogOut, KeyRound, Palette
 } from 'lucide-react';
 import './App.css';
 import Login from './components/Login';
@@ -31,6 +31,18 @@ const initialBedsData = JSON.parse(JSON.stringify(DUMMY_DATA));
 
 const initialHodomRequests = [];
 
+// All available themes
+const THEMES = [
+  { id: 'dark',     label: 'Dark',     cls: 'theme-dark',     dots: ['#00d4ff','#8b5cf6','#080a10'], dark: true  },
+  { id: 'light',    label: 'Light',    cls: 'theme-light',    dots: ['#005f8a','#7c3aed','#b8cfe8'], dark: false },
+  { id: 'emerald',  label: 'Zafiro',   cls: 'theme-emerald',  dots: ['#2563eb','#6366f1','#eff6ff'], dark: false },
+  { id: 'crimson',  label: 'Crimson',  cls: 'theme-crimson',  dots: ['#ef4444','#c084fc','#100608'], dark: true  },
+  { id: 'forest',   label: 'Forest',   cls: 'theme-forest',   dots: ['#22c55e','#a78bfa','#051008'], dark: true  },
+  { id: 'sunset',   label: 'Sunset',   cls: 'theme-sunset',   dots: ['#f97316','#a78bfa','#100800'], dark: true  },
+  { id: 'midnight', label: 'Midnight', cls: 'theme-midnight', dots: ['#818cf8','#c084fc','#010510'], dark: true  },
+  { id: 'slate',    label: 'Slate',    cls: 'theme-slate',    dots: ['#475569','#7c3aed','#e2e8f0'], dark: false },
+];
+
 function App() {
   // Auth state
   const [currentUser, setCurrentUser] = useState(() => {
@@ -50,7 +62,9 @@ function App() {
   const [viewingPatient, setViewingPatient] = useState(null);
   const [requestingWaitingIC, setRequestingWaitingIC] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState(() => localStorage.getItem('gestion-camas-theme') || 'dark');
+  const [showThemeSelector, setShowThemeSelector] = useState(false);
+  const themeBtnRef = useRef(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [isPublicRoute] = useState(() => {
     return window.location.hash.includes('#solicitud-publica') || window.location.search.includes('public=solicitud');
@@ -69,17 +83,23 @@ function App() {
   // Es la fuente de verdad del Informe de Altas, independiente del estado de las camas.
   const [dischargesLog, setDischargesLog] = useFirebaseSync('appState', 'dischargesLog', [], { realtime: false });
 
-
   useEffect(() => {
-    const classMap = { dark: 'theme-dark', light: 'theme-light', emerald: 'theme-emerald' };
-    document.body.className = classMap[theme] || 'theme-dark';
+    const t = THEMES.find(t => t.id === theme) || THEMES[0];
+    document.body.className = t.cls;
+    localStorage.setItem('gestion-camas-theme', theme);
   }, [theme]);
 
-  const cycleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : prev === 'light' ? 'emerald' : 'dark');
-  };
-  const themeIcon = theme === 'light' ? <Moon size={18} /> : theme === 'emerald' ? <Leaf size={18} /> : <Sun size={18} />;
-  const themeTitle = theme === 'dark' ? 'Cambiar a Modo Claro' : theme === 'light' ? 'Cambiar a Modo Esmeralda' : 'Cambiar a Modo Oscuro';
+  // Close theme selector on outside click
+  useEffect(() => {
+    if (!showThemeSelector) return;
+    const handler = (e) => {
+      if (themeBtnRef.current && !themeBtnRef.current.contains(e.target)) {
+        setShowThemeSelector(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showThemeSelector]);
 
 
 
@@ -459,14 +479,61 @@ function App() {
             >
               <KeyRound size={18} />
             </button>
-            <button
-              className="glass-button"
-              style={{ padding: '8px', position: 'relative' }}
-              onClick={cycleTheme}
-              title={themeTitle}
-            >
-              {themeIcon}
-            </button>
+            <div ref={themeBtnRef} style={{ position: 'relative' }}>
+              <button
+                id="theme-selector-btn"
+                className="glass-button"
+                style={{ padding: '8px' }}
+                onClick={() => setShowThemeSelector(v => !v)}
+                title="Seleccionar tema"
+              >
+                <Palette size={18} />
+              </button>
+
+              {showThemeSelector && (
+                <div className="theme-selector-dropdown">
+                  <div className="theme-selector-title">🎨 Tema de la Interfaz</div>
+
+                  <div className="theme-selector-group-label">☀️ Claros</div>
+                  <div className="theme-selector-grid">
+                    {THEMES.filter(t => !t.dark).map(t => (
+                      <button
+                        key={t.id}
+                        id={`theme-btn-${t.id}`}
+                        className={`theme-swatch-btn ${theme === t.id ? 'active' : ''}`}
+                        onClick={() => { setTheme(t.id); setShowThemeSelector(false); }}
+                      >
+                        <div className="theme-swatch-colors">
+                          {t.dots.map((c, i) => (
+                            <span key={i} className="theme-swatch-dot" style={{ background: c }} />
+                          ))}
+                        </div>
+                        <span className="theme-swatch-name">{t.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="theme-selector-group-label">🌙 Oscuros</div>
+                  <div className="theme-selector-grid">
+                    {THEMES.filter(t => t.dark).map(t => (
+                      <button
+                        key={t.id}
+                        id={`theme-btn-${t.id}`}
+                        className={`theme-swatch-btn ${theme === t.id ? 'active' : ''}`}
+                        onClick={() => { setTheme(t.id); setShowThemeSelector(false); }}
+                      >
+                        <div className="theme-swatch-colors">
+                          {t.dots.map((c, i) => (
+                            <span key={i} className="theme-swatch-dot" style={{ background: c }} />
+                          ))}
+                        </div>
+                        <span className="theme-swatch-name">{t.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <button
               className="glass-button"
               style={{ padding: '8px' }}

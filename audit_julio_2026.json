@@ -1,0 +1,838 @@
+{
+  "generadoEn": "2026-08-04T17:37:30.313Z",
+  "julio_en_dischargesLog": 269,
+  "julio_pacientes_activos": [
+    {
+      "paciente": "ALBERTINA CURIN RAINAHUEL",
+      "rut": "19623844-1",
+      "cama": "piso3 Hab.302 C1",
+      "ingreso": "31-07-2026, 11:19 a. m.",
+      "ts": "2026-07-31T15:19:00.000Z",
+      "diagnostico": "O471 - Falso trabajo de parto después de las 37 semanas completas de gestación"
+    },
+    {
+      "paciente": "CATALINA GALLARDO GUTIERREZ",
+      "rut": "60904488-4",
+      "cama": "piso3 Hab.304 C4",
+      "ingreso": "24-07-2026, 07:19 a. m.",
+      "ts": "2026-07-24T11:19:00.000Z",
+      "diagnostico": "P050 - Bajo peso para la edad gestacional"
+    },
+    {
+      "paciente": "AMPARO ISIDORA MORA FUENTES ",
+      "rut": "60904578-7",
+      "cama": "piso3 Hab.304 C5",
+      "ingreso": "30-07-2026, 05:57 p. m.",
+      "ts": "2026-07-30T21:57:00.000Z",
+      "diagnostico": "O60 - Parto prematuro"
+    },
+    {
+      "paciente": "\tAILEN MAITE VALENZUELA SILVA",
+      "rut": "19769460-2",
+      "cama": "piso3 Hab.307 C2",
+      "ingreso": "25-07-2026, 01:51 a. m.",
+      "ts": "2026-07-25T05:51:00.000Z",
+      "diagnostico": "O241 - Diabetes mellitus preexistente no insulinodependiente, O104 - Hipertensión secundaria preexistente que complica el embarazo, el parto y el puerperio, Z354 - Supervisión de embarazo en mujer multípara grande"
+    },
+    {
+      "paciente": "CARLOS ESCOBAR RAMIREZ",
+      "rut": "9929063-3",
+      "cama": "piso3 Hab.308 C3",
+      "ingreso": "27-07-2026, 06:43 p. m.",
+      "ts": "2026-07-27T22:43:00.000Z",
+      "diagnostico": "J159 - Neumonía bacteriana, no especificada"
+    },
+    {
+      "paciente": "SEGUNDO MILLAHUAL LASTRA",
+      "rut": "8370212-5",
+      "cama": "piso3 Hab.308 C4",
+      "ingreso": "17-07-2026, 06:19 p. m.",
+      "ts": "2026-07-17T22:19:00.000Z",
+      "diagnostico": "M861 - Otras osteomielitis agudas, J960 - Insuficiencia respiratoria aguda, J90 - Derrame pleural no clasificado en otra parte"
+    },
+    {
+      "paciente": "AURELIA  ANTILEF QUINTULAF",
+      "rut": "5467984-K",
+      "cama": "piso3 Hab.309 C1",
+      "ingreso": "22-07-2026, 11:49 p. m.",
+      "ts": "2026-07-23T03:49:00.000Z",
+      "diagnostico": "J189 - Neumonía, no especificada, J841 - Otras enfermedades pulmonares intersticiales con fibrosis"
+    },
+    {
+      "paciente": "ALICIA ARAVENA CARO",
+      "rut": "17116207-6",
+      "cama": "piso3 Hab.309 C2",
+      "ingreso": "10-07-2026, 08:06 p. m.",
+      "ts": "2026-07-11T00:06:00.000Z",
+      "diagnostico": "N768 - Otras enfermedades inflamatorias especificadas de la vagina y de la vulva, E111 - Diabetes mellitus tipo 2 con cetoacidosis"
+    },
+    {
+      "paciente": "VILMA ALEGRE DIAZ",
+      "rut": "7548838-6",
+      "cama": "piso3 Hab.312 C3",
+      "ingreso": "30-07-2026, 01:43 a. m.",
+      "ts": "2026-07-30T05:43:00.000Z",
+      "diagnostico": "R100 - Síndrome abdominal agudo, R579 - Shock, no especificado, E111 - Diabetes mellitus tipo 2 con cetoacidosis"
+    },
+    {
+      "paciente": "JUANA SANDOVAL CARRIEL",
+      "rut": "7431307-8",
+      "cama": "piso3 Hab.312 C4",
+      "ingreso": "28-07-2026, 06:26 p. m.",
+      "ts": "2026-07-28T22:26:00.000Z",
+      "diagnostico": "K830 - Colangitis"
+    },
+    {
+      "paciente": "ROLANDO HECTOR ROST URRUTIA",
+      "rut": "13515630-2",
+      "cama": "piso3 Hab.313 C1",
+      "ingreso": "17-07-2026, 06:10 p. m.",
+      "ts": "2026-07-17T22:10:00.000Z",
+      "diagnostico": "L732 - Hidradenitis supurativa"
+    },
+    {
+      "paciente": "JULIO QUINTEROS SANDOVAL",
+      "rut": "10924556-9",
+      "cama": "piso3 Hab.313 C2",
+      "ingreso": "08-07-2026, 04:55 p. m.",
+      "ts": "2026-07-08T20:55:00.000Z",
+      "diagnostico": "E115 - Diabetes mellitus tipo 2 con complicaciones circulatorias periféricas, F198 - Trastornos mentales y del comportamiento debidos al uso de múltiples drogas y al uso de otras sustancias psicoactivas, otros trastornos mentales y del comportamiento, Z92 - Historia personal de tratamiento médico"
+    },
+    {
+      "paciente": "JOSE FUENTEALBA GOMEZ",
+      "rut": "3163128-9",
+      "cama": "piso3 Hab.313 C3",
+      "ingreso": "27-07-2026, 04:22 p. m.",
+      "ts": "2026-07-27T20:22:00.000Z",
+      "diagnostico": "E115 - Diabetes mellitus tipo 2 con complicaciones circulatorias periféricas"
+    },
+    {
+      "paciente": "JUAN ANTONIO QUEZADA SALINAS",
+      "rut": "5598217-1",
+      "cama": "piso3 Hab.313 C4",
+      "ingreso": "28-07-2026, 06:18 p. m.",
+      "ts": "2026-07-28T22:18:00.000Z",
+      "diagnostico": "T131 - Herida del miembro inferior, nivel no especificado"
+    },
+    {
+      "paciente": "SUSAY JIMENEZ LEIVA",
+      "rut": "20122054-8",
+      "cama": "piso4 Hab.401 C2",
+      "ingreso": "20-07-2026, 04:52 p. m.",
+      "ts": "2026-07-20T20:52:00.000Z",
+      "diagnostico": "F319 - Trastorno afectivo bipolar, no especificado, F142 - Trastornos mentales y del comportamiento debidos al uso de cocaína, síndrome de dependencia, F431 - Trastorno de estrés postraumático, F630 - Juego patológico"
+    },
+    {
+      "paciente": "MARTINA ALCA SALOTTO",
+      "rut": "24144815-0",
+      "cama": "piso4 Hab.402 C1",
+      "ingreso": "31-07-2026, 02:29 a. m.",
+      "ts": "2026-07-31T06:29:00.000Z",
+      "diagnostico": "T433 - Envenenamiento por antipsicóticos y neurolépticos fenotiazínicos, F920 - Trastorno depresivo de la conducta, F431 - Trastorno de estrés postraumático"
+    },
+    {
+      "paciente": "BENJAMIN HUICHIQUEO GONZALEZ",
+      "rut": "22849384-8",
+      "cama": "piso4 Hab.402 C2",
+      "ingreso": "24-07-2026, 07:41 p. m.",
+      "ts": "2026-07-24T23:41:00.000Z",
+      "diagnostico": "F29 - Psicosis de origen no orgánico, no especificada, F208 - Otras esquizofrenias, E559 - Deficiencia de vitamina D, no especificada"
+    },
+    {
+      "paciente": "KRISHNA TRECANAO TRECANAO",
+      "rut": "23695517-6",
+      "cama": "piso4 Hab.402 C3",
+      "ingreso": "24-07-2026, 07:40 p. m.",
+      "ts": "2026-07-24T23:40:00.000Z",
+      "diagnostico": ""
+    },
+    {
+      "paciente": "CESAR FRANCISCO SORIANO GUTIERREZ",
+      "rut": "11862034-8",
+      "cama": "piso4 Hab.403 C2",
+      "ingreso": "22-07-2026, 01:41 a. m.",
+      "ts": "2026-07-22T05:41:00.000Z",
+      "diagnostico": "R458 - Otros síntomas y signos que involucran el estado emocional"
+    },
+    {
+      "paciente": "JUAN CASANOVA LEON",
+      "rut": "16428195-7",
+      "cama": "piso4 Hab.403 C3",
+      "ingreso": "29-07-2026, 03:20 a. m.",
+      "ts": "2026-07-29T07:20:00.000Z",
+      "diagnostico": "F29 - Psicosis de origen no orgánico, no especificada"
+    },
+    {
+      "paciente": "DIEGO ODGERS QUILODRAN",
+      "rut": "23265979-3",
+      "cama": "piso4 Hab.403 C4",
+      "ingreso": "31-07-2026, 07:09 p. m.",
+      "ts": "2026-07-31T23:09:00.000Z",
+      "diagnostico": "R458 - Otros síntomas y signos que involucran el estado emocional"
+    },
+    {
+      "paciente": "GERALDINNE FUENTES VILLAGRAN ",
+      "rut": "21746213-4",
+      "cama": "piso4 Hab.404 C2",
+      "ingreso": "31-07-2026, 02:30 a. m.",
+      "ts": "2026-07-31T06:30:00.000Z",
+      "diagnostico": "F220 - Trastorno delirante, R458 - Otros síntomas y signos que involucran el estado emocional"
+    },
+    {
+      "paciente": "ELSA MARIN TORRES",
+      "rut": "10626491-0",
+      "cama": "piso4 Hab.404 C3",
+      "ingreso": "31-07-2026, 02:30 a. m.",
+      "ts": "2026-07-31T06:30:00.000Z",
+      "diagnostico": "T509 - Envenenamiento por otros fármacos, medicamentos y sustancias biológicas no especificados"
+    },
+    {
+      "paciente": "GREGORIO OPORTO TAPIA",
+      "rut": "8162292-1",
+      "cama": "piso4 Hab.405 C1",
+      "ingreso": "26-07-2026, 03:29 p. m.",
+      "ts": "2026-07-26T19:29:00.000Z",
+      "diagnostico": "K800 - Cálculo de la vesícula biliar con colecistitis aguda, N19 - Insuficiencia renal no especificada"
+    },
+    {
+      "paciente": "ELIAS OSVALDO BUSTAMANTE VALDES",
+      "rut": "8281367-5",
+      "cama": "piso4 Hab.405 C2",
+      "ingreso": "27-07-2026, 07:29 p. m.",
+      "ts": "2026-07-27T23:29:00.000Z",
+      "diagnostico": "N410 - Prostatitis aguda, L021 - Absceso cutáneo, furúnculo y carbunco del cuello"
+    },
+    {
+      "paciente": "MARIA AURELIA SEPULVEDA DURAN",
+      "rut": "7051602-0",
+      "cama": "piso4 Hab.407 C1",
+      "ingreso": "31-07-2026, 10:55 a. m.",
+      "ts": "2026-07-31T14:55:00.000Z",
+      "diagnostico": "I248 - Otras formas de enfermedad isquémica aguda del corazón"
+    },
+    {
+      "paciente": "MARIA BAEZA SAN MARTIN",
+      "rut": "8973927-6",
+      "cama": "piso4 Hab.407 C2",
+      "ingreso": "27-07-2026, 02:43 a. m.",
+      "ts": "2026-07-27T06:43:00.000Z",
+      "diagnostico": "I219 - Infarto agudo del miocardio, sin otra especificación"
+    },
+    {
+      "paciente": "EDUARDO CHAVEZ CALDRON",
+      "rut": "12507526-6",
+      "cama": "piso4 Hab.407 C3",
+      "ingreso": "17-07-2026, 06:01 p. m.",
+      "ts": "2026-07-17T22:01:00.000Z",
+      "diagnostico": "D020 - Carcinoma in situ de la laringe, R061 - Estridor"
+    },
+    {
+      "paciente": "BRIAN PUENTES SALAZAR",
+      "rut": "20005432-6",
+      "cama": "piso4 Hab.408 C1",
+      "ingreso": "28-07-2026, 06:35 p. m.",
+      "ts": "2026-07-28T22:35:00.000Z",
+      "diagnostico": "B238 - Enfermedad por VIH, resultante en otras afecciones especificadas"
+    },
+    {
+      "paciente": "MARGARET ALEJANDRA MOLINA CASTRO",
+      "rut": "12709365-2",
+      "cama": "piso4 Hab.409 C1",
+      "ingreso": "23-07-2026, 07:33 a. m.",
+      "ts": "2026-07-23T11:33:00.000Z",
+      "diagnostico": "A048 - Otras infecciones intestinales bacterianas especificadas"
+    },
+    {
+      "paciente": "ROSA SANDOVAL SANDOVAL",
+      "rut": "12335453-2",
+      "cama": "piso4 Hab.411 C1",
+      "ingreso": "20-07-2026, 04:37 p. m.",
+      "ts": "2026-07-20T20:37:00.000Z",
+      "diagnostico": "K047 - Absceso periapical sin fístula"
+    },
+    {
+      "paciente": "JULIA BETZABE FUENTES NAVARRETE",
+      "rut": "9166164-0",
+      "cama": "piso4 Hab.411 C2",
+      "ingreso": "28-07-2026, 08:29 a. m.",
+      "ts": "2026-07-28T12:29:00.000Z",
+      "diagnostico": "L038 - Celulitis de otros sitios"
+    },
+    {
+      "paciente": "FILOMENA LONCOPAN COÑOEQUIR",
+      "rut": "4825302-4",
+      "cama": "piso4 Hab.411 C3",
+      "ingreso": "27-07-2026, 02:43 a. m.",
+      "ts": "2026-07-27T06:43:00.000Z",
+      "diagnostico": "K803 - Cálculo de conducto biliar con colangitis"
+    },
+    {
+      "paciente": "TRANSIO NECULFILO CAQUILPAN",
+      "rut": "72671473-2",
+      "cama": "piso4 Hab.411 C4",
+      "ingreso": "16-07-2026, 12:04 a. m.",
+      "ts": "2026-07-16T04:04:00.000Z",
+      "diagnostico": "K830 - Colangitis, I607 - Hemorragia subaracnoidea de arteria intracraneal no especificada, I509 - Insuficiencia cardíaca, no especificada, E876 - Hipopotasmia"
+    },
+    {
+      "paciente": "JUAN HERALDO PEÑA JARA ",
+      "rut": "4290436-8",
+      "cama": "piso4 Hab.412 C1",
+      "ingreso": "01-07-2026, 05:26 a. m.",
+      "ts": "2026-07-01T09:26:00.000Z",
+      "diagnostico": "T202 - Quemadura de la cabeza y del cuello, de segundo grado, N19 - Insuficiencia renal no especificada"
+    },
+    {
+      "paciente": "JOSE ULLOA ULLOA",
+      "rut": "12743149-3",
+      "cama": "piso4 Hab.412 C2",
+      "ingreso": "07-07-2026, 01:10 a. m.",
+      "ts": "2026-07-07T05:10:00.000Z",
+      "diagnostico": "L023 - Absceso cutáneo, furúnculo y carbunco de glúteos, N498 - Trastornos inflamatorios de otros órganos genitales masculinos especificados, E43 - Desnutrición proteicocalórica severa, no especificada, L022 - Absceso cutáneo, furúnculo y carbunco del tronco"
+    },
+    {
+      "paciente": "RODRIGO CUEVAS CUETO",
+      "rut": "7314677-1",
+      "cama": "piso4 Hab.412 C4",
+      "ingreso": "17-07-2026, 12:03 a. m.",
+      "ts": "2026-07-17T04:03:00.000Z",
+      "diagnostico": "Z433 - Atención de colostomía"
+    },
+    {
+      "paciente": "VORIS CUEVAS ORTIZ",
+      "rut": "19922316-K",
+      "cama": "piso4 Hab.413 C1",
+      "ingreso": "29-07-2026, 06:10 a. m.",
+      "ts": "2026-07-29T10:10:00.000Z",
+      "diagnostico": "L031 - Celulitis de otras partes de los miembros"
+    },
+    {
+      "paciente": "ANDRES CURIPE QUILENAN",
+      "rut": "15700671-1",
+      "cama": "piso4 Hab.413 C2",
+      "ingreso": "28-07-2026, 06:32 p. m.",
+      "ts": "2026-07-28T22:32:00.000Z",
+      "diagnostico": "C64 - Tumor maligno del riñón, excepto de la pelvis renal"
+    },
+    {
+      "paciente": "LUIS HERNANDEZ MILLARES",
+      "rut": "8065251-8",
+      "cama": "piso4 Hab.413 C3",
+      "ingreso": "28-07-2026, 11:58 p. m.",
+      "ts": "2026-07-29T03:58:00.000Z",
+      "diagnostico": "E115 - Diabetes mellitus tipo 2 con complicaciones circulatorias periféricas"
+    },
+    {
+      "paciente": "ORLANDO JARA VEGA",
+      "rut": "5971790-1",
+      "cama": "piso4 Hab.413 C4",
+      "ingreso": "29-07-2026, 11:16 p. m.",
+      "ts": "2026-07-30T03:16:00.000Z",
+      "diagnostico": "I200 - Angina inestable"
+    },
+    {
+      "paciente": "MANUEL ALCA CALIQUEO",
+      "rut": "5509408-K",
+      "cama": "piso4 Hab.414 C3",
+      "ingreso": "16-07-2026, 07:59 p. m.",
+      "ts": "2026-07-16T23:59:00.000Z",
+      "diagnostico": "I219 - Infarto agudo del miocardio, sin otra especificación"
+    },
+    {
+      "paciente": "HUGI BELMAR ESPINOZA",
+      "rut": "6892240-2",
+      "cama": "piso4 Hab.415 C3",
+      "ingreso": "31-07-2026, 02:32 a. m.",
+      "ts": "2026-07-31T06:32:00.000Z",
+      "diagnostico": "K566 - Otras obstrucciones intestinales y las no especificadas"
+    },
+    {
+      "paciente": "RIGOBERTO JUAN AILLA MANQUI",
+      "rut": "13157868-7",
+      "cama": "piso4 Hab.415 C4",
+      "ingreso": "21-07-2026, 10:33 p. m.",
+      "ts": "2026-07-22T02:33:00.000Z",
+      "diagnostico": "J960 - Insuficiencia respiratoria aguda, J120 - Neumonía debida a adenovirus, J158 - Otras neumonías bacterianas, N179 - Insuficiencia renal aguda, no especificada"
+    },
+    {
+      "paciente": "ALBERTO TOLOZA MUÑOZ",
+      "rut": "8526105-3",
+      "cama": "piso4 Hab.416 C1",
+      "ingreso": "04-07-2026, 03:34 a. m.",
+      "ts": "2026-07-04T07:34:00.000Z",
+      "diagnostico": "L893 - Úlcera de decúbito estadio IV, G822 - Paraplejía, no especificada, F322 - Episodio depresivo grave sin síntomas psicóticos"
+    },
+    {
+      "paciente": " JORGE ARNOLDO LLANCAFILO ANTIHUEN",
+      "rut": "9821275-2",
+      "cama": "piso4 Hab.416 C3",
+      "ingreso": "17-07-2026, 06:20 p. m.",
+      "ts": "2026-07-17T22:20:00.000Z",
+      "diagnostico": "S82 - Fractura de la pierna, inclusive el tobillo, K720 - Insuficiencia hepática aguda o subaguda, N19 - Insuficiencia renal no especificada"
+    },
+    {
+      "paciente": "HERIBERTO ARMANDO LINCOPAN MILLAHUEQUE",
+      "rut": "12335133-9",
+      "cama": "piso4 Hab.416 C4",
+      "ingreso": "25-07-2026, 01:22 a. m.",
+      "ts": "2026-07-25T05:22:00.000Z",
+      "diagnostico": "A419 - Sepsis no especificada, S370 - Traumatismo del riñón, N19 - Insuficiencia renal no especificada"
+    },
+    {
+      "paciente": "TOMAS LONCOPAN PAINEFILO",
+      "rut": "7402702-4",
+      "cama": "piso4 Hab.417 C1",
+      "ingreso": "15-07-2026, 01:38 a. m.",
+      "ts": "2026-07-15T05:38:00.000Z",
+      "diagnostico": "T212 - Quemadura del tronco, de segundo grado"
+    },
+    {
+      "paciente": "GUSTAVO RODRIGUEZ MUÑOZ ",
+      "rut": "4197485-0",
+      "cama": "piso4 Hab.417 C2",
+      "ingreso": "27-07-2026, 07:36 p. m.",
+      "ts": "2026-07-27T23:36:00.000Z",
+      "diagnostico": "I678 - Otras enfermedades cerebrovasculares especificadas"
+    },
+    {
+      "paciente": "RICARDO AMADOR EPUÑANCO CATRILAF",
+      "rut": "7244360-8",
+      "cama": "piso4 Hab.417 C4",
+      "ingreso": "29-07-2026, 05:58 a. m.",
+      "ts": "2026-07-29T09:58:00.000Z",
+      "diagnostico": "T131 - Herida del miembro inferior, nivel no especificado"
+    },
+    {
+      "paciente": "VICENTE RIVAS INALEF",
+      "rut": "21633847-2",
+      "cama": "piso4 Hab.418 C4",
+      "ingreso": "29-07-2026, 05:50 p. m.",
+      "ts": "2026-07-29T21:50:00.000Z",
+      "diagnostico": "A539 - Sífilis, no especificada"
+    },
+    {
+      "paciente": "JOSE MIGUEL CARDEMIL ZAPATA",
+      "rut": "9433484-5",
+      "cama": "piso2 Hab.201 C2",
+      "ingreso": "29-07-2026, 07:39 p. m.",
+      "ts": "2026-07-29T23:39:00.000Z",
+      "diagnostico": "I500 - Insuficiencia cardíaca congestiva, C64 - Tumor maligno del riñón, excepto de la pelvis renal"
+    },
+    {
+      "paciente": "SUSANA ARRIAGADA GAETE",
+      "rut": "4855525-K",
+      "cama": "piso2 Hab.201 C4",
+      "ingreso": "24-07-2026, 03:02 a. m.",
+      "ts": "2026-07-24T07:02:00.000Z",
+      "diagnostico": "K922 - Hemorragia gastrointestinal, no especificada"
+    },
+    {
+      "paciente": "MARIA ARAVENA RODRIGUEZ",
+      "rut": "8365245-4",
+      "cama": "piso2 Hab.201 C6",
+      "ingreso": "16-07-2026, 03:55 a. m.",
+      "ts": "2026-07-16T07:55:00.000Z",
+      "diagnostico": "R100 - Síndrome abdominal agudo"
+    },
+    {
+      "paciente": "MARIA RUIZ ROSAS",
+      "rut": "6891262-2",
+      "cama": "piso2 Hab.201 C9",
+      "ingreso": "29-07-2026, 11:15 p. m.",
+      "ts": "2026-07-30T03:15:00.000Z",
+      "diagnostico": "I269 - Embolia pulmonar sin mención de corazón pulmonar agudo"
+    },
+    {
+      "paciente": "TOMAS HERNANI HUICHALAF REINAO",
+      "rut": "13585392-5",
+      "cama": "piso2 Hab.201 C10",
+      "ingreso": "24-07-2026, 11:31 p. m.",
+      "ts": "2026-07-25T03:31:00.000Z",
+      "diagnostico": "C169 - Tumor maligno del estómago, parte no especificada"
+    },
+    {
+      "paciente": "LAUREANO LLANAO QUIDEL",
+      "rut": "7386578-6",
+      "cama": "piso2 Hab.201 C11",
+      "ingreso": "19-07-2026, 10:40 p. m.",
+      "ts": "2026-07-20T02:40:00.000Z",
+      "diagnostico": "J159 - Neumonía bacteriana, no especificada, J100 - Influenza con neumonía, debida a otro virus de la influenza identificado, N19 - Insuficiencia renal no especificada"
+    },
+    {
+      "paciente": "CARLOS HUGO MORALES FIGUEROA",
+      "rut": "7246748-5",
+      "cama": "piso2 Hab.201 C12",
+      "ingreso": "16-07-2026, 04:47 p. m.",
+      "ts": "2026-07-16T20:47:00.000Z",
+      "diagnostico": "K830 - Colangitis"
+    }
+  ],
+  "julio_en_bedsData_no_en_log": [
+    {
+      "paciente": "PAOLA FELISA DEL CARMEN COLIÑANCO SEPULVEDA",
+      "rut": "20227272-K",
+      "cama": "piso3 Hab.301 C1",
+      "alta": "29-07-2026, 07:26 p. m.",
+      "destino": "Domicilio",
+      "depth": 0,
+      "fromHistory": true
+    },
+    {
+      "paciente": "BELEN ALEJANDRA YULY CORTEZ",
+      "rut": "20648678-3",
+      "cama": "piso3 Hab.302 C3",
+      "alta": "29-07-2026, 07:26 p. m.",
+      "destino": "Domicilio",
+      "depth": 0,
+      "fromHistory": true
+    }
+  ],
+  "julio_transfers": [],
+  "julio_hodom": [
+    {
+      "rut": "12114560-K",
+      "hora": "04:05 p. m.",
+      "id": "hodom-1785528345634",
+      "estado": "aprobado",
+      "hodomObservaciones": "HODOM",
+      "bedId": "3",
+      "hodomChecks": {
+        "0": true
+      },
+      "fecha": "31-07-2026",
+      "aprobadoAt": "2026-07-31T22:56:25.960Z",
+      "prevision": "FONASA B",
+      "diagnostico": [
+        "C509 - Tumor maligno de la mama, parte no especificada",
+        "R568 - Otras convulsiones y las no especificadas"
+      ],
+      "direccion": "CALLE COLO COLO Nº 1505, VILLARRICA, VILLARRICA",
+      "sexo": "Femenino",
+      "roomId": "311",
+      "profesionalRequiere": "Javiera Rubilar Rivas",
+      "patientName": "SOLEDAD CALDERON BORQUEZ",
+      "solicitadaAt": "2026-07-31T20:05:45.634Z",
+      "edad": 44
+    },
+    {
+      "sexo": "Femenino",
+      "profesionalRequiere": "Karla Neira Luck",
+      "id": "hodom-1785439388603",
+      "prevision": "FONASA A",
+      "patientName": "GISELA DONOSO HERNANDEZ",
+      "direccion": "villarrica ",
+      "roomId": "309",
+      "edad": 50,
+      "rut": "8664160-7",
+      "bedId": "3",
+      "hora": "03:23 p. m.",
+      "estado": "aprobado",
+      "fecha": "30-07-2026",
+      "hodomChecks": {
+        "0": true
+      },
+      "hodomObservaciones": "",
+      "solicitadaAt": "2026-07-30T19:23:08.603Z",
+      "diagnostico": [
+        "I248 - Otras formas de enfermedad isquémica aguda del corazón",
+        "R073 - Otros dolores en el pecho"
+      ],
+      "aprobadoAt": "2026-07-30T19:23:14.423Z"
+    },
+    {
+      "patientName": "\tADELA FIGUEROA FUENTEALBA",
+      "prevision": "FONASA B",
+      "hora": "06:08 p. m.",
+      "direccion": "Calle huincacara km 7.0",
+      "roomId": "311",
+      "rut": "5610517-4",
+      "sexo": "Femenino",
+      "hodomObservaciones": "HODOM ",
+      "hodomChecks": {
+        "0": true
+      },
+      "solicitadaAt": "2026-07-27T22:08:46.507Z",
+      "diagnostico": [
+        "J960 - Insuficiencia respiratoria aguda",
+        "I509 - Insuficiencia cardíaca, no especificada",
+        "J90 - Derrame pleural no clasificado en otra parte"
+      ],
+      "aprobadoAt": "2026-07-27T22:43:48.694Z",
+      "estado": "aprobado",
+      "bedId": "2",
+      "edad": 81,
+      "profesionalRequiere": "Javiera Rubilar Rivas",
+      "id": "hodom-1785190126507",
+      "fecha": "27-07-2026"
+    },
+    {
+      "hodomChecks": {
+        "0": true
+      },
+      "edad": 78,
+      "diagnostico": [
+        "J100 - Influenza con neumonía, debida a otro virus de la influenza identificado"
+      ],
+      "prevision": "FONASA B",
+      "profesionalRequiere": "Javiera Rubilar Rivas",
+      "direccion": "DOMICILIO",
+      "sexo": "Femenino",
+      "id": "hodom-1784950107862",
+      "estado": "aprobado",
+      "patientName": "MIGUELINA MANRIQUEZ SAAVEDRA",
+      "roomId": "314",
+      "fecha": "24-07-2026",
+      "aprobadoAt": "2026-07-25T03:28:28.870Z",
+      "solicitadaAt": "2026-07-25T03:28:27.862Z",
+      "rut": "6114152-9",
+      "bedId": "1",
+      "hora": "11:28 p. m.",
+      "hodomObservaciones": ""
+    },
+    {
+      "rut": "6799338-1",
+      "solicitadaAt": "2026-07-21T20:18:00.501Z",
+      "hodomChecks": {
+        "0": true
+      },
+      "diagnostico": [
+        "I619 - Hemorragia intraencefálica, no especificada"
+      ],
+      "roomId": "311",
+      "hora": "04:18 p. m.",
+      "profesionalRequiere": "Javiera Rubilar Rivas",
+      "aprobadoAt": "2026-07-21T20:37:38.219Z",
+      "fecha": "21-07-2026",
+      "id": "hodom-1784665080501",
+      "patientName": "ERICA DEL CARMEN MORALES MORAGA ",
+      "edad": 75,
+      "bedId": "4",
+      "estado": "aprobado",
+      "hodomObservaciones": "",
+      "direccion": "PASAJE UNO Nº 1559, JUAN PABLO SEGUNDO, VILLARRICA",
+      "prevision": "FONASA B",
+      "sexo": "Femenino"
+    },
+    {
+      "hodomObservaciones": "-",
+      "sexo": "Femenino",
+      "edad": 86,
+      "aprobadoAt": "2026-07-20T20:21:18.986Z",
+      "patientName": "MARIA GONZALEZ ROJAS",
+      "roomId": "311",
+      "profesionalRequiere": "Sofia Zuñiga Valenzuela",
+      "estado": "aprobado",
+      "solicitadaAt": "2026-07-20T20:21:17.604Z",
+      "id": "hodom-1784578877604",
+      "prevision": "FONASA B",
+      "hora": "04:21 p. m.",
+      "direccion": "-",
+      "rut": "4355787-4",
+      "bedId": "1",
+      "diagnostico": [
+        "M160 - Osteoartrosis primaria de cadera, bilateral",
+        "F110 - Trastornos mentales y del comportamiento debidos al uso de opiáceos, intoxicación aguda"
+      ],
+      "fecha": "20-07-2026",
+      "hodomChecks": {
+        "0": true
+      }
+    },
+    {
+      "hodomChecks": {
+        "0": true
+      },
+      "hodomObservaciones": "",
+      "hora": "06:45 p. m.",
+      "diagnostico": [
+        "I219 - Infarto agudo del miocardio, sin otra especificación"
+      ],
+      "solicitadaAt": "2026-07-19T22:45:47.683Z",
+      "rut": "5958627-0",
+      "roomId": "415",
+      "prevision": "FONASA B",
+      "direccion": "DOMICILIO",
+      "bedId": "2",
+      "patientName": "ESTANILAO CONTRERAS ECHEVERREIA",
+      "aprobadoAt": "2026-07-19T22:45:48.552Z",
+      "id": "hodom-1784501147683",
+      "sexo": "Masculino",
+      "estado": "aprobado",
+      "fecha": "19-07-2026",
+      "profesionalRequiere": "Javiera Rubilar Rivas",
+      "edad": 82
+    },
+    {
+      "patientName": "ELENA HENRIQUEZ URRUTIA ",
+      "solicitadaAt": "2026-07-16T00:47:35.950Z",
+      "rut": "4966645-4",
+      "roomId": "411",
+      "edad": 83,
+      "sexo": "Femenino",
+      "hodomChecks": {
+        "0": false
+      },
+      "direccion": "DOMICILIO",
+      "diagnostico": [
+        "E875 - Hiperpotasemia"
+      ],
+      "prevision": "FONASA B",
+      "profesionalRequiere": "Javiera Rubilar Rivas",
+      "hora": "08:47 p. m.",
+      "fecha": "15-07-2026",
+      "estado": "aprobado",
+      "id": "hodom-1784162855950",
+      "hodomObservaciones": "HODOM",
+      "aprobadoAt": "2026-07-16T00:47:38.140Z",
+      "bedId": "1"
+    },
+    {
+      "prevision": "FONASA B",
+      "direccion": "LOS COIHUES ·1289",
+      "diagnostico": [
+        "J690 - Neumonitis debida a aspiración de alimento o vómito"
+      ],
+      "hodomChecks": {
+        "0": true
+      },
+      "roomId": "314",
+      "hora": "06:24 p. m.",
+      "id": "hodom-1784154268002",
+      "rut": "8594772-9",
+      "aprobadoAt": "2026-07-15T22:24:30.167Z",
+      "solicitadaAt": "2026-07-15T22:24:28.002Z",
+      "edad": 68,
+      "patientName": "INGRID EMPERATRIZ AGUIRRE AGUIRRE",
+      "hodomObservaciones": "CONCENTRADOR DE O2 - PRECAUCIÒN POR GOTITAS ",
+      "sexo": "Femenino",
+      "profesionalRequiere": "Javiera Rubilar Rivas",
+      "fecha": "15-07-2026",
+      "estado": "aprobado",
+      "bedId": "1"
+    },
+    {
+      "sexo": "Femenino",
+      "bedId": "2",
+      "patientName": "edelmira rozas maldonado",
+      "fecha": "11-07-2026",
+      "edad": 91,
+      "roomId": "418",
+      "id": "hodom-1783798959532",
+      "rut": "3297794-4",
+      "diagnostico": [
+        "J960 - Insuficiencia respiratoria aguda",
+        "E875 - Hiperpotasemia",
+        "I269 - Embolia pulmonar sin mención de corazón pulmonar agudo",
+        "E43 - Desnutrición proteicocalórica severa, no especificada"
+      ],
+      "hodomObservaciones": "",
+      "estado": "aprobado",
+      "hodomChecks": {
+        "0": true
+      },
+      "hora": "03:42 p. m.",
+      "profesionalRequiere": "FERNANDA QUEVEDO PÉREZ",
+      "solicitadaAt": "2026-07-11T19:42:39.532Z",
+      "aprobadoAt": "2026-07-11T19:42:46.816Z",
+      "prevision": "FONASA B",
+      "direccion": "Ernesto wagner 793"
+    },
+    {
+      "diagnostico": [
+        "M160 - Osteoartrosis primaria de cadera, bilateral"
+      ],
+      "fecha": "10-07-2026",
+      "estado": "aprobado",
+      "edad": 74,
+      "hodomChecks": {
+        "0": false
+      },
+      "bedId": "2",
+      "sexo": "Femenino",
+      "aprobadoAt": "2026-07-11T00:06:12.874Z",
+      "prevision": "FONASA B",
+      "direccion": "VILLARRICA ",
+      "profesionalRequiere": "Karla Neira Luck",
+      "patientName": "SARA DEL CARMEN ILLESCA LAGOS",
+      "rut": "7464584-4",
+      "hora": "08:06 p. m.",
+      "roomId": "415",
+      "solicitadaAt": "2026-07-11T00:06:11.482Z",
+      "id": "hodom-1783728371482",
+      "hodomObservaciones": ""
+    },
+    {
+      "fecha": "06-07-2026",
+      "hodomObservaciones": "",
+      "bedId": "1",
+      "profesionalRequiere": "Sofia Zuñiga Valenzuela",
+      "prevision": "FONASA A",
+      "direccion": "-",
+      "hora": "05:21 p. m.",
+      "aprobadoAt": "2026-07-06T21:21:42.867Z",
+      "patientName": "LUIS PALMA FLORES",
+      "estado": "aprobado",
+      "id": "hodom-1783372896432",
+      "roomId": "405",
+      "rut": "6460071-0",
+      "edad": 75,
+      "solicitadaAt": "2026-07-06T21:21:36.432Z",
+      "diagnostico": [
+        "M1240 - Hidrartrosis intermitente, sitio no especificado"
+      ],
+      "hodomChecks": {
+        "0": true
+      },
+      "sexo": "Masculino"
+    },
+    {
+      "diagnostico": [
+        "S72 - Fractura del fémur"
+      ],
+      "sexo": "Femenino",
+      "estado": "aprobado",
+      "hodomChecks": {
+        "0": true
+      },
+      "edad": 56,
+      "rut": "11687542-K",
+      "aprobadoAt": "2026-07-04T00:33:55.476Z",
+      "bedId": "2",
+      "direccion": "CALLE CATEDRAL 952",
+      "solicitadaAt": "2026-07-04T00:33:54.182Z",
+      "prevision": "FONASA B",
+      "id": "hodom-1783125234182",
+      "hodomObservaciones": "TRASLADO EN MOVIL BÁSICO ",
+      "fecha": "03-07-2026",
+      "hora": "08:33 p. m.",
+      "patientName": "ROCIO LOURDES CARTES MORALES",
+      "roomId": "314",
+      "profesionalRequiere": "Javiera Rubilar Rivas"
+    },
+    {
+      "id": "hodom-1783034767427",
+      "estado": "aprobado",
+      "hora": "07:26 p. m.",
+      "patientName": "NORA DEL CARMEN GONGORA ARCE",
+      "fecha": "02-07-2026",
+      "rut": "7683636-1",
+      "solicitadaAt": "2026-07-02T23:26:07.427Z",
+      "edad": 70,
+      "bedId": "1",
+      "aprobadoAt": "2026-07-02T23:26:10.608Z",
+      "direccion": "\tCALLE CHIALLACO S/N KM 11 RUTA 5, VILLARRICA",
+      "hodomObservaciones": "",
+      "roomId": "415",
+      "hodomChecks": {
+        "0": true
+      },
+      "prevision": "FONASA B",
+      "profesionalRequiere": "Fernanda Quevedo Perez",
+      "diagnostico": [
+        "J960 - Insuficiencia respiratoria aguda"
+      ],
+      "sexo": "Femenino"
+    }
+  ],
+  "julio_wld_faltantes": []
+}

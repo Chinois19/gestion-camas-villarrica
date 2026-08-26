@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Save, Activity, ArrowRight, AlertTriangle, List, HeartPulse, User, LogOut, CheckCircle, Eye } from 'lucide-react';
+import { useState } from 'react';
+import { X, Save, Activity, Eye } from 'lucide-react';
 import { GRD_DATA, calculateProjectedDays, getGrdLimit } from '../data/grd';
 import SearchableSelect from './SearchableSelect';
 import MultiSearchableSelect from './MultiSearchableSelect';
@@ -15,10 +15,8 @@ const formatRut = (val) => {
   return `${clean.slice(0, -1)}-${clean.slice(-1).toUpperCase()}`;
 };
 
-export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onFinishCleaning, onSaveNovedad }) {
+export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onSaveNovedad }) {
   // Reconstruir diagnóstico CIE-10 priorizando los campos codificados.
-  // Puede venir de bed.dxCie10 + bed.secondaryCodes (si el paciente fue registrado con CIE-10)
-  // o desde bed.originalWaitingRequest que guarda la solicitud original.
   const buildDiagnosisCodes = () => {
     const cie10Regex = /^[A-Z]\d{2}/;
 
@@ -91,7 +89,7 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
     transferType: 'libre'
   });
 
-  const [limitDays, setLimitDays] = useState(0);
+  const limitDays = formData.grdId ? getGrdLimit(formData.grdId, formData.severity) : 0;
   const [newNovedadText, setNewNovedadText] = useState('');
   const [isSavingNovedad, setIsSavingNovedad] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -102,14 +100,6 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
 
   const assignedDate = bed.assignedAt ? new Date(bed.assignedAt) : null;
   const daysOfStay = assignedDate ? Math.max(1, Math.ceil((new Date() - assignedDate) / (1000 * 60 * 60 * 24))) : 1;
-
-  useEffect(() => {
-    if (formData.grdId) {
-      const defaultDays = calculateProjectedDays(formData.grdId, formData.severity);
-      const limit = getGrdLimit(formData.grdId, formData.severity);
-      setLimitDays(limit);
-    }
-  }, [formData.grdId, formData.severity]);
 
   const handleGrdChange = (val) => {
     const newGrdId = val;

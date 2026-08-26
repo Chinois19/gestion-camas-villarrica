@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Save, Clock, Calendar, Activity, ChevronRight, AlertCircle, TrendingDown, AlertTriangle, User, Stethoscope, ArrowRightLeft, Heart } from 'lucide-react';
+import { useState } from 'react';
+import { X, Save, Clock, Activity, AlertTriangle } from 'lucide-react';
 import { GRD_DATA, calculateProjectedDays, getGrdLimit } from '../data/grd';
 import SearchableSelect from './SearchableSelect';
 import MultiSearchableSelect from './MultiSearchableSelect';
@@ -19,13 +19,10 @@ function ReadOnlyField({ label, value, color }) {
 
 export default function AssignmentModal({ patient, bed, user, onConfirm, onClose }) {
   // Reconstruir diagnóstico CIE-10 priorizando los campos codificados del formulario de solicitud.
-  // patient.dxCie10 y patient.secondaryCodes son los campos guardados por SolicitudForm con los
-  // códigos reales. Solo usamos patient.diagnosis como fallback (puede ser texto libre como "ICC").
   const buildDiagnosisCodes = () => {
     const cie10Regex = /^[A-Z]\d{2}(\.\d+)?/; // detecta formato CIE-10 real
     // Si existe dxCie10 en el paciente, reconstruir desde esos campos
     if (patient.dxCie10) {
-      const codes = [patient.dxCie10 + (patient.dxCie10.includes(' - ') ? '' : '')];
       // Buscar descripción completa desde CIE10_OPTIONS
       const mainOption = CIE10_OPTIONS.find(o => o.value.startsWith(patient.dxCie10));
       const mainCode = mainOption ? mainOption.value : patient.dxCie10;
@@ -60,8 +57,8 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
     severity: 1
   });
 
-  const [projectedDays, setProjectedDays] = useState(0);
-  const [limitDays, setLimitDays] = useState(0);
+  const projectedDays = formData.grdId ? calculateProjectedDays(formData.grdId, parseInt(formData.severity)) : 0;
+  const limitDays = formData.grdId ? getGrdLimit(formData.grdId, parseInt(formData.severity)) : 0;
   
   const canEditRetroactive = user?.role === 'superadmin' || user?.role === 'gestor_camas';
 
@@ -96,13 +93,6 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
   
   const waitMinutes = Math.floor((assignTime - requestTime) / (1000 * 60));
   const waitHours = Math.floor(waitMinutes / 60);
-
-  useEffect(() => {
-    if (formData.grdId) {
-      setProjectedDays(calculateProjectedDays(formData.grdId, parseInt(formData.severity)));
-      setLimitDays(getGrdLimit(formData.grdId, parseInt(formData.severity)));
-    }
-  }, [formData.grdId, formData.severity]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

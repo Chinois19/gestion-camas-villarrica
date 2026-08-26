@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Stethoscope, Clock, Search, CheckCircle, XCircle, Trash2, Activity, AlertTriangle, Users, Eye } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Stethoscope, Clock, Search, AlertTriangle, Users, Eye } from 'lucide-react';
 import { matchesSearch as matchUtils } from '../utils/search';
 import ViewInterconsultaModal from './ViewInterconsultaModal';
 
-export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDone, onDeleteIC, userRole }) {
+export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDone, userRole }) {
   const isVisor = userRole === 'visor';
-  const [allICs, setAllICs] = useState([]);
   const [filterSpecialty, setFilterSpecialty] = useState('todos');
   const [filterStatus, setFilterStatus] = useState('pendientes');
   const [filterPriorizacion, setFilterPriorizacion] = useState('todas');
@@ -15,7 +14,7 @@ export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDon
   const [observaciones, setObservaciones] = useState('');
   const [viewingIC, setViewingIC] = useState(null);
 
-  useEffect(() => {
+  const allICs = useMemo(() => {
     const list = [];
     Object.keys(bedsData).forEach(floor => {
       Object.keys(bedsData[floor]).forEach(sector => {
@@ -55,8 +54,7 @@ export default function InterconsultasPanel({ bedsData, waitingList, onMarkICDon
         }
       });
     }
-    list.sort((a, b) => new Date(b.solicitadaAt) - new Date(a.solicitadaAt));
-    setAllICs(list);
+    return list.sort((a, b) => new Date(b.solicitadaAt) - new Date(a.solicitadaAt));
   }, [bedsData, waitingList]);
 
   const calculateWaitTimeMinutes = (solicitadaAt) =>

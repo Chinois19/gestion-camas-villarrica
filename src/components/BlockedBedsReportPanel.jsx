@@ -18,14 +18,13 @@ const parseDate = (val) => {
   // dd/mm/yyyy hh:mm
   const m = String(val).match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
   if (m) return new Date(`${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}:00`);
-  try { const d = new Date(val); if (!isNaN(d)) return d; } catch {}
+  try {
+    const d = new Date(val);
+    if (!isNaN(d)) return d;
+  } catch {
+    return null;
+  }
   return null;
-};
-
-const fmt = (isoOrStr) => {
-  const d = parseDate(isoOrStr);
-  if (!d) return '—';
-  return d.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
 const fmtFull = (isoOrStr) => {
@@ -142,12 +141,6 @@ function EditBlockModal({ record, onClose, onSave }) {
   );
 }
 
-/* ─── Causal badge column helper ───────────────────────────────── */
-const CAUSAL_COLS = CAUSALES.map((c, i) => ({
-  key: `causal_${i}`,
-  label: c,
-}));
-
 /* ─── Breakdown helper ─────────────────────────────────────────── */
 const breakdownRecordByDay = (record, currentTime) => {
   const start = parseDate(record.blockedAt);
@@ -200,14 +193,9 @@ const breakdownRecordByDay = (record, currentTime) => {
       });
 
       // Format duration text
-      let durationText = '';
-      if (isCenso) {
-        durationText = '24h (Día Completo)';
-      } else {
-        const hrs = Math.floor(durationMin / 60);
-        const mins = durationMin % 60;
-        durationText = `${hrs}h ${mins}m`;
-      }
+      const durationText = isCenso
+        ? '24h (Día Completo)'
+        : `${Math.floor(durationMin / 60)}h ${durationMin % 60}m`;
 
       // Format time range within the day
       const formatTime = (d) => {
@@ -246,7 +234,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
   const [filterMonth, setFilterMonth] = useState('');
   const [editingRow, setEditingRow] = useState(null);
   const [savedToast, setSavedToast] = useState(false);
-  const [currentTime, setCurrentTime] = useState(Date.now());
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(Date.now()), 60000); // refresh every minute
