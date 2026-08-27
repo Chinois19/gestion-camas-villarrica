@@ -25,6 +25,10 @@ import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
 import { MOCK_TRANSFERS } from './data/mockTransfers';
 import { Toaster, toast } from 'sonner';
 
+import { logoutUser } from './utils/authService';
+import { auth } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+
 // Pre-fill some realistic interconsultas in the DUMMY_DATA to make the initial view visually rich
 const initialBedsData = JSON.parse(JSON.stringify(DUMMY_DATA));
 
@@ -71,6 +75,19 @@ function App() {
     return window.location.hash.includes('#solicitud-publica') || window.location.search.includes('public=solicitud');
   });
 
+  // Keep Firebase Auth state synchronized
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (!firebaseUser && !isPublicRoute) {
+        if (currentUser) {
+          setCurrentUser(null);
+          localStorage.removeItem('villarrica_session');
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [currentUser, isPublicRoute]);
+
   // Only sync clinical data if user is authenticated or in a public form route
   const isSyncEnabled = !!currentUser || isPublicRoute;
 
@@ -105,8 +122,6 @@ function App() {
     return () => document.removeEventListener('mousedown', handler);
   }, [showThemeSelector]);
 
-
-
   const isLoading = bedsLoading || waitingLoading || hodomLoading || transfersLoading || dischargesLoading || blockLogLoading;
 
   const handleLogin = (user) => {
@@ -119,12 +134,14 @@ function App() {
     toast.success(`Bienvenido/a, ${user.name}`);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logoutUser();
     setCurrentUser(null);
     localStorage.removeItem('villarrica_session');
     setCurrentView('dashboard');
     toast.info('Sesión cerrada');
   };
+
 
   // ── CLINICAL HANDLERS ──────────────────────────────────────────────────────
 

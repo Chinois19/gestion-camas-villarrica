@@ -1,17 +1,7 @@
 import React, { useState } from 'react';
 import { Activity, Lock, User, Eye, EyeOff, LogIn } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { authenticateUser } from '../utils/authService';
 import './Login.css';
-
-const defaultUsers = [
-  { id: 1, name: 'Super Administrador', username: 'admin', password: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', roleName: 'Super Administrador', status: 'active' },
-  { id: 2, name: 'Visor Institucional', username: 'visor', password: 'visor', email: 'visor@hospitalvillarrica.cl', role: 'visor', roleName: 'Visor Institucional', status: 'active' },
-  { id: 3, name: 'Médico General', username: 'medico', password: 'medico', email: 'medico@hospitalvillarrica.cl', role: 'medico_general', roleName: 'Médico', status: 'active' },
-  { id: 4, name: 'Gestor de Camas', username: 'gestor', password: 'gestor', email: 'gestor@hospitalvillarrica.cl', role: 'gestor_camas', roleName: 'Gestor de Camas', status: 'active' },
-  { id: 5, name: 'Médico HODOM', username: 'hodom', password: 'hodom', email: 'hodom@hospitalvillarrica.cl', role: 'medico_hodom', roleName: 'Médico HODOM', status: 'active' },
-  { id: 6, name: 'Personal de Aseo', username: 'aseo', password: 'aseo', email: 'aseo@hospitalvillarrica.cl', role: 'personal_aseo', roleName: 'Personal de Aseo', status: 'active' }
-];
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -20,57 +10,43 @@ const Login = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    setTimeout(async () => {
-      try {
-        const docRef = doc(db, 'appState', 'users');
-        const docSnap = await getDoc(docRef);
-        
-        let usersList = defaultUsers;
-        if (docSnap.exists()) {
-          usersList = docSnap.data().data;
-        }
-
-        const foundUser = usersList.find(u => u.username === username && u.password === password && u.status === 'active');
-
-        if (foundUser) {
-          onLogin({
-            id: foundUser.id,
-            name: foundUser.name,
-            username: foundUser.username,
-            role: foundUser.role,
-            roleName: foundUser.roleName === 'Médico General' ? 'Médico' : (foundUser.roleName || (foundUser.role === 'medico_general' ? 'Médico' : foundUser.role)) // Fallback if newly created user doesn't have roleName
-          });
-        } else {
-          setError('Usuario o contraseña incorrectos');
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Error validando usuario:", error);
-        
-        // Fallback robusto: Si Firebase falla (ej. reglas expiradas o sin internet), usar defaultUsers
-        const foundUser = defaultUsers.find(u => u.username === username && u.password === password && u.status === 'active');
-        if (foundUser) {
-          onLogin({
-            id: foundUser.id,
-            name: foundUser.name,
-            username: foundUser.username,
-            role: foundUser.role,
-            roleName: foundUser.roleName === 'Médico General' ? 'Médico' : (foundUser.roleName || (foundUser.role === 'medico_general' ? 'Médico' : foundUser.role))
-          });
-        } else {
-          setError(error.message?.includes("permissions") || error.code === "permission-denied" 
-            ? 'Error de permisos en Firebase. Revisa las reglas de seguridad.' 
-            : 'Error al conectar con la base de datos.');
-          setIsLoading(false);
-        }
+    try {
+      const authenticatedUser = await authenticateUser(username, password);
+      onLogin({
+        id: authenticatedUser.id,
+        name: authenticatedUser.name,
+        username: authenticatedUser.username,
+        email: authenticatedUser.email,
+        role: authenticatedUser.role,
+        roleName: authenticatedUser.roleName === 'Médico General' ? 'Médico' : (authenticatedUser.roleName || (authenticatedUser.role === 'medico_general' ? 'Médico' : authenticatedUser.role)),
+        firebaseUid: authenticatedUser.firebaseUid
+      });
+    } catch (err) {
+      console.error("Error validando usuario:", err);
+      if (
+        err.code === 'auth/invalid-credential' || 
+        err.code === 'auth/user-not-found' || 
+        err.code === 'auth/wrong-password' || 
+        err.message?.includes('incorrectos') ||
+        err.message?.includes('Contraseña')
+      ) {
+        setError('Usuario o contraseña incorrectos');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Demasiados intentos fallidos. Intente nuevamente en unos minutos.');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Error de conexión a internet.');
+      } else {
+        setError(err.message || 'Error al conectar con el servicio de autenticación.');
       }
-    }, 1000);
+      setIsLoading(false);
+    }
   };
+
 
   return (
     <div className="login-page">

@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { X, Eye, EyeOff, Lock, Check, AlertTriangle } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { updateAuthPassword } from '../utils/authService';
 import { toast } from 'sonner';
+
 
 const ChangePasswordModal = ({ currentUser, onClose, notify }) => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -111,9 +113,17 @@ const ChangePasswordModal = ({ currentUser, onClose, notify }) => {
       // 6. Escribir a Firestore
       await setDoc(docRef, { data: updatedUsers });
 
+      // 7. Actualizar en Firebase Auth
+      try {
+        await updateAuthPassword(newPassword);
+      } catch (authPwdErr) {
+        console.warn('Advertencia al actualizar contraseña en Firebase Auth:', authPwdErr);
+      }
+
       setSuccess(true);
       toast.success('Contraseña actualizada exitosamente.');
       if (notify) notify('Contraseña actualizada exitosamente.');
+
 
       // Cerrar después de 2 segundos
       setTimeout(() => {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { UserPlus, Search, Shield, User, Mail, MoreVertical, Trash2, Edit2, Check, X } from 'lucide-react';
+import { UserPlus, Search, Shield, User, Mail, MoreVertical, Trash2, Edit2, Check, X, RefreshCw } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import { useFirebaseSync } from '../hooks/useFirebaseSync';
+import { createAuthUserBackground } from '../utils/authService';
 import './UserManagement.css';
 import { matchesSearch } from '../utils/search';
 import { toast } from 'sonner';
@@ -20,6 +21,7 @@ const UserManagement = ({ notify }) => {
 
   const [isAdding, setIsAdding] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isSyncingAuth, setIsSyncingAuth] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', username: '', email: '', role: 'visor' });
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -30,11 +32,15 @@ const UserManagement = ({ notify }) => {
     // 1. Generar contraseña aleatoria de 8 caracteres
     const generatedPassword = Math.random().toString(36).slice(-8);
 
-    // 2. Configuración de EmailJS
-    // INSTRUCCIONES: Crea una cuenta en https://www.emailjs.com/
-    // - Crea un servicio (Email Service)
-    // - Crea un template de correo con las variables: {{to_name}}, {{username}}, {{password}}, {{role}}
-    // - Reemplaza los valores de abajo con tus IDs reales:
+    // 2. Registrar en Firebase Auth ÚNICAMENTE por Username
+    try {
+      const canonicalUsernameEmail = `${newUser.username.toLowerCase().trim()}@hospitalvillarrica.cl`;
+      await createAuthUserBackground(canonicalUsernameEmail, generatedPassword);
+    } catch (authErr) {
+      console.warn('Advertencia al registrar en Firebase Auth:', authErr);
+    }
+
+    // 3. Configuración de EmailJS
     const SERVICE_ID = 'service_tz8tauh'; 
     const TEMPLATE_ID = 'template_2b8zk5w';
     const PUBLIC_KEY = 'PbZKvEo7Mmyk0dD0-';
@@ -48,7 +54,7 @@ const UserManagement = ({ notify }) => {
     };
 
     try {
-      // 3. Enviar el correo usando EmailJS
+      // 4. Enviar el correo usando EmailJS
       await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
       
       const id = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
@@ -59,12 +65,40 @@ const UserManagement = ({ notify }) => {
       setIsAdding(false);
     } catch (error) {
       console.error('Error enviando correo con EmailJS:', error);
-      toast.error('Error al enviar el correo con credenciales.');
-      if (notify) notify('Error al enviar el correo. Revisa la configuración en consola.');
+      // Aún así creamos el usuario en la BD si falló el envío de correo
+      const id = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
+      setUsers([...users, { ...newUser, id, status: 'active', password: generatedPassword }]);
+      toast.warning(`Usuario creado en el sistema con contraseña: ${generatedPassword} (El correo no se pudo enviar automáticamente).`);
+      if (notify) notify(`Usuario creado. Contraseña: ${generatedPassword}`);
+      setNewUser({ name: '', username: '', email: '', role: 'visor' });
+      setIsAdding(false);
     } finally {
       setIsSending(false);
     }
   };
+
+  const handleSyncAllUsersToAuth = async () => {
+    if (!users || users.length === 0) return;
+    setIsSyncingAuth(true);
+    let successCount = 0;
+
+    for (const u of users) {
+      if (!u.username) continue;
+      const usernameEmail = `${u.username.toLowerCase().trim()}@hospitalvillarrica.cl`;
+      const pwd = u.password || 'admin123';
+      try {
+        await createAuthUserBackground(usernameEmail, pwd);
+        successCount++;
+      } catch (err) {
+        console.warn(`Error al migrar usuario ${u.username}:`, err);
+      }
+    }
+
+    setIsSyncingAuth(false);
+    toast.success(`Sincronización completada: ${successCount} usuarios habilitados en Firebase Auth.`);
+    if (notify) notify(`Sincronización completada: ${successCount} usuarios habilitados.`);
+  };
+
 
   const handleDeleteUser = (id, username) => {
     if (username === 'admin') {
@@ -101,11 +135,23 @@ const UserManagement = ({ notify }) => {
           <h2 className="text-gradient">Gestión de Profesionales</h2>
           <p className="um-subtitle">Administre el acceso y roles del personal hospitalario</p>
         </div>
-        <button className="glass-button primary" onClick={() => setIsAdding(true)}>
-          <UserPlus size={18} />
-          <span>Agregar Profesional</span>
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            className="glass-button" 
+            onClick={handleSyncAllUsersToAuth} 
+            disabled={isSyncingAuth}
+            title="Sincroniza todos los usuarios de la tabla a Firebase Authentication"
+          >
+            <RefreshCw size={16} className={isSyncingAuth ? 'animate-spin' : ''} />
+            <span>{isSyncingAuth ? 'Sincronizando...' : 'Sincronizar a Firebase Auth'}</span>
+          </button>
+          <button className="glass-button primary" onClick={() => setIsAdding(true)}>
+            <UserPlus size={18} />
+            <span>Agregar Profesional</span>
+          </button>
+        </div>
       </div>
+
 
       <div className="um-controls glass-panel">
         <div className="search-container">
