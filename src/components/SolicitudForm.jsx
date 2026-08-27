@@ -6,6 +6,7 @@ import { MEDICOS } from '../data/medicos';
 import MultiSearchableSelect from './MultiSearchableSelect';
 import { matchesSearch } from '../utils/search';
 import { calculateAgeDetailed } from '../utils/age';
+import { toast } from 'sonner';
 
 const DESTINOS = ['UCI', 'UTI', 'Cuidados Medios', 'GINE/PUERPERIO', 'Neonatología', 'Infantil', 'Básico'];
 const SEXOS = ['—', 'Masculino', 'Femenino', 'Otro'];
@@ -491,6 +492,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     if (!getVal(formData.procedimientosPendientes)) missingFields.push('Procedimientos Pendientes');
 
     if (missingFields.length > 0) {
+      toast.error(`Complete los campos obligatorios: ${missingFields.join(', ')}.`);
       alert(`Los siguientes campos son obligatorios: ${missingFields.join(', ')}.`);
       return;
     }
@@ -550,7 +552,10 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
         });
 
         if (updateRes === false) {
+          toast.error('Error al guardar las modificaciones.');
           setSaveError('⚠️ Error de sincronización: No se pudieron guardar las modificaciones en el servidor. Intente nuevamente.');
+        } else {
+          toast.success('Solicitud actualizada con éxito');
         }
         return;
       }
@@ -627,13 +632,16 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       if (onSubmit) {
         const submitSuccess = await onSubmit(newPatient);
         if (submitSuccess === false) {
+          toast.error('Error al guardar la solicitud en el servidor.');
           setSaveError('⚠️ Error de conexión: No se pudo guardar la solicitud en la base de datos del servidor. Por favor verifique su señal e intente nuevamente.');
           return;
         }
       }
+      toast.success(`Solicitud ingresada correctamente — Ticket #${generatedTicket}`);
       setSubmitted(true);
     } catch (err) {
       console.error('Error al guardar solicitud:', err);
+      toast.error('Error inesperado al guardar la solicitud.');
       setSaveError('⚠️ Error inesperado al guardar la solicitud. Por favor intente nuevamente.');
     } finally {
       setIsSaving(false);
@@ -816,8 +824,8 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                 ) : (
                   <>
                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr', gap: 10, marginBottom: 10 }}>
-                      <div><FieldLabel>Nombre Completo <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Ej. Juan Pérez González" required /></div>
-                      <div><FieldLabel>RUT <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="rut" value={formData.rut} onChange={handleChange} maxLength={10} placeholder="12345678-9" required /></div>
+                      <div><FieldLabel>Nombre Completo <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Ej. Juan Pérez González" required autoComplete={"off"} /></div>
+                      <div><FieldLabel>RUT <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="rut" autoComplete={"off"} value={formData.rut} onChange={handleChange} maxLength={10} placeholder="12345678-9" required /></div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 10, marginBottom: 10 }}>
                       <div>

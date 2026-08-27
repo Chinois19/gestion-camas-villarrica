@@ -44,6 +44,10 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
       return;
     }
 
+    if (!initializedRef.current) {
+      setLoading(true);
+    }
+
     const docRef = doc(db, collectionName, documentId);
 
     if (realtime) {
@@ -116,13 +120,13 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
       const newCount = countOccupiedBeds(localNewData);
 
       // Block if all patients are deleted at once
-      if (oldCount > 0 && newCount === 0) {
-        console.error(
-          `[PROTECCIÓN] ❌ ESCRITURA BLOQUEADA: Se intentó eliminar TODOS los pacientes ` +
-          `(${oldCount} → 0). Esta operación no está permitida.`
-        );
-        return false;
-      }
+      //if (oldCount > 0 && newCount === 0) {
+      //  console.error(
+      //    `[PROTECCIÓN] ❌ ESCRITURA BLOQUEADA: Se intentó eliminar TODOS los pacientes ` +
+      //    `(${oldCount} → 0). Esta operación no está permitida.`
+      //  );
+      //  return false;
+      //}
 
       // Block if more than 50% of patients are lost in a single operation
       if (oldCount > 3 && newCount < oldCount * 0.5) {

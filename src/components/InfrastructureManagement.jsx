@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Layers, Plus, Edit2, Trash2, Home, Map, MapPin, Bed, Save, X, Settings, Check } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function InfrastructureManagement({ bedsData, setBedsData }) {
   const [selectedFloor, setSelectedFloor] = useState(null);
@@ -27,12 +28,14 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     if (!newFloorName.trim()) return;
     const floorKey = newFloorName.trim().toLowerCase().replace(/\s+/g, '');
     if (bedsData[floorKey]) {
+      toast.error('El piso ya existe');
       alert('El piso ya existe');
       return;
     }
     const updated = JSON.parse(JSON.stringify(bedsData));
     updated[floorKey] = {};
     setBedsData(updated);
+    toast.success(`Piso "${newFloorName.trim()}" agregado`);
     setNewFloorName('');
     setIsAddingFloor(false);
     setSelectedFloor(floorKey);
@@ -45,12 +48,14 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     if (!newWingName.trim() || !selectedFloor) return;
     const wingKey = newWingName.trim().toLowerCase();
     if (bedsData[selectedFloor][wingKey]) {
+      toast.error('El ala ya existe en este piso');
       alert('El ala ya existe en este piso');
       return;
     }
     const updated = JSON.parse(JSON.stringify(bedsData));
     updated[selectedFloor][wingKey] = [];
     setBedsData(updated);
+    toast.success(`Ala "${newWingName.trim()}" agregada`);
     setNewWingName('');
     setIsAddingWing(false);
     setSelectedWing(wingKey);
@@ -62,6 +67,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     if (!newRoomId.trim() || !selectedFloor || !selectedWing) return;
     const roomExists = bedsData[selectedFloor][selectedWing].some(r => r.roomId === newRoomId.trim());
     if (roomExists) {
+      toast.error('La habitación ya existe en esta ala');
       alert('La habitación ya existe en esta ala');
       return;
     }
@@ -72,6 +78,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
       beds: []
     });
     setBedsData(updated);
+    toast.success(`Habitación "${newRoomId.trim()}" agregada`);
     setNewRoomId('');
     setIsAddingRoom(false);
     setSelectedRoom(updated[selectedFloor][selectedWing][updated[selectedFloor][selectedWing].length - 1]);
@@ -107,6 +114,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
 
     setBedsData(updated);
     setSelectedRoom(wingData[roomIndex]); // refresh
+    toast.success(isAddingBed ? `Cama "${editingBed.id}" agregada con éxito` : `Cama "${editingBed.id}" actualizada`);
     setEditingBed(null);
     setIsAddingBed(false);
   };
@@ -147,6 +155,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
   const handleDeleteFloor = (floorKey) => {
     const patientCount = countPatientsInFloor(floorKey);
     if (patientCount > 0) {
+      toast.error(`No se puede eliminar "${floorKey}": tiene ${patientCount} paciente(s) activo(s).`);
       alert(`⛔ No se puede eliminar "${floorKey}": tiene ${patientCount} paciente(s) activo(s).\n\nPrimero debe dar de alta a todos los pacientes de este piso.`);
       return;
     }
@@ -154,6 +163,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const updated = JSON.parse(JSON.stringify(bedsData));
     delete updated[floorKey];
     setBedsData(updated);
+    toast.success(`Piso "${floorKey}" eliminado`);
     if (selectedFloor === floorKey) {
       setSelectedFloor(null);
       setSelectedWing(null);
@@ -164,6 +174,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
   const handleDeleteWing = (wingKey) => {
     const patientCount = countPatientsInWing(selectedFloor, wingKey);
     if (patientCount > 0) {
+      toast.error(`No se puede eliminar el ala "${wingKey}": tiene ${patientCount} paciente(s) activo(s).`);
       alert(`⛔ No se puede eliminar el ala "${wingKey}": tiene ${patientCount} paciente(s) activo(s).\n\nPrimero debe dar de alta a todos los pacientes de esta ala.`);
       return;
     }
@@ -171,6 +182,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const updated = JSON.parse(JSON.stringify(bedsData));
     delete updated[selectedFloor][wingKey];
     setBedsData(updated);
+    toast.success(`Ala "${wingKey}" eliminada`);
     if (selectedWing === wingKey) {
       setSelectedWing(null);
       setSelectedRoom(null);
@@ -181,6 +193,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const room = bedsData[selectedFloor]?.[selectedWing]?.find(r => r.roomId === roomId);
     const patientCount = room ? countPatientsInRoom(room) : 0;
     if (patientCount > 0) {
+      toast.error(`No se puede eliminar la habitación ${roomId}: tiene ${patientCount} paciente(s) activo(s).`);
       alert(`⛔ No se puede eliminar la habitación ${roomId}: tiene ${patientCount} paciente(s) activo(s).\n\nPrimero debe dar de alta a todos los pacientes de esta habitación.`);
       return;
     }
@@ -188,6 +201,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const updated = JSON.parse(JSON.stringify(bedsData));
     updated[selectedFloor][selectedWing] = updated[selectedFloor][selectedWing].filter(r => r.roomId !== roomId);
     setBedsData(updated);
+    toast.success(`Habitación "${roomId}" eliminada`);
     if (selectedRoom?.roomId === roomId) {
       setSelectedRoom(null);
     }
@@ -197,6 +211,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const room = bedsData[selectedFloor]?.[selectedWing]?.find(r => r.roomId === selectedRoom.roomId);
     const bed = room?.beds?.find(b => b.id === bedId);
     if (bed && bed.status === 'occupied' && bed.patient) {
+      toast.error(`No se puede eliminar la cama ${bedId}: está ocupada por "${bed.patient}".`);
       alert(`⛔ No se puede eliminar la cama ${bedId}: está ocupada por "${bed.patient}".\n\nPrimero debe dar de alta al paciente.`);
       return;
     }
@@ -205,6 +220,7 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const roomIndex = updated[selectedFloor][selectedWing].findIndex(r => r.roomId === selectedRoom.roomId);
     updated[selectedFloor][selectedWing][roomIndex].beds = updated[selectedFloor][selectedWing][roomIndex].beds.filter(b => b.id !== bedId);
     setBedsData(updated);
+    toast.success(`Cama "${bedId}" eliminada`);
     setSelectedRoom(updated[selectedFloor][selectedWing][roomIndex]);
   };
 

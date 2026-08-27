@@ -4,6 +4,7 @@ import emailjs from '@emailjs/browser';
 import { useFirebaseSync } from '../hooks/useFirebaseSync';
 import './UserManagement.css';
 import { matchesSearch } from '../utils/search';
+import { toast } from 'sonner';
 
 const defaultUsers = [
   { id: 1, name: 'Super Administrador', username: 'admin', password: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', roleName: 'Super Administrador', status: 'active' },
@@ -52,11 +53,13 @@ const UserManagement = ({ notify }) => {
       
       const id = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
       setUsers([...users, { ...newUser, id, status: 'active', password: generatedPassword }]);
+      toast.success(`Profesional ${newUser.name} agregado. Se enviaron sus credenciales al correo.`);
       if (notify) notify(`Profesional ${newUser.name} agregado. Se enviaron sus credenciales al correo.`);
       setNewUser({ name: '', username: '', email: '', role: 'visor' });
       setIsAdding(false);
     } catch (error) {
       console.error('Error enviando correo con EmailJS:', error);
+      toast.error('Error al enviar el correo con credenciales.');
       if (notify) notify('Error al enviar el correo. Revisa la configuración en consola.');
     } finally {
       setIsSending(false);
@@ -65,11 +68,13 @@ const UserManagement = ({ notify }) => {
 
   const handleDeleteUser = (id, username) => {
     if (username === 'admin') {
+      toast.warning('No puedes eliminar al administrador principal.');
       if (notify) notify('No puedes eliminar al administrador principal.');
       return;
     }
     if (window.confirm('¿Estás seguro de que deseas eliminar este profesional?')) {
       setUsers(users.filter(u => u.id !== id));
+      toast.success('Profesional eliminado correctamente.');
       if (notify) notify('Profesional eliminado correctamente.');
     }
   };

@@ -15,6 +15,7 @@ import { matchesSearch } from '../utils/search';
 import { formatAgeDetailed } from '../utils/age';
 import cie10Data from '../data/cie10.json';
 import { DndContext, useDroppable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { toast } from 'sonner';
 
 const checkCompatibility = (bed, patient) => {
   if (!patient) return true;
@@ -583,8 +584,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     if (success !== false) {
       // Solo remover de la lista de espera si la escritura de camas fue exitosa
       setWaitingList(prev => prev.filter(p => p.id !== patientId));
+      toast.success(`Paciente ${patientData.name || 'asignado'} acostado en Cama ${bedId}`);
     } else {
       console.error('[Dashboard] ❌ Asignación fallida: la escritura de bedsData fue bloqueada o falló. El paciente permanece en la lista de espera.');
+      toast.error('Error al asignar la cama. El paciente permanece en la lista de espera.');
       alert('Error al asignar la cama. El paciente permanece en la lista de espera. Por favor intente nuevamente.');
     }
     setPendingAssignment(null);
@@ -632,6 +635,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       setBlockLog(prev => [logEntry, ...(prev || [])]);
     }
 
+    toast.success(`Cama ${blockingBed.bed.id} bloqueada por: ${reason}`);
     setBlockingBed(null);
   };
 
@@ -672,6 +676,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       });
     }
 
+    toast.success(`Cama ${unblockingBed.bed.id} desbloqueada y disponible`);
     setUnblockingBed(null);
   };
 
@@ -815,6 +820,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         });
       }
 
+      toast.success(`Alta de lista de espera registrada para ${bed.patient}`);
       setDischargingPatient(null);
       return;
     }
@@ -917,6 +923,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         originalWaitingRequest: null
       });
     }
+    toast.success(`Alta médica registrada para ${cleanDischargeRecord.patient || bed.patient}. Cama enviada a aseo.`);
     setDischargingPatient(null);
   };
 
@@ -1049,8 +1056,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
 
       if (success !== false) {
         setWaitingList(prev => [...prev, requestToRestore]);
+        toast.success('Acueste revocado; paciente devuelto a la lista de espera');
       } else {
         console.error('[Dashboard] ❌ Revocación fallida: no se pudo liberar la cama.');
+        toast.error('Error al revocar el acueste. Por favor intente nuevamente.');
         alert('Error al revocar el acueste. Por favor intente nuevamente.');
       }
     }
@@ -1115,6 +1124,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       return next;
     });
 
+    toast.success(`Interconsulta solicitada a ${formData.especialidadDestino}`);
     setRequestingIC(null);
   };
 
@@ -1493,8 +1503,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
   const confirmGrdEdit = async (grdData, transferTarget) => {
     if (transferTarget) {
       handleTransfer(editingGrdBed.roomId, editingGrdBed.bed.id, transferTarget.roomId, transferTarget.bedId, grdData, transferTarget.type);
+      toast.success('Traslado de cama registrado correctamente');
     } else {
       await updateBedState(editingGrdBed.roomId, editingGrdBed.bed.id, grdData);
+      toast.success('Datos clínicos actualizados');
       setEditingGrdBed(null);
     }
   };

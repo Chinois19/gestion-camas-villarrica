@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Eye, EyeOff, Lock, Check, AlertTriangle } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { toast } from 'sonner';
 
 const ChangePasswordModal = ({ currentUser, onClose, notify }) => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -38,16 +39,19 @@ const ChangePasswordModal = ({ currentUser, onClose, notify }) => {
     // Validaciones
     if (newPassword.length < 4) {
       setError('La nueva contraseña debe tener al menos 4 caracteres.');
+      toast.error('La nueva contraseña debe tener al menos 4 caracteres.');
       return;
     }
 
     if (newPassword !== confirmPassword) {
       setError('Las contraseñas nuevas no coinciden.');
+      toast.error('Las contraseñas nuevas no coinciden.');
       return;
     }
 
     if (newPassword === currentPassword) {
       setError('La nueva contraseña debe ser diferente a la actual.');
+      toast.error('La nueva contraseña debe ser diferente a la actual.');
       return;
     }
 
@@ -60,6 +64,7 @@ const ChangePasswordModal = ({ currentUser, onClose, notify }) => {
 
       if (!docSnap.exists()) {
         setError('No se pudo acceder a la base de datos de usuarios.');
+        toast.error('No se pudo acceder a la base de datos de usuarios.');
         setIsSubmitting(false);
         return;
       }
@@ -73,6 +78,7 @@ const ChangePasswordModal = ({ currentUser, onClose, notify }) => {
 
       if (userIndex === -1) {
         setError('La contraseña actual es incorrecta.');
+        toast.error('La contraseña actual es incorrecta.');
         setIsSubmitting(false);
         return;
       }
@@ -97,6 +103,7 @@ const ChangePasswordModal = ({ currentUser, onClose, notify }) => {
       // 5. Verificación de integridad: mismo número de usuarios
       if (updatedUsers.length !== users.length) {
         setError('Error de integridad. Operación cancelada.');
+        toast.error('Error de integridad. Operación cancelada.');
         setIsSubmitting(false);
         return;
       }
@@ -105,6 +112,7 @@ const ChangePasswordModal = ({ currentUser, onClose, notify }) => {
       await setDoc(docRef, { data: updatedUsers });
 
       setSuccess(true);
+      toast.success('Contraseña actualizada exitosamente.');
       if (notify) notify('Contraseña actualizada exitosamente.');
 
       // Cerrar después de 2 segundos
@@ -115,6 +123,7 @@ const ChangePasswordModal = ({ currentUser, onClose, notify }) => {
     } catch (err) {
       console.error('Error al cambiar contraseña:', err);
       setError('Error al guardar. Intente nuevamente.');
+      toast.error('Error al guardar la nueva contraseña.');
     } finally {
       setIsSubmitting(false);
     }

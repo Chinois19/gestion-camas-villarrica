@@ -23,6 +23,7 @@ import Navbar from './components/Navbar';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
 import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
 import { MOCK_TRANSFERS } from './data/mockTransfers';
+import { Toaster, toast } from 'sonner';
 
 // Pre-fill some realistic interconsultas in the DUMMY_DATA to make the initial view visually rich
 const initialBedsData = JSON.parse(JSON.stringify(DUMMY_DATA));
@@ -70,18 +71,21 @@ function App() {
     return window.location.hash.includes('#solicitud-publica') || window.location.search.includes('public=solicitud');
   });
 
+  // Only sync clinical data if user is authenticated or in a public form route
+  const isSyncEnabled = !!currentUser || isPublicRoute;
+
   // Clinical state — persisted in Firebase
-  const [bedsData, setBedsData, bedsLoading] = useFirebaseSync('appState', 'bedsData', initialBedsData);
-  const [waitingList, setWaitingList, waitingLoading] = useFirebaseSync('appState', 'waitingList', WAITING_LIST);
-  const [hodomRequests, setHodomRequests, hodomLoading] = useFirebaseSync('appState', 'hodomRequests', initialHodomRequests);
-  const [transferHistory, setTransferHistory, transfersLoading] = useFirebaseSync('appState', 'transferHistory', MOCK_TRANSFERS, { realtime: false });
-  const [waitingListDischarges, setWaitingListDischarges, dischargesLoading] = useFirebaseSync('appState', 'waitingListDischarges', []);
-  const [blockLog, setBlockLog, blockLogLoading] = useFirebaseSync('appState', 'blockLog', [], { realtime: false });
+  const [bedsData, setBedsData, bedsLoading] = useFirebaseSync('appState', 'bedsData', initialBedsData, { enabled: isSyncEnabled });
+  const [waitingList, setWaitingList, waitingLoading] = useFirebaseSync('appState', 'waitingList', WAITING_LIST, { enabled: isSyncEnabled });
+  const [hodomRequests, setHodomRequests, hodomLoading] = useFirebaseSync('appState', 'hodomRequests', initialHodomRequests, { enabled: isSyncEnabled });
+  const [transferHistory, setTransferHistory, transfersLoading] = useFirebaseSync('appState', 'transferHistory', MOCK_TRANSFERS, { realtime: false, enabled: isSyncEnabled });
+  const [waitingListDischarges, setWaitingListDischarges, dischargesLoading] = useFirebaseSync('appState', 'waitingListDischarges', [], { enabled: isSyncEnabled });
+  const [blockLog, setBlockLog, blockLogLoading] = useFirebaseSync('appState', 'blockLog', [], { realtime: false, enabled: isSyncEnabled });
   // ── LOG PERMANENTE DE EPISODIOS DE ALTA ─────────────────────────────────────
   // dischargesLog es append-only: cada alta genera un registro único e inmutable.
   // Nunca se edita ni se borra un registro existente, solo se agregan nuevos.
   // Es la fuente de verdad del Informe de Altas, independiente del estado de las camas.
-  const [dischargesLog, setDischargesLog] = useFirebaseSync('appState', 'dischargesLog', [], { realtime: false });
+  const [dischargesLog, setDischargesLog] = useFirebaseSync('appState', 'dischargesLog', [], { realtime: false, enabled: isSyncEnabled });
 
   useEffect(() => {
     const t = THEMES.find(t => t.id === theme) || THEMES[0];
@@ -112,12 +116,14 @@ function App() {
     setCurrentUser(user);
     localStorage.setItem('villarrica_session', JSON.stringify(user));
     setCurrentView('dashboard');
+    toast.success(`Bienvenido/a, ${user.name}`);
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('villarrica_session');
     setCurrentView('dashboard');
+    toast.info('Sesión cerrada');
   };
 
   // ── CLINICAL HANDLERS ──────────────────────────────────────────────────────
@@ -143,6 +149,7 @@ function App() {
       hodomObservaciones: reqData.hodomObservaciones || ''
     };
     setHodomRequests(prev => [newReq, ...prev]);
+    toast.success(`Solicitud HODOM ingresada para ${reqData.patientName}`);
   };
 
   const handleHodomMarkDone = (hodomId) => {
@@ -152,6 +159,7 @@ function App() {
     setHodomRequests(prev => prev.map(r =>
       r.id === hodomId ? { ...r, estado: 'aprobado', aprobadoAt: new Date().toISOString() } : r
     ));
+    toast.success('Solicitud HODOM aprobada');
   };
 
   const handleHodomMarkDoneByBed = (roomId, bedId) => {
@@ -184,10 +192,12 @@ function App() {
       }
       return next;
     });
+    toast.success(`HODOM registrado. Hab. ${roomId} — Cama ${bedId} enviada a aseo.`);
   };
 
   const handleHodomDelete = (hodomId) => {
     setHodomRequests(prev => prev.filter(r => r.id !== hodomId));
+    toast.success('Solicitud HODOM eliminada');
   };
 
   const handleFinishCleaning = (roomId, bedId) => {
@@ -206,6 +216,7 @@ function App() {
       }
       return next;
     });
+    toast.success(`Aseo finalizado en Hab. ${roomId} — Cama ${bedId}. Cama disponible.`);
   };
 
   const handleMarkICDone = (roomId, bedId, icId, newState = 'realizada', observaciones = '') => {
@@ -216,6 +227,7 @@ function App() {
         }
         return p;
       }));
+      toast.success(`Interconsulta marcada como ${newState}`);
       return;
     }
     setBedsData(prev => {
@@ -241,6 +253,7 @@ function App() {
       }
       return next;
     });
+    toast.success(`Interconsulta marcada como ${newState}`);
   };
 
   const handleDeleteIC = (roomId, bedId, icId) => {
@@ -251,6 +264,7 @@ function App() {
         }
         return p;
       }));
+      toast.success('Interconsulta eliminada');
       return;
     }
     setBedsData(prev => {
@@ -268,6 +282,7 @@ function App() {
       }
       return next;
     });
+    toast.success('Interconsulta eliminada');
   };
 
   const handleEditPatient = (patient) => {
@@ -290,6 +305,7 @@ function App() {
       // Verificar si ya está en lista de espera
       const duplicateInWaiting = waitingList.find(p => cleanRut(p.rut) === newRut);
       if (duplicateInWaiting) {
+        toast.warning(`Paciente ya en espera: ${newPatient.name} (${newPatient.rut}) con ticket ${duplicateInWaiting.ticket || duplicateInWaiting.id}`);
         alert(`⚠️ PACIENTE DUPLICADO\n\n${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra en la lista de espera con el ticket ${duplicateInWaiting.ticket || duplicateInWaiting.id}.\n\nNo es posible ingresar el mismo paciente dos veces.`);
         return false;
       }
@@ -314,13 +330,20 @@ function App() {
         if (foundInBed) break;
       }
       if (foundInBed) {
+        toast.warning(`Paciente ya hospitalizado en ${bedInfo}`);
         alert(`⚠️ PACIENTE YA ACOSTADO\n\n${newPatient.name} (RUT: ${newPatient.rut}) ya figura como paciente acostado en ${bedInfo}.\n\nNo es posible ingresar a lista de espera a un paciente que ya se encuentra hospitalizado.`);
         return false;
       }
     }
 
     const res = await setWaitingList(prev => [newPatient, ...prev]);
-    return res !== false;
+    if (res !== false) {
+      toast.success(`Solicitud ingresada correctamente para ${newPatient.name}`);
+      return true;
+    } else {
+      toast.error('Error al guardar la solicitud en el servidor');
+      return false;
+    }
   };
 
   // Pending counts for nav badges
@@ -367,6 +390,7 @@ function App() {
     
     return (
       <div className="app-container" style={{ padding: '24px 0', minHeight: '100vh', overflowY: 'auto' }}>
+        <Toaster position="top-right" richColors />
         <SolicitudForm
           onSubmit={async (newPatient) => {
             const cleanRut = (rut) => (rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
@@ -389,7 +413,12 @@ function App() {
 
   // ── LOGIN GATE ─────────────────────────────────────────────────────────────
   if (!currentUser) {
-    return <Login onLogin={handleLogin} />;
+    return (
+      <>
+        <Toaster position="top-right" richColors />
+        <Login onLogin={handleLogin} />
+      </>
+    );
   }
 
   // ── LOADING GATE ───────────────────────────────────────────────────────────
@@ -430,6 +459,7 @@ function App() {
 
   return (
     <div className="app-container">
+      <Toaster position="top-right" richColors />
       {/* Universal Header */}
       <header className="glass-panel hide-on-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
         <div className="header-title" style={{ cursor: 'pointer' }} onClick={() => setCurrentView('dashboard')}>
@@ -619,6 +649,7 @@ function App() {
                setViewingPatient(prev => ({ ...prev, interconsultas: [...(prev.interconsultas || []), formData] }));
              }
              setRequestingWaitingIC(null);
+             toast.success(`Interconsulta a ${formData.especialidadDestino} solicitada para paciente en espera`);
           }}
           onClose={() => setRequestingWaitingIC(null)}
         />

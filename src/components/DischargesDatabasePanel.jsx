@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
 import { matchesSearch } from '../utils/search';
 import { formatAgeDetailed } from '../utils/age';
+import { toast } from 'sonner';
 
 const formatDateToDDMMYYYY = (dateVal) => {
   if (!dateVal) return '—';
@@ -533,6 +534,7 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
           return [...prev, restoredPatient];
         });
       }
+      toast.success(`Alta de ${targetDischarge.patient} revocada; paciente restaurado a lista de espera`);
       return;
     }
 
@@ -576,7 +578,12 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
           });
         }
       }
-      if (!handled) alert("No se pudo encontrar el registro de alta para restaurar.");
+      if (!handled) {
+        toast.error("No se pudo encontrar el registro de alta para restaurar.");
+        alert("No se pudo encontrar el registro de alta para restaurar.");
+      } else {
+        toast.success(`Alta de la cama ${bedId} revocada; paciente restaurado`);
+      }
       return next;
     });
   };
@@ -603,6 +610,7 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
           });
         });
       }
+      toast.success('Registro de alta actualizado correctamente');
       setEditingRow(null);
       return;
     }
@@ -666,6 +674,8 @@ export default function DischargesDatabasePanel({ bedsData, setBedsData, waiting
       }
       return next;
     });
+
+    toast.success('Registro de alta actualizado correctamente');
     setEditingRow(null);
   };
 
