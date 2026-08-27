@@ -1,0 +1,505 @@
+================================================================================
+INFORME TÉCNICO DE ARQUITECTURA, FUNCIONAMIENTO Y DIAGNÓSTICO DEL SISTEMA
+PROYECTO: SISTEMA DE GESTIÓN DE CAMAS Y TRAZABILIDAD CLÍNICA - HOSPITAL VILLARRICA
+FECHA DE ELABORACIÓN: Agosto 2026
+AUTOR / RESPONSABLE: Departamento de Control de Gestión & GPS
+================================================================================
+
+--------------------------------------------------------------------------------
+ÍNDICE DE CONTENIDOS
+--------------------------------------------------------------------------------
+1. RESUMEN EJECUTIVO Y OBJETIVO DEL SISTEMA
+2. STACK TECNOLÓGICO Y DEPENDENCIAS
+3. ROLES DE USUARIO Y MODELO DE PERMISOS
+4. ARQUITECTURA Y FUNCIONAMIENTO MÓDULO POR MÓDULO
+   4.1. Dashboard Principal y Mapa de Camas en Tiempo Real
+   4.2. Flujo de Admisión y Solicitud de Cama (Lista de Espera)
+   4.3. Asignación de Camas y Hospitalización
+   4.4. Ficha Clínica Rápida, GRD y Modificación de Paciente
+   4.5. Sistema de Interconsultas (IC)
+   4.6. Derivaciones a Hospitalización Domiciliaria (HODOM)
+   4.7. Flujo de Aseo, Limpieza y Desinfección
+   4.8. Bloqueo e Inhabilitación de Camas
+   4.9. Traslados de Pacientes (Internos y Externos)
+   4.10. Altas Médicas y Trazabilidad Permanente (Log Inmutable)
+   4.11. Paneles de Analítica, Inteligencia y Estadísticas (Insights)
+   4.12. Gestión de Infraestructura Hospitalaria Dinámica
+   4.13. Gestión de Usuarios y Envío de Credenciales (EmailJS)
+   4.14. Sistema Multitema e Interfaz Visual
+5. ESTRUCTURA DE BASE DE DATOS EN FIREBASE FIRESTORE
+   5.1. Colecciones y Documentos Utilizados
+   5.2. Mecanismo de Sincronización (useFirebaseSync Hook)
+   5.3. Sistema de Protección de Integridad y Auto-Backups
+6. PROBLEMAS Y RIESGOS IDENTIFICADOS EN EL PROYECTO
+   6.1. Cuello de Botella del "Documento Monolítico" (Límite de 1 MB en Firestore)
+   6.2. Riesgo de Condiciones de Carrera (Race Conditions) y Sobrescritura
+   6.3. Vulnerabilidades de Seguridad y Autenticación No Nativa
+   6.4. Ineficiencia en Consumo de Ancho de Banda y Re-renders
+   6.5. Falta de Paginación en Consultas Históricas
+7. ANÁLISIS DE MEJORAS Y PLAN DE OPTIMIZACIÓN RECOMENDADO
+   7.1. Migración a Colecciones y Subcolecciones Normalizadas
+   7.2. Implementación de Firebase Authentication Oficial y Security Rules
+   7.3. Optimización de Estado Global (Zustand / Redux) y Modularización
+   7.4. Paginación e Indexación de Reportes
+   7.5. Auditoría de Eventos Completa (Audit Trail / Logs por Usuario)
+   7.6. Integración con Estándares de Salud (HL7 / FHIR / HIS)
+================================================================================
+
+
+================================================================================
+1. RESUMEN EJECUTIVO Y OBJETIVO DEL SISTEMA
+================================================================================
+El Sistema de Gestión de Camas del Hospital Villarrica es una plataforma web
+interactiva diseñada para la coordinación clínica y administrativa en tiempo real
+de la capacidad instalada de hospitalización del establecimiento de salud.
+
+Sus objetivos primordiales son:
+1. Proporcionar visibilidad continua e instantánea del estado de ocupación de
+   camas críticas (UCI/UTI) y básicas/medias (Medicina, Cirugía, Maternidad,
+   Ginecología, Neonatología, Pediatría, etc.).
+2. Optimizar el flujo de pacientes desde el ingreso por Urgencia o Admisión
+   (Lista de Espera) hasta el egreso hospitalario (Alta médica, Traslado o HODOM).
+3. Reducir los tiempos de cama ociosa mediante la coordinación ágil entre
+   el personal clínico, gestión de camas y el equipo de aseo.
+4. Generar trazabilidad histórica inmutable de altas, traslados y bloqueos
+   para el análisis estadístico de indicadores clave (Estadía Media, Ocupación,
+   Categorización GRD, etc.) por parte de Control de Gestión.
+
+
+================================================================================
+2. STACK TECNOLÓGICO Y DEPENDENCIAS
+================================================================================
+- Frontend Core: React 19.x (JavaScript ES6+, JSX)
+- Bundler / Tooling: Vite 8.x
+- Base de Datos / Backend Serverless: Firebase Firestore (Web SDK v12 / v9 Modular)
+- Estilos & UI: Vanilla CSS personalizado, CSS Variables, Glassmorphism,
+  animaciones fluidas y sistema multitema reactivo (8 temas: Dark, Light,
+  Zafiro/Emerald, Crimson, Forest, Sunset, Midnight, Slate).
+- Iconografía: Lucide React (lucide-react v1.11+)
+- Drag & Drop: @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities
+- Envío de Notificaciones / Correos: @emailjs/browser (para entrega de credenciales)
+- Manipulación de Fechas: date-fns
+- Exportación de Reportes: SheetJS (xlsx) para descarga de tablas a Excel.
+
+
+================================================================================
+3. ROLES DE USUARIO Y MODELO DE PERMISOS
+================================================================================
+El sistema implementa un control de acceso basado en roles (RBAC) que condiciona
+la visualización del menú superior (Navbar), los paneles disponibles y los
+botones de acción:
+
+1. SUPERADMINISTRADOR ('superadmin' o 'admin'):
+   - Acceso total a todas las funcionalidades del sistema.
+   - Administración de usuarios (crear, editar, eliminar, regenerar clave).
+   - Administración de infraestructura hospitalaria (agregar/eliminar pisos,
+     sectores, habitaciones y camas).
+   - Acceso a todos los reportes, auditorías, bloqueos y bases de datos.
+
+2. GESTOR DE CAMAS ('gestor_camas'):
+   - Control operacional de asignación de camas desde lista de espera.
+   - Modificación de GRD, severidad y datos clínicos de pacientes.
+   - Bloqueo y desbloqueo de camas.
+   - Gestión de traslados internos y externos.
+   - Gestión de altas y acceso a paneles estadísticos (Insights, Reportes).
+
+3. MÉDICO GENERAL ('medico_general' o 'medico'):
+   - Visualización del mapa de camas y pacientes.
+   - Solicitud de interconsultas especializadas.
+   - Registro de novedades médicas y evoluciones.
+   - Indicación de pre-alta o solicitud de HODOM.
+
+4. GESTORA DE SERVICIO ('gestora_servicio'):
+   - Supervisión clínica de ocupación por servicio/piso.
+   - Gestión de interconsultas y visualización de paneles analíticos.
+
+5. MÉDICO HODOM ('medico_hodom' o 'hodom'):
+   - Acceso enfocado en el panel de Hospitalización Domiciliaria.
+   - Aprobación o rechazo de solicitudes de derivación HODOM.
+   - Liberación de camas hacia proceso de aseo al aceptar pacientes en domicilio.
+
+6. PERSONAL DE ASEO ('personal_aseo' o 'aseo'):
+   - Acceso dedicado al panel de Aseo y Limpieza.
+   - Visualización de camas en estado 'cleaning' (concurrente o terminal).
+   - Cronómetro de tiempo de aseo y confirmación de cama limpia/disponible.
+
+7. VISOR INSTITUCIONAL ('visor'):
+   - Acceso de solo lectura al Dashboard, Insights, Estado General y Bases
+     de Datos. No puede realizar modificaciones clínicas ni asignaciones.
+
+8. USUARIO PÚBLICO / REMOTO (Ruta pública `#solicitud-publica`):
+   - Formulario de solicitud de cama directo para servicios de Urgencia o
+     derivaciones externas sin requerir login en la app central.
+
+
+================================================================================
+4. ARQUITECTURA Y FUNCIONAMIENTO MÓDULO POR MÓDULO
+================================================================================
+
+--------------------------------------------------------------------------------
+4.1. Dashboard Principal y Mapa de Camas en Tiempo Real
+--------------------------------------------------------------------------------
+El Dashboard es el núcleo operativo de la aplicación.
+- Representa la estructura física del hospital dividida jerárquicamente en:
+  Piso -> Sector (Oriente / Poniente) -> Habitación (Room) -> Camas (Beds).
+- Estados de Cama:
+  * 'available' (Disponible): Fondo neutro/verde, lista para recibir paciente.
+  * 'occupied' (Ocupada): Muestra ficha resumida del paciente, RUT, diagnóstico,
+    días de estadía calculados dinámicamente, nivel de aislamiento, oxígeno, etc.
+  * 'cleaning' (En Aseo): Indica que el paciente egresó y la cama requiere
+    desinfección antes de ser ocupada nuevamente.
+  * 'blocked' (Bloqueada/Inhabilitada): Cama fuera de servicio por mantención,
+    aislamiento de cohorte, desperfecto técnico o falta de personal.
+- Funcionalidades interactivas en cada cama:
+  * Menú contextual de 3 puntos con acciones según estado.
+  * Acceso directo a Ficha de Paciente, Interconsultas, Traslado, Alta,
+    Derivación a HODOM, Bloqueo y Registro de Novedades Clínicas.
+
+--------------------------------------------------------------------------------
+4.2. Flujo de Admisión y Solicitud de Cama (Lista de Espera)
+--------------------------------------------------------------------------------
+- Permite registrar requerimientos de hospitalización (desde Urgencia u otros
+  servicios).
+- Captura datos filiatorios (Nombre, RUT, Edad, Sexo, Previsión), diagnóstico
+  con autocompletado CIE-10, requerimiento de aislamiento (Gotitas, Contacto,
+  Aéreo, Neutropénico), dependencia, ESI/CBO y notas clínicas.
+- Validación de integridad: Bloqueo de duplicados por RUT tanto si ya está en
+  la lista de espera como si ya figura acostado en una cama del hospital.
+
+--------------------------------------------------------------------------------
+4.3. Asignación de Camas y Hospitalización
+--------------------------------------------------------------------------------
+- Mediante el modal `AssignmentModal.jsx`, el Gestor de Camas selecciona una
+  cama disponible adecuada (según sexo de la sala, tipo de cama requerida
+  UCI/UTI/Básica y aislamiento).
+- Al confirmar, el paciente sale de `waitingList` y se inserta en el objeto
+  de la cama correspondiente en `bedsData`, estampando fecha y hora de ingreso.
+
+--------------------------------------------------------------------------------
+4.4. Ficha Clínica Rápida, GRD y Modificación de Paciente
+--------------------------------------------------------------------------------
+- Permite actualizar en tiempo real la información clínica del paciente
+  acostado (`EditGrdModal.jsx`):
+  * Código y descripción de Grupo Relacionado por el Diagnóstico (GRD).
+  * Severidad (Nivel 1 a 4).
+  * Días proyectados de estadía (Norma GRD) vs Días reales transcurridos.
+  * Requerimientos de Oxígeno (Cánula nasal, Mascarilla Venturi, Reservorio, VMNI, VM).
+  * Indicadores de Aislamiento y Medidas Especiales.
+
+--------------------------------------------------------------------------------
+4.5. Sistema de Interconsultas (IC)
+--------------------------------------------------------------------------------
+- Módulo centralizado (`InterconsultasPanel.jsx`, `InterconsultaModal.jsx`):
+  * Médicos pueden solicitar evaluación por especialistas (Cardiología, Neurología,
+    Cirugía, Traumatología, Medicina Interna, etc.).
+  * Soporta prioridades (Urgente, Normal, Electiva).
+  * Estados de ciclo de vida: 'pendiente', 'en_proceso', 'realizada', 'cancelada'.
+  * Notificación visual inmediata mediante badges numéricos en la barra superior.
+
+--------------------------------------------------------------------------------
+4.6. Derivaciones a Hospitalización Domiciliaria (HODOM)
+--------------------------------------------------------------------------------
+- Panel especializado (`HodomPanel.jsx`):
+  * Médicos solicitan traslado al programa HODOM cumpliendo criterios clínicos
+    (vía venosa periférica, antibioticoterapia parenteral, curaciones complejas, etc.).
+  * El equipo HODOM evalúa la solicitud y, al aprobarla, el sistema libera
+    automáticamente la cama hospitalaria pasándola a estado 'cleaning'.
+
+--------------------------------------------------------------------------------
+4.7. Flujo de Aseo, Limpieza y Desinfección
+--------------------------------------------------------------------------------
+- Panel de Aseo (`AseoPanel.jsx`):
+  * Registra las camas desocupadas que requieren aseo concurrente o terminal.
+  * Muestra el tiempo transcurrido desde la liberación de la cama.
+  * Al finalizar la limpieza, el personal de aseo o enfermería pulsa "Finalizar
+    Aseo", dejando la cama en estado 'available' de forma inmediata.
+
+--------------------------------------------------------------------------------
+4.8. Bloqueo e Inhabilitación de Camas
+--------------------------------------------------------------------------------
+- Permite inhabilitar camas con motivos tipificados:
+  * Aislamiento preventivo o de cohorte.
+  * Mantenimiento de infraestructura / Falla de equipamiento.
+  * Falta transitoria de recurso humano (médico / enfermería).
+- Genera un log histórico en `blockLog` con fecha de inicio, motivo, responsable
+  y fecha de desbloqueo para auditar la merma de disponibilidad.
+
+--------------------------------------------------------------------------------
+4.9. Traslados de Pacientes (Internos y Externos)
+--------------------------------------------------------------------------------
+- Permite mover un paciente de una cama a otra (ej. paso de UCI a UTI o de
+  UTI a Sala Básica/Media) manteniendo su historial clínico.
+- También registra derivaciones hacia otros centros de la red asistencial
+  (Hospital de Temuco, Padre Las Casas, etc.).
+- Todo evento se registra de forma acumulativa en `transferHistory`.
+
+--------------------------------------------------------------------------------
+4.10. Altas Médicas y Trazabilidad Permanente (Log Inmutable)
+--------------------------------------------------------------------------------
+- Módulo de egresos (`DischargeModal.jsx`, `DischargesDatabasePanel.jsx`):
+  * Tipos de egreso: Alta a Domicilio, Fallecimiento, Fuga/Voluntaria, Traslado.
+  * Calcula la estancia real del paciente (días y horas).
+  * Almacena un registro permanente e inmutable en `appState/dischargesLog`.
+  * Este log es append-only: no se borra al liberar la cama ni se ve afectado
+    por modificaciones posteriores en el mapa de camas.
+
+--------------------------------------------------------------------------------
+4.11. Paneles de Analítica, Inteligencia y Estadísticas (Insights)
+--------------------------------------------------------------------------------
+- `InsightsDashboard.jsx` y `GeneralBedStatusPanel.jsx`:
+  * Cálculo de tasa de ocupación global y por piso/servicio.
+  * Estadía Media (EM) por diagnóstico y servicio.
+  * Distribución de pacientes por rango etario, sexo y previsión.
+  * Monitoreo de camas bloqueadas e impacto en la capacidad hospitalaria.
+  * Filtros por rangos de fecha y exportación de datos tabulares a Excel.
+
+--------------------------------------------------------------------------------
+4.12. Gestión de Infraestructura Hospitalaria Dinámica
+--------------------------------------------------------------------------------
+- Módulo `InfrastructureManagement.jsx` (exclusivo Superadmin):
+  * Permite crear, renombrar, reordenar o eliminar pisos, sectores y habitaciones.
+  * Agregar o quitar camas dinámicamente según la contingencia hospitalaria
+    (ej. campañas de invierno, reconversión de camas críticas).
+
+--------------------------------------------------------------------------------
+4.13. Gestión de Usuarios y Envío de Credenciales (EmailJS)
+--------------------------------------------------------------------------------
+- Módulo `UserManagement.jsx` (exclusivo Superadmin):
+  * Creación y mantención de usuarios con asignación de roles.
+  * Generación aleatoria de contraseñas de primer acceso.
+  * Integración con EmailJS para envío automático de correos con credenciales
+    al email institucional del usuario creado.
+
+--------------------------------------------------------------------------------
+4.14. Sistema Multitema e Interfaz Visual
+--------------------------------------------------------------------------------
+- Selector de temas con 8 esquemas de color persistidos en `localStorage`.
+- Diseño responsive adaptado a pantallas de gestión, monitores de enfermería
+  y dispositivos móviles de uso clínico.
+
+
+================================================================================
+5. ESTRUCTURA DE BASE DE DATOS EN FIREBASE FIRESTORE
+================================================================================
+
+--------------------------------------------------------------------------------
+5.1. Colecciones y Documentos Utilizados
+--------------------------------------------------------------------------------
+El proyecto utiliza actualmente una arquitectura basada en una colección principal
+llamada `appState`, dentro de la cual se almacenan documentos que agrupan el
+estado global de cada entidad en un campo envoltorio `{ data: ... }`:
+
+COLECCIÓN: `appState`
+DOCUMENTOS:
+├── `bedsData`
+│   └── Contiene el árbol JSON completo de la infraestructura y pacientes:
+│       {
+│         piso2: { poniente: [...habitaciones con camas y pacientes...] },
+│         piso3: { poniente: [...], oriente: [...] },
+│         piso4: { poniente: [...], oriente: [...] }
+│       }
+├── `bedsData_lastBackup`
+│   └── Copia de seguridad automática del estado anterior de `bedsData` antes
+│       de cada operación de escritura. Incluye timestamp y conteo de ocupados.
+├── `waitingList`
+│   └── Array con la lista completa de solicitudes y pacientes en espera:
+│       [ { id, name, rut, age, diagnosis, isolation, requestedAt, ... }, ... ]
+├── `hodomRequests`
+│   └── Array con todas las solicitudes de Hospitalización Domiciliaria:
+│       [ { id, patientName, rut, roomId, bedId, estado, solicitadaAt, ... }, ... ]
+├── `transferHistory`
+│   └── Array acumulativo con el historial de traslados registrados:
+│       [ { id, patientName, fromRoom, toRoom, timestamp, ... }, ... ]
+├── `dischargesLog`
+│   └── Array maestro e inmutable con el historial completo de altas hospitalarias:
+│       [ { id, patientName, rut, diagnosis, admittedAt, dischargedAt, stayDays, ... } ]
+├── `waitingListDischarges`
+│   └── Array con registros de pacientes que salieron de lista de espera sin
+│       llegar a hospitalizarse (cancelados, derivados o dados de alta en espera).
+├── `blockLog`
+│   └── Array con el historial de eventos de bloqueo y desbloqueo de camas:
+│       [ { id, roomId, bedId, reason, blockedAt, unblockedAt, blockedBy, ... }, ... ]
+├── `users`
+│   └── Array con el catálogo de usuarios del sistema:
+│       [ { id, name, username, password, email, role, roleName, status }, ... ]
+├── `users_lastBackup`
+│   └── Respaldo automático del catálogo de usuarios previo a modificaciones.
+└── `activeUsers`
+    └── Documento para registro de presencia y usuarios conectados.
+
+--------------------------------------------------------------------------------
+5.2. Mecanismo de Sincronización (useFirebaseSync Hook)
+--------------------------------------------------------------------------------
+La sincronización entre la interfaz de usuario y Firestore se realiza mediante
+el hook personalizado `src/hooks/useFirebaseSync.js`:
+- Para datos operativos en tiempo real (`bedsData`, `waitingList`, `hodomRequests`):
+  Utiliza el listener `onSnapshot` de Firestore, asegurando que cualquier cambio
+  realizado por un usuario se refleje en milisegundos en todas las pantallas.
+- Para datos históricos o pesados (`dischargesLog`, `transferHistory`, `blockLog`):
+  Utiliza `getDoc` con la opción `{ realtime: false }` para evitar consumo
+  excesivo de lecturas en colecciones que no requieren reactividad continua.
+
+--------------------------------------------------------------------------------
+5.3. Sistema de Protección de Integridad y Auto-Backups
+--------------------------------------------------------------------------------
+Para prevenir pérdida accidental de datos por fallos de red o errores de usuario,
+el hook `useFirebaseSync` implementa 3 capas de protección:
+- CAPA 1: Prevención de sobrescritura con datos dummy si el documento no existe.
+- CAPA 2: Auto-backup asíncrono (`_lastBackup`) antes de ejecutar escrituras críticas.
+- CAPA 3: Validaciones de integridad heurísticas:
+  * Bloquea escrituras en `bedsData` si se detecta una pérdida sospechosa de más
+    del 50% de los pacientes hospitalizados o una reducción a 0 pacientes.
+  * Bloquea escrituras en `users` si se detecta un intento de reducción involuntaria
+    hacia los usuarios por defecto (defaultUsers).
+- Reintentos automáticos: Mecanismo de hasta 3 intentos con retardo exponencial
+  (exponential backoff) para asegurar la confirmación de guardado en Firestore.
+
+
+================================================================================
+6. PROBLEMAS Y RIESGOS IDENTIFICADOS EN EL PROYECTO
+================================================================================
+
+--------------------------------------------------------------------------------
+6.1. Cuello de Botella del "Documento Monolítico" (Límite de 1 MB en Firestore)
+--------------------------------------------------------------------------------
+- PROBLEMA: Firestore impone un límite estricto e inquebrantable de 1 Megabyte (1 MB)
+  por documento.
+- RIESGO ACTUAL:
+  1. `appState/dischargesLog`: Al ser una lista donde se agregan todas las altas
+     históricas del hospital a lo largo de los meses y años, este documento
+     crece continuamente. Cuando alcance 1 MB (aprox. 1.500 - 2.500 registros con
+     campos clínicos detallados), Firestore RECHAZARÁ todas las escrituras,
+     impidiendo dar altas a pacientes.
+  2. `appState/bedsData`: Contiene no solo la estructura de camas sino las novedades,
+     interconsultas, evoluciones y antecedentes de cada paciente en un solo JSON.
+     Si se agregan muchas notas o historiales extensos, el tamaño del documento
+     aumenta peligrosamente.
+
+--------------------------------------------------------------------------------
+6.2. Riesgo de Condiciones de Carrera (Race Conditions) y Sobrescritura
+--------------------------------------------------------------------------------
+- PROBLEMA: Al guardar todo el hospital en un único documento (`appState/bedsData`),
+  cuando dos gestores o enfermeros realizan acciones simultáneas (ej. Usuario A
+  asigna un paciente en el Piso 2 y Usuario B da de alta a un paciente en el Piso 4
+  al mismo segundo), ambos leen el estado previo y envían un `setDoc` completo.
+- RIESGO: El último `setDoc` en llegar a Firestore sobrescribe completamente el
+  documento, anulando la acción del primer usuario de forma silenciosa. No se
+  utilizan transacciones atómicas (`runTransaction`) ni actualizaciones parciales
+  de campo (`updateDoc`).
+
+--------------------------------------------------------------------------------
+6.3. Vulnerabilidades de Seguridad y Autenticación No Nativa
+--------------------------------------------------------------------------------
+- PROBLEMA 1 (Credenciales en Base de Datos): Los usuarios se autentican leyendo un
+  documento plano `appState/users` donde las contraseñas se almacenan en texto claro
+  (sin hashing con bcrypt/argon2 ni cifrado).
+- PROBLEMA 2 (Reglas de Firestore): Para que el formulario de login personalizado
+  pueda leer `appState/users` antes de autenticarse, las reglas de Firestore
+  frecuentemente deben quedar públicas (`allow read, write: if true;`), permitiendo
+  que cualquier persona con la API Key pública de Firebase pueda leer o modificar
+  toda la base de datos desde la consola del navegador.
+- PROBLEMA 3 (Tokens EmailJS en Frontend): Las claves `SERVICE_ID`, `TEMPLATE_ID` y
+  `PUBLIC_KEY` de EmailJS están hardcodeadas en el código fuente cliente, exponiendo
+  la cuota del servicio de correos a abusos externos.
+- PROBLEMA 4 (Sesión en LocalStorage): La sesión se guarda como JSON en
+  `localStorage.getItem('villarrica_session')`. Cualquier usuario con conocimientos
+  básicos de navegador puede modificar su rol en la consola a `role: 'superadmin'`
+  y obtener acceso a paneles restringidos en el cliente.
+
+--------------------------------------------------------------------------------
+6.4. Ineficiencia en Consumo de Ancho de Banda y Re-renders
+--------------------------------------------------------------------------------
+- PROBLEMA: Cuando una sola cama cambia de estado (ej. un paciente toma oxígeno o
+  se agrega una nota de evolución), Firestore emite un snapshot con TODO el objeto
+  del hospital.
+- IMPACTO: Todos los computadores conectados descargan la estructura completa de 125
+  camas con todos sus pacientes, provocando re-renders masivos en React y un
+  consumo innecesario de cuota de red y batería en dispositivos móviles.
+
+--------------------------------------------------------------------------------
+6.5. Falta de Paginación en Consultas Históricas
+--------------------------------------------------------------------------------
+- PROBLEMA: Paneles como el de Altas (`DischargesDatabasePanel`), Traslados y Bloqueos
+  descargan el arreglo completo a la memoria RAM del navegador del cliente para
+  luego filtrarlo con `.filter()` de JavaScript.
+- IMPACTO: A medida que pasen los meses y se acumulen miles de registros, la carga
+  inicial del sistema se volverá lenta y pesada, pudiendo congelar navegadores en
+  equipos clínicos con hardware básico.
+
+
+================================================================================
+7. ANÁLISIS DE MEJORAS Y PLAN DE OPTIMIZACIÓN RECOMENDADO
+================================================================================
+
+--------------------------------------------------------------------------------
+7.1. Migración a Colecciones y Subcolecciones Normalizadas en Firestore
+--------------------------------------------------------------------------------
+Se recomienda transformar la estructura de "God Documents" a un modelo documental
+granular estándar de Firebase:
+
+PROPUESTA DE ARQUITECTURA NORMALIZADA:
+- `beds` (Colección con 1 documento por cama: `beds/{piso}_{sector}_{roomId}_{bedId}`):
+  * Cada cama es un documento independiente de ~2 KB.
+  * Modificar una cama solo actualiza ese documento específico usando `updateDoc`.
+  * Elimina las condiciones de carrera entre usuarios que trabajan en diferentes salas.
+- `episodes` o `discharges` (Colección con 1 documento por alta: `discharges/{dischargeId}`):
+  * Capacidad infinita de almacenamiento (millones de altas sin riesgo de límite de 1 MB).
+  * Consultas paginadas y filtradas directamente en el servidor de Firestore.
+- `transfers` (Colección `transfers/{transferId}`): 1 documento por traslado.
+- `waiting_list` (Colección `waiting_list/{patientId}`): 1 documento por paciente en espera.
+- `interconsultas` (Colección `interconsultas/{icId}`): Trazabilidad independiente.
+
+--------------------------------------------------------------------------------
+7.2. Implementación de Firebase Authentication Oficial y Security Rules
+--------------------------------------------------------------------------------
+- Reemplazar el login manual por Firebase Authentication (Email/Password o
+  integración institucional con Google Workspace / Microsoft 365).
+- Almacenar los roles en Firebase Custom Claims o en una colección protegida
+  `users/{uid}` a la que solo el backend o Cloud Functions tengan permisos de escritura.
+- Configurar Firestore Security Rules estrictas:
+  * Solo usuarios autenticados (`request.auth != null`) pueden leer camas.
+  * Solo usuarios con rol `superadmin` pueden modificar infraestructura o usuarios.
+  * Bloqueo total de acceso anónimo salvo para el endpoint público de solicitud.
+
+--------------------------------------------------------------------------------
+7.3. Optimización de Estado Global (Zustand / Redux) y Modularización
+--------------------------------------------------------------------------------
+- Actualmente, `src/App.jsx` concentra más de 700 líneas de código, manejando
+  múltiples estados, listeners y handlers clínicos en un solo archivo.
+- Recomendación:
+  * Implementar un gestor de estado liviano como Zustand (`useBedStore`, `useAuthStore`,
+    `useWaitingStore`).
+  * Crear una capa de servicios (`BedService.js`, `DischargeService.js`, `PatientService.js`)
+    que desacople la lógica de Firestore de la interfaz gráfica.
+
+--------------------------------------------------------------------------------
+7.4. Paginación e Indexación de Reportes
+--------------------------------------------------------------------------------
+- Implementar consultas paginadas con `limit(50)` y `startAfter(lastVisibleDoc)` en
+  el Panel de Altas y Base de Datos.
+- Crear índices compuestos en Firestore para permitir búsquedas instantáneas por:
+  * Rango de fechas (`dischargedAt >= start` y `dischargedAt <= end`).
+  * Servicio clínico de egreso (`service == 'Medicina'`).
+  * Diagnóstico GRD / CIE-10.
+
+--------------------------------------------------------------------------------
+7.5. Auditoría de Eventos Completa (Audit Trail / Logs por Usuario)
+--------------------------------------------------------------------------------
+- Crear una colección `audit_logs/{logId}` que registre automáticamente:
+  * Usuario que ejecutó la acción (ID, nombre y rol).
+  * Tipo de acción ('ASSIGN_BED', 'DISCHARGE', 'EDIT_GRD', 'BLOCK_BED', 'TRANSFER').
+  * Cama y paciente afectado.
+  * Snapshot de los datos antes y después del cambio.
+  * Fecha, hora exacta y dirección IP / User-Agent.
+
+--------------------------------------------------------------------------------
+7.6. Integración con Estándares de Salud y Exportación Oficial
+--------------------------------------------------------------------------------
+- Generación de plantillas de reporte compatibles con el Departamento de
+  Estadísticas e Información de Salud (DEIS) del MINSAL.
+- Preparar la estructura de datos para futura interoperabilidad con la ficha
+  clínica electrónica institucional (HIS) mediante estándares HL7 / FHIR.
+
+================================================================================
+FIN DEL INFORME TÉCNICO
+================================================================================
