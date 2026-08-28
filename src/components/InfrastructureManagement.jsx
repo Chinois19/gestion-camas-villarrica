@@ -29,7 +29,6 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const floorKey = newFloorName.trim().toLowerCase().replace(/\s+/g, '');
     if (bedsData[floorKey]) {
       toast.error('El piso ya existe');
-      alert('El piso ya existe');
       return;
     }
     const updated = JSON.parse(JSON.stringify(bedsData));
@@ -49,7 +48,6 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const wingKey = newWingName.trim().toLowerCase();
     if (bedsData[selectedFloor][wingKey]) {
       toast.error('El ala ya existe en este piso');
-      alert('El ala ya existe en este piso');
       return;
     }
     const updated = JSON.parse(JSON.stringify(bedsData));
@@ -68,7 +66,6 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const roomExists = bedsData[selectedFloor][selectedWing].some(r => r.roomId === newRoomId.trim());
     if (roomExists) {
       toast.error('La habitación ya existe en esta ala');
-      alert('La habitación ya existe en esta ala');
       return;
     }
     const updated = JSON.parse(JSON.stringify(bedsData));
@@ -156,7 +153,6 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const patientCount = countPatientsInFloor(floorKey);
     if (patientCount > 0) {
       toast.error(`No se puede eliminar "${floorKey}": tiene ${patientCount} paciente(s) activo(s).`);
-      alert(`⛔ No se puede eliminar "${floorKey}": tiene ${patientCount} paciente(s) activo(s).\n\nPrimero debe dar de alta a todos los pacientes de este piso.`);
       return;
     }
     if (!window.confirm('¿Eliminar piso completo? (Sin pacientes activos)')) return;
@@ -175,7 +171,6 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const patientCount = countPatientsInWing(selectedFloor, wingKey);
     if (patientCount > 0) {
       toast.error(`No se puede eliminar el ala "${wingKey}": tiene ${patientCount} paciente(s) activo(s).`);
-      alert(`⛔ No se puede eliminar el ala "${wingKey}": tiene ${patientCount} paciente(s) activo(s).\n\nPrimero debe dar de alta a todos los pacientes de esta ala.`);
       return;
     }
     if (!window.confirm('¿Eliminar ala completa? (Sin pacientes activos)')) return;
@@ -194,7 +189,6 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const patientCount = room ? countPatientsInRoom(room) : 0;
     if (patientCount > 0) {
       toast.error(`No se puede eliminar la habitación ${roomId}: tiene ${patientCount} paciente(s) activo(s).`);
-      alert(`⛔ No se puede eliminar la habitación ${roomId}: tiene ${patientCount} paciente(s) activo(s).\n\nPrimero debe dar de alta a todos los pacientes de esta habitación.`);
       return;
     }
     if (!window.confirm(`¿Eliminar habitación ${roomId}? (Sin pacientes activos)`)) return;
@@ -212,7 +206,6 @@ export default function InfrastructureManagement({ bedsData, setBedsData }) {
     const bed = room?.beds?.find(b => b.id === bedId);
     if (bed && bed.status === 'occupied' && bed.patient) {
       toast.error(`No se puede eliminar la cama ${bedId}: está ocupada por "${bed.patient}".`);
-      alert(`⛔ No se puede eliminar la cama ${bedId}: está ocupada por "${bed.patient}".\n\nPrimero debe dar de alta al paciente.`);
       return;
     }
     if (!window.confirm(`¿Eliminar cama ${bedId}? (Sin paciente activo)`)) return;

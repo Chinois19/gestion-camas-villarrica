@@ -3,44 +3,32 @@ import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 /**
- * Cuenta la cantidad de camas ocupadas (con paciente) en una estructura bedsData.
- * Se usa para validación de integridad antes de cada escritura.
+ * Hook genérico para sincronizar estado con documentos de Cloud Firestore.
+ * 
+ * @param {string} collectionName - Nombre de la colección (ej. 'appState').
+ * @param {string} documentId - ID del documento (ej. 'bedsData', 'users').
+ * @param {any} initialData - Valor inicial por defecto en caso de no existir o antes de cargar.
+ * @param {object} options - Opciones de configuración:
+ *    - {boolean} realtime: Si es true (default), escucha cambios en tiempo real vía onSnapshot.
+ *    - {boolean} enabled: Si es false, no inicia la sincronización (default true).
+ *    - {function} validate: (newData, prevData) => boolean. Función opcional de validación previa a la escritura.
  */
-function countOccupiedBeds(data) {
-  let count = 0;
-  if (!data || typeof data !== 'object') return 0;
-  for (const floor in data) {
-    if (typeof data[floor] !== 'object') continue;
-    for (const sector in data[floor]) {
-      if (!Array.isArray(data[floor][sector])) continue;
-      data[floor][sector].forEach(room => {
-        if (room.beds && Array.isArray(room.beds)) {
-          room.beds.forEach(bed => {
-            if (bed.status === 'occupied' && bed.patient) count++;
-          });
-        }
-      });
-    }
-  }
-  return count;
-}
-
 export function useFirebaseSync(collectionName, documentId, initialData, options = {}) {
-  const { realtime = true, enabled = true } = options;
+  const { realtime = true, enabled = true, validate } = options;
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(() => enabled);
 
-  // Keep a ref to the latest data so updater functions always see the current value
+  // Mantenemos una referencia al dato más reciente para updaters y sincronización
   const dataRef = useRef(data);
   useEffect(() => {
     dataRef.current = data;
   }, [data]);
 
-  // Track whether we've received the first snapshot from Firestore
   const initializedRef = useRef(false);
 
   useEffect(() => {
     if (!enabled) {
+      setLoading(false);
       return;
     }
 
@@ -51,53 +39,50 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
     const docRef = doc(db, collectionName, documentId);
 
     if (realtime) {
-      const unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const firestoreData = docSnap.data().data;
-          // Always trust Firestore as the single source of truth
-          setData(firestoreData);
-          dataRef.current = firestoreData;
-        } else {
-          // ═══════════════════════════════════════════════════════════════
-          // PROTECCIÓN CAPA 1: NUNCA sobrescribir Firestore con datos dummy.
-          // Si el documento no existe, usamos los datos iniciales SOLO como
-          // estado local temporal. El documento se creará automáticamente
-          // con la primera acción real del usuario (asignar paciente, etc.)
-          // ═══════════════════════════════════════════════════════════════
-          console.warn(
-            `[useFirebaseSync] ⚠️ Documento "${collectionName}/${documentId}" no existe en Firestore. ` +
-            `Usando datos locales de respaldo. Se creará automáticamente con la primera acción del usuario.`
-          );
-          // Keep the initialData as local state — do NOT write it to Firestore
+      const unsubscribe = onSnapshot(
+        docRef,
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const firestoreData = docSnap.data().data;
+            setData(firestoreData);
+            dataRef.current = firestoreData;
+          } else {
+            console.warn(
+              `[useFirebaseSync] Documento "${collectionName}/${documentId}" no existe en Firestore. Usando estado inicial.`
+            );
+          }
+          initializedRef.current = true;
+          setLoading(false);
+        },
+        (error) => {
+          console.error(`[useFirebaseSync] Error al escuchar ${collectionName}/${documentId}:`, error);
+          setLoading(false);
         }
-        initializedRef.current = true;
-        setLoading(false);
-      }, (error) => {
-        console.error(`Error listening to ${collectionName}/${documentId}:`, error);
-        setLoading(false);
-      });
+      );
 
       return () => unsubscribe();
     } else {
       let active = true;
-      getDoc(docRef).then((docSnap) => {
-        if (!active) return;
-        if (docSnap.exists()) {
-          const firestoreData = docSnap.data().data;
-          setData(firestoreData);
-          dataRef.current = firestoreData;
-        } else {
-          console.warn(
-            `[useFirebaseSync] ⚠️ Documento "${collectionName}/${documentId}" no existe en Firestore.`
-          );
-        }
-        initializedRef.current = true;
-        setLoading(false);
-      }).catch((error) => {
-        if (!active) return;
-        console.error(`Error loading ${collectionName}/${documentId}:`, error);
-        setLoading(false);
-      });
+      getDoc(docRef)
+        .then((docSnap) => {
+          if (!active) return;
+          if (docSnap.exists()) {
+            const firestoreData = docSnap.data().data;
+            setData(firestoreData);
+            dataRef.current = firestoreData;
+          } else {
+            console.warn(
+              `[useFirebaseSync] Documento "${collectionName}/${documentId}" no existe en Firestore.`
+            );
+          }
+          initializedRef.current = true;
+          setLoading(false);
+        })
+        .catch((error) => {
+          if (!active) return;
+          console.error(`[useFirebaseSync] Error al cargar ${collectionName}/${documentId}:`, error);
+          setLoading(false);
+        });
 
       return () => {
         active = false;
@@ -105,157 +90,55 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
     }
   }, [collectionName, documentId, realtime, enabled]);
 
-  const updateData = useCallback(async (newDataOrUpdater) => {
-    // 1. Compute local update immediately for responsive UI
-    const currentData = dataRef.current;
-    const localNewData = typeof newDataOrUpdater === 'function'
-      ? newDataOrUpdater(currentData)
-      : newDataOrUpdater;
+  const updateData = useCallback(
+    async (newDataOrUpdater) => {
+      const currentData = dataRef.current;
+      const localNewData =
+        typeof newDataOrUpdater === 'function'
+          ? newDataOrUpdater(currentData)
+          : newDataOrUpdater;
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // PROTECCIÓN CAPA 3 — bedsData: Validación de integridad de pacientes
-    // ═══════════════════════════════════════════════════════════════════════
-    if (documentId === 'bedsData') {
-      const oldCount = countOccupiedBeds(currentData);
-      const newCount = countOccupiedBeds(localNewData);
-
-      // Block if all patients are deleted at once
-      //if (oldCount > 0 && newCount === 0) {
-      //  console.error(
-      //    `[PROTECCIÓN] ❌ ESCRITURA BLOQUEADA: Se intentó eliminar TODOS los pacientes ` +
-      //    `(${oldCount} → 0). Esta operación no está permitida.`
-      //  );
-      //  return false;
-      //}
-
-      // Block if more than 50% of patients are lost in a single operation
-      if (oldCount > 3 && newCount < oldCount * 0.5) {
-        console.error(
-          `[PROTECCIÓN] ❌ ESCRITURA BLOQUEADA: Reducción sospechosa de pacientes ` +
-          `(${oldCount} → ${newCount}, pérdida >${Math.round((1 - newCount/oldCount) * 100)}%). ` +
-          `Posible corrupción de datos. Operación cancelada.`
-        );
-        return false;
-      }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // PROTECCIÓN CAPA 3 — users: Validación de integridad de usuarios
-    // Previene que los 6 defaultUsers sobrescriban el listado real cuando
-    // hay una race condition entre el montaje del componente y la respuesta
-    // de Firestore (onSnapshot).
-    // ═══════════════════════════════════════════════════════════════════════
-    if (documentId === 'users') {
-      const oldCount = Array.isArray(currentData) ? currentData.length : 0;
-      const newCount = Array.isArray(localNewData) ? localNewData.length : 0;
-
-      // Block if replacing real users with defaultUsers (6 hardcoded)
-      if (oldCount > 6 && newCount <= 6) {
-        console.error(
-          `[PROTECCIÓN USUARIOS] ❌ ESCRITURA BLOQUEADA: Se intentó reducir de ` +
-          `${oldCount} a ${newCount} usuarios. Posible sobrescritura con defaultUsers.`
-        );
-        return false;
+      // Validación opcional si se proporcionó en las opciones
+      if (typeof validate === 'function') {
+        const isValid = validate(localNewData, currentData);
+        if (!isValid) {
+          console.warn(`[useFirebaseSync] Validación fallida para ${collectionName}/${documentId}. Operación cancelada.`);
+          return false;
+        }
       }
 
-      // Block if more than 30% of users are lost in a single operation
-      if (oldCount > 3 && newCount < oldCount * 0.7) {
-        console.error(
-          `[PROTECCIÓN USUARIOS] ❌ ESCRITURA BLOQUEADA: Reducción sospechosa ` +
-          `(${oldCount} → ${newCount}, pérdida >${Math.round((1 - newCount/oldCount) * 100)}%). ` +
-          `Operación cancelada.`
-        );
-        return false;
-      }
+      // Actualización optimista del estado local
+      setData(localNewData);
+      dataRef.current = localNewData;
 
-      // Extra safety: verify against Firestore before writing
-      // If Firestore has significantly more users, abort to prevent overwrite
-      try {
-        const verifyRef = doc(db, collectionName, documentId);
-        const verifySnap = await getDoc(verifyRef);
-        if (verifySnap.exists()) {
-          const firestoreUsers = verifySnap.data().data;
-          if (Array.isArray(firestoreUsers) && firestoreUsers.length > newCount + 1) {
-            console.error(
-              `[PROTECCIÓN USUARIOS] ❌ ESCRITURA BLOQUEADA: Firestore tiene ${firestoreUsers.length} ` +
-              `usuarios pero se intentó escribir solo ${newCount}. Sincronizando datos reales.`
-            );
-            // Re-sync local state with Firestore truth
-            setData(firestoreUsers);
-            dataRef.current = firestoreUsers;
+      const docRef = doc(db, collectionName, documentId);
+
+      // Reintentos automáticos (máximo 3 intentos con backoff exponencial)
+      let attempts = 0;
+      let writeSuccess = false;
+
+      while (attempts < 3 && !writeSuccess) {
+        try {
+          attempts++;
+          await setDoc(docRef, { data: localNewData });
+          writeSuccess = true;
+        } catch (err) {
+          console.warn(`[useFirebaseSync] Reintento ${attempts}/3 para "${documentId}":`, err);
+          if (attempts >= 3) {
+            console.error(`[useFirebaseSync] Falló escritura definitiva en ${documentId}:`, err);
+            // Revertir estado local en caso de error crítico
+            setData(currentData);
+            dataRef.current = currentData;
             return false;
           }
-        }
-      } catch (verifyErr) {
-        console.warn('[PROTECCIÓN USUARIOS] No se pudo verificar Firestore pre-escritura:', verifyErr);
-        // If we can't verify and the count drop is suspicious, block anyway
-        if (oldCount > 6 && newCount < oldCount) {
-          console.error('[PROTECCIÓN USUARIOS] ❌ Sin verificación posible + reducción detectada. Bloqueando.');
-          return false;
+          await new Promise((res) => setTimeout(res, 300 * attempts));
         }
       }
-    }
 
-    // Immediately update local state + ref for a fast UI response
-    setData(localNewData);
-    dataRef.current = localNewData;
-
-    const docRef = doc(db, collectionName, documentId);
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // PROTECCIÓN CAPA 2 — Auto-backup antes de cada escritura
-    // ═══════════════════════════════════════════════════════════════════════
-
-    // Auto-backup para bedsData — fire-and-forget, no bloquea la escritura principal
-    if (documentId === 'bedsData' && currentData) {
-      const backupRef = doc(db, collectionName, `${documentId}_lastBackup`);
-      setDoc(backupRef, {
-        data: currentData,
-        backedUpAt: new Date().toISOString(),
-        occupiedBeds: countOccupiedBeds(currentData),
-        reason: 'auto_backup_before_write'
-      }).catch(backupErr => {
-        console.warn('[Backup] No se pudo guardar respaldo automático:', backupErr);
-      });
-    }
-
-    // Auto-backup para users — guarda el estado previo antes de cada modificación
-    if (documentId === 'users' && currentData && Array.isArray(currentData) && currentData.length > 6) {
-      const backupRef = doc(db, collectionName, `${documentId}_lastBackup`);
-      setDoc(backupRef, {
-        data: currentData,
-        backedUpAt: new Date().toISOString(),
-        userCount: currentData.length,
-        reason: 'auto_backup_before_write'
-      }).catch(backupErr => {
-        console.warn('[Backup Users] No se pudo guardar respaldo automático:', backupErr);
-      });
-    }
-
-    // Escritura con reintentos automáticos (máximo 3 intentos) para garantizar la persistencia
-    let attempts = 0;
-    let writeSuccess = false;
-    while (attempts < 3 && !writeSuccess) {
-      try {
-        attempts++;
-        await setDoc(docRef, { data: localNewData });
-        writeSuccess = true;
-      } catch (err) {
-        console.warn(`[useFirebaseSync] ⚠️ Reintento de escritura ${attempts}/3 para "${documentId}":`, err);
-        if (attempts >= 3) {
-          console.error(`[useFirebaseSync] ❌ Escritura fallida definitivamente tras 3 intentos en ${documentId}:`, err);
-          // Revert local state on critical failure
-          setData(currentData);
-          dataRef.current = currentData;
-          return false;
-        }
-        // Esperar 500ms * número de intento antes de reintentar
-        await new Promise(res => setTimeout(res, 500 * attempts));
-      }
-    }
-    return true;
-  }, [collectionName, documentId]);
-
+      return true;
+    },
+    [collectionName, documentId, validate]
+  );
 
   return [data, updateData, loading];
 }

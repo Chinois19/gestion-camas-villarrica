@@ -454,7 +454,10 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   };
 
   const addEvolution = () => {
-    if (!evolNote.trim()) return;
+    if (!evolNote.trim()) {
+      toast.info("Por favor, escriba el texto de la evolución.");
+      return;
+    }
     const newEv = {
       id: Date.now().toString(),
       timestamp: new Date().toLocaleString('es-CL'),
@@ -464,6 +467,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     };
     setEvolutions(prev => [newEv, ...prev]);
     setEvolNote('');
+    toast.success("Evolución agregada a la solicitud");
   };
 
   const handleSubmit = async (e) => {
@@ -493,7 +497,6 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
 
     if (missingFields.length > 0) {
       toast.error(`Complete los campos obligatorios: ${missingFields.join(', ')}.`);
-      alert(`Los siguientes campos son obligatorios: ${missingFields.join(', ')}.`);
       return;
     }
 

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Database, Search, Download, Calendar, ArrowRight, Activity, TrendingUp, Home, Clock } from 'lucide-react';
+import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
 import { matchesSearch } from '../utils/search';
@@ -211,6 +212,7 @@ export default function TransfersDatabasePanel({ transferHistory = [] }) {
     ws['!cols'] = wscols;
 
     XLSX.writeFile(wb, `Base_de_Datos_Traslados_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Base de datos de traslados exportada a Excel');
   };
 
   return (

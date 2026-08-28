@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Lock, Download, Edit2, AlertTriangle, Filter, Search, RefreshCw, X, Save, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
 
@@ -299,6 +300,8 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
     setEditingRow(null);
     setSavedToast(true);
     setTimeout(() => setSavedToast(false), 5000);
+    toast.success('Registro de bloqueo actualizado correctamente');
+    toast.info('Recuerde informar la modificación a Estadística de Atención Cerrada del Depto. de Gestión de Información.');
   };
 
   /* ── Export XLSX ── */
@@ -337,6 +340,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Camas Bloqueadas Diarias');
     XLSX.writeFile(wb, `informe_camas_bloqueadas_diarias_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Informe de camas bloqueadas exportado a Excel');
   };
 
   /* ── Stats summary ── */

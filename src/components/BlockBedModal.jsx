@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Lock, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function BlockBedModal({ bed, onClose, onConfirm, user }) {
   const [reason, setReason] = useState('');
@@ -15,7 +16,7 @@ export default function BlockBedModal({ bed, onClose, onConfirm, user }) {
 
   const handleSubmit = () => {
     if (!reason) {
-      alert('Debe seleccionar un motivo de bloqueo.');
+      toast.error('Debe seleccionar un motivo de bloqueo.');
       return;
     }
     onConfirm({ reason, observation });

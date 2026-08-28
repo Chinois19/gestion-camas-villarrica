@@ -7,7 +7,7 @@ import { CIE10_OPTIONS } from '../data/cie10Options';
 import { ESPECIALIDADES } from '../data/formData';
 import { formatAgeDetailed } from '../utils/age';
 import ViewInterconsultaModal from './ViewInterconsultaModal';
-
+import { toast } from 'sonner';
 const formatRut = (val) => {
   if (!val) return '';
   const clean = val.replace(/[^0-9kK]/g, '');
@@ -15,7 +15,7 @@ const formatRut = (val) => {
   return `${clean.slice(0, -1)}-${clean.slice(-1).toUpperCase()}`;
 };
 
-export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onSaveNovedad }) {
+export default function EditGrdModal({ bed, procedures = [], allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onSaveNovedad }) {
   // Reconstruir diagnóstico CIE-10 priorizando los campos codificados.
   const buildDiagnosisCodes = () => {
     const cie10Regex = /^[A-Z]\d{2}/;
@@ -117,7 +117,10 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
   };
 
   const handleAddNovedad = async () => {
-    if (!newNovedadText.trim() || isSavingNovedad) return;
+    if (!newNovedadText.trim() || isSavingNovedad) {
+      toast.info("Por favor, escriba una novedad.");
+      return;
+    }
     const now = new Date();
     const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     const newEntry = {
@@ -138,6 +141,9 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
       setIsSavingNovedad(true);
       try {
         await onSaveNovedad(newEntry);
+        toast.success("Novedad guardada exitosamente");
+      } catch (error) {
+        toast.error("Error al guardar la novedad", error);
       } finally {
         setIsSavingNovedad(false);
       }
@@ -175,6 +181,9 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
         novedades: formData.novedades,
         destino: formData.destino
       }, transferTarget);
+    } catch (err) {
+      console.error('Error al guardar datos clínicos:', err);
+      toast.error('Error al guardar los datos del caso clínico');
     } finally {
       setIsSaving(false);
     }
@@ -739,8 +748,16 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
 
                   {/* Lista de Registros */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '200px', overflowY: 'auto', paddingRight: '4px' }}>
-                    {formData.novedades && formData.novedades.length > 0 ? (
-                      formData.novedades.map((nov) => (
+                    {(() => {
+                      const displayedList = (procedures && procedures.length > 0) ? procedures : (formData.novedades || []);
+                      if (displayedList.length === 0) {
+                        return (
+                          <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+                            No hay procedimientos registrados.
+                          </div>
+                        );
+                      }
+                      return displayedList.map((nov) => (
                         <div
                           key={nov.id}
                           style={{
@@ -758,15 +775,11 @@ export default function EditGrdModal({ bed, allBeds = [], user, onConfirm, onClo
                             <span style={{ color: 'var(--text-secondary)' }}>🕒 {nov.fecha}</span>
                           </div>
                           <div style={{ color: 'var(--text-primary)', lineHeight: 1.4, wordBreak: 'break-word' }}>
-                            {nov.contenido}
+                            {nov.contenido || nov.procedimiento}
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
-                        No hay procedimientos registrados.
-                      </div>
-                    )}
+                      ));
+                    })()}
                   </div>
                 </div>
 

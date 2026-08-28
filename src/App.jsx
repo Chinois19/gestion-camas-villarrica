@@ -21,6 +21,9 @@ import BlockedBedsReportPanel from './components/BlockedBedsReportPanel';
 import GeneralBedStatusPanel from './components/GeneralBedStatusPanel';
 import Navbar from './components/Navbar';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
+import { useFirestoreCollection } from './hooks/useFirestoreCollection';
+import { runCollectionsMigration } from './utils/migrationService';
+import { sanitizeBedsStructure } from './utils/bedSanitizer';
 import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
 import { MOCK_TRANSFERS } from './data/mockTransfers';
 import { Toaster, toast } from 'sonner';
@@ -31,8 +34,6 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 // Pre-fill some realistic interconsultas in the DUMMY_DATA to make the initial view visually rich
 const initialBedsData = JSON.parse(JSON.stringify(DUMMY_DATA));
-
-// Clean start without initial interconsultas
 
 const initialHodomRequests = [];
 
@@ -91,18 +92,41 @@ function App() {
   // Only sync clinical data if user is authenticated or in a public form route
   const isSyncEnabled = !!currentUser || isPublicRoute;
 
-  // Clinical state — persisted in Firebase
+  // ── Auto-migración a colecciones independientes en primer inicio ──
+  useEffect(() => {
+    if (isSyncEnabled) {
+      runCollectionsMigration().catch(err => console.error('[Migration] Error silencioso:', err));
+    }
+  }, [isSyncEnabled]);
+
+  // ── ESTADO OPERATIVO DE CAMAS Y ESPERA (Documentos ligeros fijos) ─────────────
   const [bedsData, setBedsData, bedsLoading] = useFirebaseSync('appState', 'bedsData', initialBedsData, { enabled: isSyncEnabled });
   const [waitingList, setWaitingList, waitingLoading] = useFirebaseSync('appState', 'waitingList', WAITING_LIST, { enabled: isSyncEnabled });
-  const [hodomRequests, setHodomRequests, hodomLoading] = useFirebaseSync('appState', 'hodomRequests', initialHodomRequests, { enabled: isSyncEnabled });
-  const [transferHistory, setTransferHistory, transfersLoading] = useFirebaseSync('appState', 'transferHistory', MOCK_TRANSFERS, { realtime: false, enabled: isSyncEnabled });
-  const [waitingListDischarges, setWaitingListDischarges, dischargesLoading] = useFirebaseSync('appState', 'waitingListDischarges', [], { enabled: isSyncEnabled });
-  const [blockLog, setBlockLog, blockLogLoading] = useFirebaseSync('appState', 'blockLog', [], { realtime: false, enabled: isSyncEnabled });
-  // ── LOG PERMANENTE DE EPISODIOS DE ALTA ─────────────────────────────────────
-  // dischargesLog es append-only: cada alta genera un registro único e inmutable.
-  // Nunca se edita ni se borra un registro existente, solo se agregan nuevos.
-  // Es la fuente de verdad del Informe de Altas, independiente del estado de las camas.
-  const [dischargesLog, setDischargesLog] = useFirebaseSync('appState', 'dischargesLog', [], { realtime: false, enabled: isSyncEnabled });
+
+  // ── Sanitización y auto-reparación preventiva de camas con IDs corruptos ────────
+  useEffect(() => {
+    if (!bedsLoading && bedsData && isSyncEnabled) {
+      const { cleaned, hasFixes } = sanitizeBedsStructure(bedsData);
+      if (hasFixes) {
+        console.log('[App] 🛡️ Sanitizando IDs de cama corruptos en bedsData...');
+        setBedsData(cleaned);
+      }
+    }
+  }, [bedsData, bedsLoading, isSyncEnabled, setBedsData]);
+
+  // ── COLECCIONES INDEPENDIENTES DE FIRESTORE (Registros individuales) ─────────
+  const dischargesCol = useFirestoreCollection('discharges', { orderByField: 'dischargeAt', enabled: isSyncEnabled });
+  const transfersCol = useFirestoreCollection('transfers', { orderByField: 'fechaTraslado', enabled: isSyncEnabled, initialData: MOCK_TRANSFERS });
+  const blockLogsCol = useFirestoreCollection('blockLogs', { orderByField: 'blockedAt', enabled: isSyncEnabled });
+  const hodomCol = useFirestoreCollection('hodomRequests', { orderByField: 'solicitadaAt', enabled: isSyncEnabled });
+  const proceduresCol = useFirestoreCollection('procedures', { orderByField: 'createdAt', enabled: isSyncEnabled });
+
+  // Alias y adaptadores de compatibilidad
+  const hodomRequests = hodomCol.data;
+  const transferHistory = transfersCol.data;
+  const blockLog = blockLogsCol.data;
+  const dischargesLog = dischargesCol.data;
+  const procedures = proceduresCol.data;
 
   useEffect(() => {
     const t = THEMES.find(t => t.id === theme) || THEMES[0];
@@ -122,7 +146,7 @@ function App() {
     return () => document.removeEventListener('mousedown', handler);
   }, [showThemeSelector]);
 
-  const isLoading = bedsLoading || waitingLoading || hodomLoading || transfersLoading || dischargesLoading || blockLogLoading;
+  const isLoading = bedsLoading || waitingLoading || hodomCol.loading || transfersCol.loading || dischargesCol.loading || blockLogsCol.loading || proceduresCol.loading;
 
   const handleLogin = (user) => {
     if (user && user.role === 'admin') {
@@ -145,7 +169,7 @@ function App() {
 
   // ── CLINICAL HANDLERS ──────────────────────────────────────────────────────
 
-  const handleHodomSubmit = (reqData) => {
+  const handleHodomSubmit = async (reqData) => {
     const newReq = {
       id: `hodom-${Date.now()}`,
       patientName: reqData.patientName,
@@ -165,18 +189,26 @@ function App() {
       hodomChecks: reqData.hodomChecks || {},
       hodomObservaciones: reqData.hodomObservaciones || ''
     };
-    setHodomRequests(prev => [newReq, ...prev]);
-    toast.success(`Solicitud HODOM ingresada para ${reqData.patientName}`);
+    try {
+      await hodomCol.addItem(newReq);
+      toast.success(`Solicitud HODOM ingresada para ${reqData.patientName}`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Error al guardar solicitud HODOM');
+    }
   };
 
-  const handleHodomMarkDone = (hodomId) => {
-    const req = hodomRequests.find(r => r.id === hodomId);
-    if (!req) return;
-
-    setHodomRequests(prev => prev.map(r =>
-      r.id === hodomId ? { ...r, estado: 'aprobado', aprobadoAt: new Date().toISOString() } : r
-    ));
-    toast.success('Solicitud HODOM aprobada');
+  const handleHodomMarkDone = async (hodomId) => {
+    try {
+      await hodomCol.updateItem(hodomId, {
+        estado: 'aprobado',
+        aprobadoAt: new Date().toISOString()
+      });
+      toast.success('Solicitud HODOM aprobada');
+    } catch (err) {
+      console.error(err);
+      toast.error('Error al aprobar solicitud HODOM');
+    }
   };
 
   const handleHodomMarkDoneByBed = (roomId, bedId) => {
@@ -212,9 +244,14 @@ function App() {
     toast.success(`HODOM registrado. Hab. ${roomId} — Cama ${bedId} enviada a aseo.`);
   };
 
-  const handleHodomDelete = (hodomId) => {
-    setHodomRequests(prev => prev.filter(r => r.id !== hodomId));
-    toast.success('Solicitud HODOM eliminada');
+  const handleHodomDelete = async (hodomId) => {
+    try {
+      await hodomCol.removeItem(hodomId);
+      toast.success('Solicitud HODOM eliminada');
+    } catch (err) {
+      console.error(err);
+      toast.error('Error al eliminar solicitud HODOM');
+    }
   };
 
   const handleFinishCleaning = (roomId, bedId) => {
@@ -322,8 +359,7 @@ function App() {
       // Verificar si ya está en lista de espera
       const duplicateInWaiting = waitingList.find(p => cleanRut(p.rut) === newRut);
       if (duplicateInWaiting) {
-        toast.warning(`Paciente ya en espera: ${newPatient.name} (${newPatient.rut}) con ticket ${duplicateInWaiting.ticket || duplicateInWaiting.id}`);
-        alert(`⚠️ PACIENTE DUPLICADO\n\n${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra en la lista de espera con el ticket ${duplicateInWaiting.ticket || duplicateInWaiting.id}.\n\nNo es posible ingresar el mismo paciente dos veces.`);
+        toast.error(`⚠️ Paciente ${newPatient.name} (${newPatient.rut}) ya está en lista de espera (Ticket ${duplicateInWaiting.ticket || duplicateInWaiting.id})`);
         return false;
       }
 
@@ -347,8 +383,7 @@ function App() {
         if (foundInBed) break;
       }
       if (foundInBed) {
-        toast.warning(`Paciente ya hospitalizado en ${bedInfo}`);
-        alert(`⚠️ PACIENTE YA ACOSTADO\n\n${newPatient.name} (RUT: ${newPatient.rut}) ya figura como paciente acostado en ${bedInfo}.\n\nNo es posible ingresar a lista de espera a un paciente que ya se encuentra hospitalizado.`);
+        toast.error(`⚠️ Paciente ${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra hospitalizado en ${bedInfo}`);
         return false;
       }
     }
@@ -415,7 +450,7 @@ function App() {
             if (newRut) {
               const dup = waitingList.find(p => cleanRut(p.rut) === newRut);
               if (dup) {
-                alert(`⚠️ PACIENTE DUPLICADO\n\n${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra en la lista de espera.\n\nNo es posible ingresar el mismo paciente dos veces.`);
+                toast.error(`⚠️ Paciente ${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra en la lista de espera.`);
                 return false;
               }
             }
@@ -601,15 +636,17 @@ function App() {
           setBedsData={setBedsData}
           waitingList={waitingList}
           setWaitingList={setWaitingList}
+          procedures={procedures}
+          onAddProcedure={proceduresCol.addItem}
           onHodomSubmit={handleHodomSubmit}
           onMarkHodomDoneByBed={handleHodomMarkDoneByBed}
           onEditPatient={handleEditPatient}
           onViewPatient={handleViewPatient}
-          onAddTransfers={(newTransfers) => setTransferHistory(prev => [...newTransfers, ...(prev || [])])}
+          onAddTransfers={transfersCol.bulkAdd}
+          onAddDischarge={dischargesCol.addItem}
+          onAddBlockLog={blockLogsCol.addItem}
+          onUpdateBlockLog={blockLogsCol.updateItem}
           user={currentUser}
-          setWaitingListDischarges={setWaitingListDischarges}
-          setDischargesLog={setDischargesLog}
-          setBlockLog={setBlockLog}
           onRequestWaitingIC={(patient) => setRequestingWaitingIC(patient)}
         />
       )}
@@ -702,22 +739,28 @@ function App() {
         <InfrastructureManagement bedsData={bedsData} setBedsData={setBedsData} />
       )}
       {currentView === 'insights' && (
-        <InsightsDashboard bedsData={bedsData} waitingList={waitingList} transferHistory={transferHistory} blockLog={blockLog} dischargesLog={dischargesLog} />
+        <InsightsDashboard 
+          bedsData={bedsData} 
+          waitingList={waitingList} 
+          transferHistory={transferHistory} 
+          blockLog={blockLog} 
+          dischargesLog={dischargesLog} 
+        />
       )}
       {currentView === 'general_status' && (
         <GeneralBedStatusPanel bedsData={bedsData} />
       )}
       {currentView === 'database' && (
-        <DatabasePanel bedsData={bedsData} />
+        <DatabasePanel bedsData={bedsData} procedures={procedures} />
       )}
       {currentView === 'altas_database' && (
         <DischargesDatabasePanel 
+          discharges={dischargesLog}
+          procedures={procedures}
+          onUpdateDischarge={dischargesCol.updateItem}
+          onAddDischarge={dischargesCol.addItem}
           bedsData={bedsData} 
           setBedsData={setBedsData} 
-          waitingListDischarges={waitingListDischarges}
-          setWaitingListDischarges={setWaitingListDischarges}
-          dischargesLog={dischargesLog}
-          setDischargesLog={setDischargesLog}
           setWaitingList={setWaitingList}
           userRole={currentUser.role} 
         />
@@ -728,7 +771,16 @@ function App() {
       {currentView === 'blocked_beds' && (
         <BlockedBedsReportPanel
           blockLog={blockLog || []}
-          setBlockLog={setBlockLog}
+          setBlockLog={(updater) => {
+            if (typeof updater === 'function') {
+              const updatedList = updater(blockLog);
+              // Si se actualizó un elemento individual:
+              const changed = updatedList.find((item, idx) => JSON.stringify(item) !== JSON.stringify(blockLog[idx]));
+              if (changed && changed.id) {
+                blockLogsCol.updateItem(changed.id, changed).catch(e => console.error(e));
+              }
+            }
+          }}
           userRole={currentUser.role}
         />
       )}

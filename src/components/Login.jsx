@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Activity, Lock, User, Eye, EyeOff, LogIn } from 'lucide-react';
+import { toast } from 'sonner';
 import { authenticateUser } from '../utils/authService';
 import './Login.css';
 
@@ -28,6 +29,7 @@ const Login = ({ onLogin }) => {
       });
     } catch (err) {
       console.error("Error validando usuario:", err);
+      let errorMsg = 'Error al conectar con el servicio de autenticación.';
       if (
         err.code === 'auth/invalid-credential' || 
         err.code === 'auth/user-not-found' || 
@@ -35,14 +37,16 @@ const Login = ({ onLogin }) => {
         err.message?.includes('incorrectos') ||
         err.message?.includes('Contraseña')
       ) {
-        setError('Usuario o contraseña incorrectos');
+        errorMsg = 'Usuario o contraseña incorrectos';
       } else if (err.code === 'auth/too-many-requests') {
-        setError('Demasiados intentos fallidos. Intente nuevamente en unos minutos.');
+        errorMsg = 'Demasiados intentos fallidos. Intente nuevamente en unos minutos.';
       } else if (err.code === 'auth/network-request-failed') {
-        setError('Error de conexión a internet.');
-      } else {
-        setError(err.message || 'Error al conectar con el servicio de autenticación.');
+        errorMsg = 'Error de conexión a internet.';
+      } else if (err.message) {
+        errorMsg = err.message;
       }
+      setError(errorMsg);
+      toast.error(errorMsg);
       setIsLoading(false);
     }
   };

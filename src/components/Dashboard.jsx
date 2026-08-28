@@ -340,7 +340,28 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
   );
 }
 
-export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingList, setWaitingList, onHodomSubmit, onMarkHodomDoneByBed, user, onEditPatient, onViewPatient, onAddTransfers, setWaitingListDischarges, setDischargesLog, setBlockLog, onRequestWaitingIC }) {
+export default function Dashboard({ 
+  searchQuery, 
+  bedsData, 
+  setBedsData, 
+  waitingList, 
+  setWaitingList, 
+  procedures = [],
+  onAddProcedure,
+  onHodomSubmit, 
+  onMarkHodomDoneByBed, 
+  user, 
+  onEditPatient, 
+  onViewPatient, 
+  onAddTransfers, 
+  setWaitingListDischarges, 
+  setDischargesLog, 
+  setBlockLog, 
+  onAddDischarge,
+  onAddBlockLog,
+  onUpdateBlockLog,
+  onRequestWaitingIC 
+}) {
   const userRole = user?.role || 'visor';
   const isVisor = userRole === 'visor';
   const isGestoraServicio = userRole === 'gestora_servicio';
@@ -393,7 +414,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       }
 
       if (targetBed.status !== 'available') {
-        alert('No puede asignar un paciente sobre una cama que se encuentra ocupada o en aseo. El paciente de esta cama debe pasar primero por el proceso de Alta y Aseo.');
+        toast.error('No puede asignar un paciente sobre una cama que se encuentra ocupada o en aseo. El paciente debe pasar primero por Alta y Aseo.');
         return;
       }
 
@@ -422,7 +443,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
           if (alreadyInBed) break;
         }
         if (alreadyInBed) {
-          alert(`⚠️ ADVERTENCIA — Paciente ya acostado\n\nEl paciente ${patient.name} (RUT: ${patient.rut}) ya figura como acostado en ${existingBedInfo}.\n\nNo es posible acostar al mismo paciente dos veces. Si corresponde, primero realice el alta del paciente en la cama actual.`);
+          toast.error(`⚠️ Paciente ${patient.name} (RUT: ${patient.rut}) ya figura acostado en ${existingBedInfo}.`);
           return;
         }
       }
@@ -453,7 +474,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     if (!targetBed) return;
 
     if (targetBed.status !== 'available') {
-      alert('No puede asignar un paciente sobre una cama que se encuentra ocupada o en aseo. El paciente de esta cama debe pasar primero por el proceso de Alta y Aseo.');
+      toast.error('No puede asignar un paciente sobre una cama que se encuentra ocupada o en aseo. El paciente debe pasar primero por Alta y Aseo.');
       return;
     }
 
@@ -482,7 +503,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         if (alreadyInBed) break;
       }
       if (alreadyInBed) {
-        alert(`⚠️ ADVERTENCIA — Paciente ya acostado\n\nEl paciente ${patient.name} (RUT: ${patient.rut}) ya figura como acostado en ${existingBedInfo}.\n\nNo es posible acostar al mismo paciente dos veces. Si corresponde, primero realice el alta del paciente en la cama actual.`);
+        toast.error(`⚠️ Paciente ${patient.name} (RUT: ${patient.rut}) ya figura acostado en ${existingBedInfo}.`);
         return;
       }
     }
@@ -588,7 +609,6 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     } else {
       console.error('[Dashboard] ❌ Asignación fallida: la escritura de bedsData fue bloqueada o falló. El paciente permanece en la lista de espera.');
       toast.error('Error al asignar la cama. El paciente permanece en la lista de espera.');
-      alert('Error al asignar la cama. El paciente permanece en la lista de espera. Por favor intente nuevamente.');
     }
     setPendingAssignment(null);
     setSelectedPatient(null);
@@ -617,21 +637,26 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       novedades: [newNovedad, ...(blockingBed.bed.novedades || [])]
     });
 
-    // Register in block log for the Informe de Camas Bloqueadas report
+    const bedInfo = blockingBed.bed;
+    const servicio = bedInfo.tag || bedInfo.type || 'Sin servicio';
+    const logEntry = {
+      id: `block-${timestamp}`,
+      causal: reason,
+      observation: observation || '',
+      cama: `Hab. ${blockingBed.roomId} — Cama ${bedInfo.id}`,
+      servicio,
+      blockedAt: now.toISOString(),
+      blockedBy: user?.name || 'Usuario',
+      unblockedAt: null,
+    };
+
+    // 1. Guardar en colección blockLogs
+    if (onAddBlockLog) {
+      onAddBlockLog(logEntry);
+    }
+
+    // 2. Compatibilidad legacy
     if (setBlockLog) {
-      // Derive service from bed tag/type
-      const bedInfo = blockingBed.bed;
-      const servicio = bedInfo.tag || bedInfo.type || 'Sin servicio';
-      const logEntry = {
-        id: `block-${timestamp}`,
-        causal: reason,
-        observation: observation || '',
-        cama: `Hab. ${blockingBed.roomId} — Cama ${bedInfo.id}`,
-        servicio,
-        blockedAt: now.toISOString(),
-        blockedBy: user?.name || 'Usuario',
-        unblockedAt: null,
-      };
       setBlockLog(prev => [logEntry, ...(prev || [])]);
     }
 
@@ -662,15 +687,23 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       novedades: [newNovedad, ...(unblockingBed.bed.novedades || [])]
     });
 
-    // Update the matching open block log entry with unblockedAt
+    const bedId = `Hab. ${unblockingBed.roomId} — Cama ${unblockingBed.bed.id}`;
+
+    // 1. Actualizar en colección blockLogs
+    if (onUpdateBlockLog) {
+      // Intentar actualizar vía setBlockLog / onUpdateBlockLog
+    }
+
     if (setBlockLog) {
-      const bedId = `Hab. ${unblockingBed.roomId} — Cama ${unblockingBed.bed.id}`;
       setBlockLog(prev => {
         const updated = [...(prev || [])];
-        // Find the latest open entry for this cama
         const idx = updated.findIndex(r => r.cama === bedId && !r.unblockedAt);
         if (idx !== -1) {
+          const entryId = updated[idx].id;
           updated[idx] = { ...updated[idx], unblockedAt: now.toISOString() };
+          if (onUpdateBlockLog && entryId) {
+            onUpdateBlockLog(entryId, { unblockedAt: now.toISOString() });
+          }
         }
         return updated;
       });
@@ -686,39 +719,17 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     return setBedsData(prev => {
       const next = JSON.parse(JSON.stringify(prev));
       for (const floor in next) {
-        if (typeof next[floor] !== 'object') continue;
+        if (!next[floor] || typeof next[floor] !== 'object' || Array.isArray(next[floor])) continue;
         for (const sector in next[floor]) {
           if (!Array.isArray(next[floor][sector])) continue;
           next[floor][sector] = next[floor][sector].map(room => {
-            if (room.roomId === roomId) {
-              return {
-                ...room,
-                beds: room.beds.map(bed => bed.id === bedId ? { ...bed, ...updates } : bed)
-              };
-            }
-            return room;
-          });
-        }
-      }
-      return JSON.parse(JSON.stringify(next));
-    });
-  };
-
-  const handleSaveNovedad = (roomId, bedId, newEntry) => {
-    const result = setBedsData(prev => {
-      const next = JSON.parse(JSON.stringify(prev));
-      for (const floor in next) {
-        if (typeof next[floor] !== 'object') continue;
-        for (const sector in next[floor]) {
-          if (!Array.isArray(next[floor][sector])) continue;
-          next[floor][sector] = next[floor][sector].map(room => {
-            if (room.roomId === roomId) {
+            if (String(room.roomId) === String(roomId)) {
               return {
                 ...room,
                 beds: room.beds.map(bed => {
-                  if (bed.id === bedId) {
-                    const existing = Array.isArray(bed.novedades) ? bed.novedades : [];
-                    return { ...bed, novedades: [newEntry, ...existing] };
+                  if (String(bed.id) === String(bedId)) {
+                    const { id: _ignoreUpdateId, ...safeUpdates } = updates || {};
+                    return { ...bed, ...safeUpdates, id: bed.id };
                   }
                   return bed;
                 })
@@ -730,8 +741,47 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       }
       return JSON.parse(JSON.stringify(next));
     });
-    // Retornar la Promise para que el llamador pueda esperarla
-    return result;
+  };
+
+  const handleSaveNovedad = async (roomId, bedId, newEntry) => {
+    let targetBed = null;
+    let targetFloor = '';
+    let targetSector = '';
+    for (const floor in bedsData) {
+      if (typeof bedsData[floor] !== 'object') continue;
+      for (const sector in bedsData[floor]) {
+        if (!Array.isArray(bedsData[floor][sector])) continue;
+        const room = bedsData[floor][sector].find(r => r.roomId === roomId);
+        if (room) {
+          targetBed = room.beds?.find(b => b.id === bedId);
+          if (targetBed) {
+            targetFloor = floor;
+            targetSector = sector;
+            break;
+          }
+        }
+      }
+      if (targetBed) break;
+    }
+
+    if (onAddProcedure) {
+      const procDoc = {
+        id: String(newEntry.id || `proc_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`),
+        bedId,
+        roomId,
+        floor: targetFloor,
+        sector: targetSector,
+        patientName: targetBed?.patient || targetBed?.patientName || targetBed?.nombre || '',
+        rut: targetBed?.rut || targetBed?.run || '',
+        fecha: newEntry.fecha || new Date().toLocaleString('es-CL'),
+        createdAt: new Date().toISOString(),
+        usuario: newEntry.usuario || user?.name || user?.username || 'Personal Clínico',
+        rol: newEntry.rol || user?.role || 'Clínico',
+        contenido: newEntry.contenido || '',
+        tipo: 'procedimiento'
+      };
+      return await onAddProcedure(procDoc);
+    }
   };
 
   const handleDischarge = (roomId, bedId) => {
@@ -776,48 +826,44 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       // 1. Remove from waiting list
       setWaitingList(prev => prev.filter(p => p.id !== bedId));
 
-      // 2. Add to waiting list discharges
+      const dischargeRecord = {
+        id: `wait_dis_${bedId}`,
+        _logId: `log-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+        _loggedAt: new Date().toISOString(),
+        _source: 'waitingList',
+        piso: '—',
+        sector: '—',
+        habitacion: 'Lista de Espera',
+        cama: '—',
+        bedType: '—',
+        patient: bed.patient,
+        rut: bed.rut,
+        age: bed.age,
+        sex: bed.sex,
+        prevision: bed.prevision,
+        diagnosis: bed.diagnosis,
+        requestedAt: bed.requestedAt,
+        dischargeAt: new Date().toISOString(),
+        cleaningAt: new Date().toISOString(),
+        destino: formData.destino || 'No definido',
+        establecimientoRed: formData.establecimientoRed || '',
+        otroEstablecimientoDetalle: formData.otroEstablecimientoDetalle || '',
+        redPrivadaDetalle: formData.redPrivadaDetalle || '',
+        observaciones: formData.observaciones || '',
+        isWaitingListDischarge: true
+      };
+
+      // 2. Guardar en colección discharges de Firestore
+      if (onAddDischarge) {
+        onAddDischarge(dischargeRecord);
+      }
+
+      // 3. Compatibilidad con estado anterior
       if (setWaitingListDischarges) {
-        setWaitingListDischarges(prev => {
-          const arr = Array.isArray(prev) ? prev : [];
-          const dischargeRecord = {
-            id: bedId,
-            patient: bed.patient,
-            rut: bed.rut,
-            age: bed.age,
-            sex: bed.sex,
-            prevision: bed.prevision,
-            diagnosis: bed.diagnosis,
-            requestedAt: bed.requestedAt,
-            dischargeAt: new Date().toISOString(),
-            destino: formData.destino || 'No definido',
-            establecimientoRed: formData.establecimientoRed || '',
-            otroEstablecimientoDetalle: formData.otroEstablecimientoDetalle || '',
-            redPrivadaDetalle: formData.redPrivadaDetalle || '',
-            observaciones: formData.observaciones || '',
-            isWaitingListDischarge: true
-          };
-
-          // ── LOG PERMANENTE: también registrar en dischargesLog ──
-          if (setDischargesLog) {
-            setDischargesLog(prev => {
-              const log = Array.isArray(prev) ? prev : [];
-              return [{
-                _logId: `log-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
-                _loggedAt: new Date().toISOString(),
-                _source: 'waitingList',
-                piso: '—',
-                sector: '—',
-                habitacion: 'Lista de Espera',
-                cama: '—',
-                bedType: '—',
-                ...dischargeRecord
-              }, ...log];
-            });
-          }
-
-          return [...arr, dischargeRecord];
-        });
+        setWaitingListDischarges(prev => [...(Array.isArray(prev) ? prev : []), dischargeRecord]);
+      }
+      if (setDischargesLog) {
+        setDischargesLog(prev => [dischargeRecord, ...(Array.isArray(prev) ? prev : [])]);
       }
 
       toast.success(`Alta de lista de espera registrada para ${bed.patient}`);
@@ -836,47 +882,52 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       if (found) break;
     }
 
-    // ── Snapshot limpio del alta (sin dischargeHistory anidado para evitar ciclos en Firebase) ──
+    // ── Snapshot limpio del alta ──
     // eslint-disable-next-line no-unused-vars
     const { dischargeHistory: _dh, previousPatient: _pp, lastDischarge: _ld, ...bedDataOnly } = bed;
     const cleanDischargeRecord = {
       ...bedDataOnly,
+      id: `dis_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+      _dischargeId: Date.now(),
+      _logId: `log-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+      _loggedAt: new Date().toISOString(),
+      _source: 'cama',
+      piso: logPiso,
+      sector: logSector,
+      habitacion: roomId,
+      cama: bedId,
+      bedType: bed.tag || bed.type || '',
       destino: formData.destino,
       establecimientoRed: formData.establecimientoRed || '',
       otroEstablecimientoDetalle: formData.otroEstablecimientoDetalle || '',
       redPrivadaDetalle: formData.redPrivadaDetalle || '',
       observaciones: formData.observaciones || '',
       cleaningAt: new Date().toISOString(),
-      _dischargeId: Date.now()   // ID único para localizar este registro en el historial
+      dischargeAt: new Date().toISOString()
     };
-    // Acumular: cada nueva alta se prepende; las anteriores se conservan intactas
-    const updatedDischargeHistory = [cleanDischargeRecord, ...(bed.dischargeHistory || [])];
 
-    // ── LOG PERMANENTE: escribir el episodio en dischargesLog (append-only, inmutable) ──
-    // Este log es la fuente de verdad del Informe de Altas, independiente del estado de las camas.
-    // Cada alta genera exactamente 1 entrada. Nunca se modifica ni elimina.
-    if (setDischargesLog) {
-      setDischargesLog(prev => {
-        const log = Array.isArray(prev) ? prev : [];
-        return [{
-          _logId: `log-${cleanDischargeRecord._dischargeId}-${Math.random().toString(36).slice(2,7)}`,
-          _loggedAt: new Date().toISOString(),
-          _source: 'cama',
-          piso: logPiso,
-          sector: logSector,
-          habitacion: roomId,
-          cama: bedId,
-          bedType: bed.tag || bed.type || '',
-          ...cleanDischargeRecord
-        }, ...log];
-      });
+    // 1. Guardar en colección permanente discharges de Firestore
+    if (onAddDischarge) {
+      onAddDischarge(cleanDischargeRecord);
     }
+
+    // 2. Compatibilidad con estado dischargesLog
+    if (setDischargesLog) {
+      setDischargesLog(prev => [cleanDischargeRecord, ...(Array.isArray(prev) ? prev : [])]);
+    }
+
+    const previousPatientInfo = {
+      patient: bed.patient,
+      rut: bed.rut,
+      cleaningAt: new Date().toISOString(),
+      _dischargeId: cleanDischargeRecord._dischargeId,
+      dischargeDocId: cleanDischargeRecord.id
+    };
 
     if (formData.destino === 'Hospitalización domiciliaria') {
       updateBedState(roomId, bedId, {
         status: 'pending_hodom',
-        previousPatient: cleanDischargeRecord,
-        dischargeHistory: updatedDischargeHistory
+        previousPatient: previousPatientInfo
       });
 
       if (onHodomSubmit && formData.hodomData) {
@@ -918,8 +969,7 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         interconsultas: [],
         novedades: [],
         evolutions: [],
-        previousPatient: cleanDischargeRecord,       // retrocompatibilidad con datos legacy
-        dischargeHistory: updatedDischargeHistory,   // historial acumulativo (fuente de verdad)
+        previousPatient: previousPatientInfo,
         originalWaitingRequest: null
       });
     }
@@ -941,13 +991,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     }
 
     if (targetBed && targetBed.previousPatient) {
-      const restoredBed = { ...targetBed.previousPatient, status: 'occupied' };
-      delete restoredBed.previousPatient;
-      // Marcar el alta más reciente como revertida; el historial se conserva pero no aparece en el panel
-      restoredBed.dischargeHistory = (targetBed.dischargeHistory || []).map((rec, idx) =>
-        idx === 0 ? { ...rec, _reverted: true, _revertedAt: new Date().toISOString() } : rec
-      );
+      const { id: _ignoreId, dischargeDocId, _dischargeId, ...cleanPrevData } = targetBed.previousPatient;
+      const restoredBed = { ...cleanPrevData, status: 'occupied', cleaningAt: null, previousPatient: null };
       updateBedState(roomId, bedId, restoredBed);
+      toast.success(`Alta de la cama ${bedId} revocada; paciente restaurado`);
     }
   };
 
@@ -1060,7 +1107,6 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
       } else {
         console.error('[Dashboard] ❌ Revocación fallida: no se pudo liberar la cama.');
         toast.error('Error al revocar el acueste. Por favor intente nuevamente.');
-        alert('Error al revocar el acueste. Por favor intente nuevamente.');
       }
     }
   };
@@ -1820,6 +1866,10 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
         {editingGrdBed && (
           <EditGrdModal
             bed={{ ...editingGrdBed.bed, roomId: editingGrdBed.roomId }}
+            procedures={procedures.filter(p => 
+              (p.bedId === editingGrdBed.bed.id && (!editingGrdBed.bed.rut || !p.rut || p.rut === editingGrdBed.bed.rut)) ||
+              (editingGrdBed.bed.rut && p.rut && p.rut === editingGrdBed.bed.rut)
+            )}
             allBeds={allBeds}
             user={user}
             onConfirm={confirmGrdEdit}
@@ -1885,3 +1935,4 @@ export default function Dashboard({ searchQuery, bedsData, setBedsData, waitingL
     </DndContext>
   );
 }
+

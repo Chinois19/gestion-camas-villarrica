@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Save, Clock, Activity, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 import { GRD_DATA, calculateProjectedDays, getGrdLimit } from '../data/grd';
 import SearchableSelect from './SearchableSelect';
 import MultiSearchableSelect from './MultiSearchableSelect';
@@ -99,29 +100,39 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleConfirm = (e) => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleConfirm = async (e) => {
     e.preventDefault();
+    if (isSaving) return;
     
     if (canEditRetroactive) {
       const selectedTime = getParsedAssignTime();
       if (selectedTime < requestTime) {
-        alert('La fecha y hora del acueste no puede ser anterior a la fecha de la solicitud.');
+        toast.error('La fecha y hora del acueste no puede ser anterior a la fecha de la solicitud.');
         return;
       }
       const now = new Date();
       if (selectedTime > now) {
-        alert('La fecha y hora del acueste no puede ser posterior a la fecha y hora actual.');
+        toast.error('La fecha y hora del acueste no puede ser posterior a la fecha y hora actual.');
         return;
       }
     }
 
-    onConfirm({
-      ...formData,
-      waitMinutes,
-      projectedDays,
-      assignedAt: assignTime.toISOString(),
-      projectedReleaseDate: new Date(assignTime.getTime() + (projectedDays * 24 * 60 * 60 * 1000)).toISOString()
-    });
+    setIsSaving(true);
+    try {
+      await onConfirm({
+        ...formData,
+        waitMinutes,
+        projectedDays,
+        assignedAt: assignTime.toISOString(),
+        projectedReleaseDate: new Date(assignTime.getTime() + (projectedDays * 24 * 60 * 60 * 1000)).toISOString()
+      });
+    } catch (err) {
+      toast.error('Error al confirmar el acueste del paciente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Helper arrays for conditional rendering
@@ -157,13 +168,16 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
             type="button" 
             className="close-btn" 
             onClick={onClose}
+            disabled={isSaving}
             style={{
               background: 'rgba(255, 255, 255, 0.12)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
               color: '#ffffff',
               transition: 'all 0.2s ease',
               width: '36px',
-              height: '36px'
+              height: '36px',
+              opacity: isSaving ? 0.5 : 1,
+              cursor: isSaving ? 'not-allowed' : 'pointer'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
@@ -442,9 +456,34 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
 
           {/* Modal Actions */}
           <div className="modal-actions" style={{ background: 'var(--panel-bg)', borderTop: '1px solid var(--glass-border)', padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: '12px', margin: 0 }}>
-            <button type="button" className="glass-button" onClick={onClose} style={{ background: '#4c1d95', color: '#fff', border: 'none' }}>Cancelar</button>
-            <button type="submit" className="glass-button primary" style={{ background: '#0891b2', color: '#fff', border: 'none' }}>
-              <Save size={18} /> Confirmar Asignación Segura
+            <button 
+              type="button" 
+              className="glass-button" 
+              onClick={onClose} 
+              disabled={isSaving}
+              style={{ 
+                background: '#4c1d95', 
+                color: '#fff', 
+                border: 'none', 
+                opacity: isSaving ? 0.5 : 1, 
+                cursor: isSaving ? 'not-allowed' : 'pointer' 
+              }}
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              className="glass-button primary" 
+              disabled={isSaving}
+              style={{ 
+                background: '#0891b2', 
+                color: '#fff', 
+                border: 'none', 
+                opacity: isSaving ? 0.6 : 1, 
+                cursor: isSaving ? 'not-allowed' : 'pointer' 
+              }}
+            >
+              <Save size={18} /> {isSaving ? 'Asignando...' : 'Confirmar Asignación Segura'}
             </button>
           </div>
         </form>

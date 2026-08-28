@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Database, Search, Download, Filter, Printer } from 'lucide-react';
+import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
 import { matchesSearch } from '../utils/search';
@@ -39,7 +40,7 @@ const parseEntryDate = (entry) => {
   return new Date(0);
 };
 
-export default function DatabasePanel({ bedsData }) {
+export default function DatabasePanel({ bedsData, procedures = [] }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const patientsData = useMemo(() => {
@@ -150,6 +151,27 @@ export default function DatabasePanel({ bedsData }) {
                   }
                 });
               }
+
+              // Desde colección procedures
+              if (Array.isArray(procedures)) {
+                const patientRut = (p.rut || p.run || '').replace(/[^0-9kK]/g, '').toLowerCase();
+                const matchedProcs = procedures.filter(pr => {
+                  if (pr.bedId && pr.bedId === bed.id) return true;
+                  const prRut = (pr.rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
+                  if (patientRut && prRut && patientRut === prRut) return true;
+                  return false;
+                });
+                matchedProcs.forEach(nov => {
+                  if (nov.contenido || nov.procedimiento) {
+                    updates.push({
+                      texto: nov.contenido || nov.procedimiento,
+                      fecha: formatDateToDDMMYYYY(nov.fecha || nov.createdAt),
+                      rawDate: parseEntryDate(nov)
+                    });
+                  }
+                });
+              }
+
               if (p.novedades && Array.isArray(p.novedades)) {
                 p.novedades.forEach(nov => {
                   if (nov.contenido) {
@@ -273,6 +295,7 @@ export default function DatabasePanel({ bedsData }) {
 
     // Exportar archivo físico
     XLSX.writeFile(wb, `Entrega_de_Turnos_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Reporte de entrega de turnos exportado a Excel');
   };
 
   return (
