@@ -184,7 +184,7 @@ const breakdownRecordByDay = (record, currentTime) => {
       // Or if start is before this day and end is after this day.
       const isStartOfCalDay = intersectStart.getHours() === 0 && intersectStart.getMinutes() <= 1;
       const isEndOfCalDay = (intersectEnd.getHours() === 23 && intersectEnd.getMinutes() >= 59) || (end.getTime() > calEnd.getTime());
-      
+
       const isCenso = isStartOfCalDay && isEndOfCalDay;
 
       const formattedDate = currentDate.toLocaleDateString('es-CL', {
@@ -256,7 +256,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
     start.setHours(0, 0, 0, 0);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
-    
+
     // 1. Expand all raw blockLog records into daily snapshot records intersecting with [start, end]
     const allDailySnapshots = [];
     (blockLog || []).forEach(r => {
@@ -315,20 +315,20 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
     if (!hasDateRange || rows.length === 0) return;
 
     const headers = [
-      'Día de Registro', 
-      'Cama', 
-      'Servicio', 
-      'Tipo de Bloqueo', 
-      'Duración Día', 
-      'Horario Día', 
-      'Causal del Bloqueo', 
-      'Observación', 
-      'Fecha Inicio Original', 
-      'Fecha Término Original', 
+      'Día de Registro',
+      'Cama',
+      'Servicio',
+      'Tipo de Bloqueo',
+      'Duración Día',
+      'Horario Día',
+      'Causal del Bloqueo',
+      'Observación',
+      'Fecha Inicio Original',
+      'Fecha Término Original',
       'Tiempo Total Bloqueo',
       'Bloqueado por'
     ];
-    
+
     const sheetData = [headers, ...rows.map(r => [
       r.dateStr,
       r.cama || '',
@@ -343,7 +343,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
       r.totalDurationText,
       r.blockedBy || ''
     ])];
-    
+
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Camas Bloqueadas Diarias');
@@ -362,17 +362,17 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
     const total = rows.length; // total daily block snapshots shown in the table
     // Count currently active blocks: count the raw blockLog entries that have no unblockedAt date
     const activos = (blockLog || []).filter(r => !r.unblockedAt).length;
-    
+
     // Count census blocks and partial blocks in the current filtered rows
     const censoCount = rows.filter(r => r.type === 'CENSO').length;
     const parcialCount = rows.filter(r => r.type === 'PARCIAL').length;
 
     const byReason = {};
     CAUSALES.forEach(c => { byReason[c] = 0; });
-    rows.forEach(r => { 
-      if (r.causal) byReason[r.causal] = (byReason[r.causal] || 0) + 1; 
+    rows.forEach(r => {
+      if (r.causal) byReason[r.causal] = (byReason[r.causal] || 0) + 1;
     });
-    
+
     return { total, activos, censoCount, parcialCount, byReason };
   }, [rows, blockLog, hasDateRange]);
 
@@ -410,7 +410,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
               Informe de Camas Bloqueadas
             </h2>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
-              {hasDateRange 
+              {hasDateRange
                 ? `Fotografía diaria de bloqueos (${rows.length} registros cargados) · Corte 17:00 del día anterior`
                 : 'Seleccione un periodo de fechas (Desde - Hasta) para generar el informe'}
             </p>
@@ -425,13 +425,13 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
             <RefreshCw size={12} />
             Congelado al: {freezeTS.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </div>
-          <button 
-            className="glass-button primary" 
+          <button
+            className="glass-button primary"
             onClick={handleExport}
             disabled={!hasDateRange || rows.length === 0}
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
               gap: 6,
               opacity: (!hasDateRange || rows.length === 0) ? 0.5 : 1,
               cursor: (!hasDateRange || rows.length === 0) ? 'not-allowed' : 'pointer'
@@ -470,16 +470,16 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
       <div className="glass-panel" style={{ padding: '16px 20px', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <div className="date-filter-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Periodo:</span>
-          <input 
-            type="date" 
-            value={startDate} 
+          <input
+            type="date"
+            value={startDate}
             onChange={e => setStartDate(e.target.value)}
             style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
           />
           <span style={{ color: 'var(--text-muted)' }}>-</span>
-          <input 
-            type="date" 
-            value={endDate} 
+          <input
+            type="date"
+            value={endDate}
             onChange={e => setEndDate(e.target.value)}
             style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
           />
@@ -703,7 +703,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
                           )}
                         </td>
                       ))}
-                      
+
                       <td style={{ ...tdStyle }}>
                         {isCenso ? (
                           <span style={{ fontSize: '0.7rem', padding: '3px 9px', borderRadius: 6, fontWeight: 700, background: 'rgba(124, 58, 237, 0.15)', color: '#c084fc', border: '1px solid rgba(124, 58, 237, 0.4)', whiteSpace: 'nowrap' }}>📊 Bloqueo CENSO</span>
@@ -711,11 +711,11 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
                           <span style={{ fontSize: '0.7rem', padding: '3px 9px', borderRadius: 6, fontWeight: 700, background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.4)', whiteSpace: 'nowrap' }}>⏳ Bloqueo Parcial</span>
                         )}
                       </td>
-                      
+
                       <td style={{ ...tdStyle, fontWeight: 700, color: isCenso ? '#c084fc' : '#fbbf24' }}>
                         {r.durationText}
                       </td>
-                      
+
                       <td style={{ ...tdStyle, fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                         {r.timeRangeText}
                       </td>
@@ -723,7 +723,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
                       <td style={{ ...tdStyle, maxWidth: 180, fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: r.observation ? 'normal' : 'italic' }}>
                         {r.observation || 'Sin observación'}
                       </td>
-                      
+
                       <td style={{ ...tdStyle, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
                         <div style={{ fontWeight: 600 }}>Inic: {fmtFull(r.originalRecord.blockedAt)}</div>
                         <div>Térm: {r.originalRecord.unblockedAt ? fmtFull(r.originalRecord.unblockedAt) : <span style={{ fontStyle: 'italic', color: '#22c55e' }}>En curso</span>}</div>

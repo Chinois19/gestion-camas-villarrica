@@ -9,32 +9,27 @@ const SERVICES = ['UCI', 'UTI', 'Cuidados Medios', 'GINE/PUERPERIO', 'Neonatolog
 
 export default function TransfersDatabasePanel({ transferHistory = [] }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState('2026-05-01');
+  const [endDate, setEndDate] = useState('2026-12-31');
   const [originService, setOriginService] = useState('todos');
   const [destinationService, setDestinationService] = useState('todos');
 
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  // Determinar si hay un rango de fechas activo
-  const hasDateRange = Boolean(startDate && endDate);
-
   // Filter and compute data
   const filteredData = useMemo(() => {
-    if (!startDate || !endDate) return [];
-
     let result = [...transferHistory];
 
     // Filter by date range
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
 
-    result = result.filter(row => {
-      const tDate = new Date(row.fechaTraslado);
-      return tDate >= start && tDate <= end;
-    });
+      result = result.filter(row => {
+        const tDate = new Date(row.fechaTraslado);
+        return tDate >= start && tDate <= end;
+      });
+    }
 
     // Filter by origin service
     if (originService !== 'todos') {
@@ -48,11 +43,11 @@ export default function TransfersDatabasePanel({ transferHistory = [] }) {
 
     // Filter by search term
     if (searchTerm) {
-      result = result.filter(row => 
+      result = result.filter(row =>
         Object.entries(row).some(([key, val]) => {
           if (key === 'actualizacion' && Array.isArray(val)) {
-            return val.some(act => 
-              matchesSearch(act.texto, searchTerm) || 
+            return val.some(act =>
+              matchesSearch(act.texto, searchTerm) ||
               matchesSearch(act.fecha, searchTerm)
             );
           }
@@ -144,12 +139,12 @@ export default function TransfersDatabasePanel({ transferHistory = [] }) {
     try {
       const date = new Date(isoString);
       if (isNaN(date.getTime())) return isoString;
-      return date.toLocaleString('es-CL', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      return date.toLocaleString('es-CL', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
     } catch {
       return isoString;
@@ -230,96 +225,32 @@ export default function TransfersDatabasePanel({ transferHistory = [] }) {
           </div>
           <div>
             <h2 className="db-title" style={{ color: '#8b5cf6' }}>Base de Datos de Traslados</h2>
-            <p className="db-subtitle">
-              {hasDateRange 
-                ? `Monitoreo histórico de movimientos de pacientes entre servicios (${filteredData.length} registros cargados)`
-                : 'Seleccione un periodo de fechas (Desde - Hasta) para consultar los registros'}
-            </p>
+            <p className="db-subtitle">Monitoreo histórico de movimientos de pacientes entre servicios ({filteredData.length} registros)</p>
           </div>
         </div>
 
         <div className="db-actions hide-on-print" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div className="date-filter-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Periodo:</span>
-            <input 
-              type="date" 
-              value={startDate} 
+            <input
+              type="date"
+              value={startDate}
               onChange={e => setStartDate(e.target.value)}
               style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
             />
             <span style={{ color: 'var(--text-muted)' }}>-</span>
-            <input 
-              type="date" 
-              value={endDate} 
+            <input
+              type="date"
+              value={endDate}
               onChange={e => setEndDate(e.target.value)}
               style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
             />
-            <span style={{ width: '1px', height: '20px', background: 'var(--border-subtle)', margin: '0 4px' }} />
-            <button
-              onClick={() => { setStartDate(todayStr); setEndDate(todayStr); }}
-              title="Ver solo traslados de hoy"
-              style={{
-                background: startDate === todayStr && endDate === todayStr ? '#8b5cf6' : 'rgba(139,92,246,0.12)',
-                color: startDate === todayStr && endDate === todayStr ? '#fff' : '#a78bfa',
-                border: '1px solid rgba(139,92,246,0.35)',
-                borderRadius: '6px',
-                padding: '2px 10px',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s'
-              }}
-            >
-              Hoy
-            </button>
-            <button
-              onClick={() => {
-                const now = new Date();
-                const y = now.getFullYear();
-                const m = String(now.getMonth() + 1).padStart(2, '0');
-                const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
-                setStartDate(`${y}-${m}-01`);
-                setEndDate(`${y}-${m}-${lastDay}`);
-              }}
-              title="Ver traslados de este mes"
-              style={{
-                background: 'rgba(139,92,246,0.08)',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '6px',
-                padding: '2px 10px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Este Mes
-            </button>
-            {hasDateRange && (
-              <button
-                onClick={() => { setStartDate(''); setEndDate(''); }}
-                title="Limpiar periodo"
-                style={{
-                  background: 'rgba(239,68,68,0.1)',
-                  color: '#f87171',
-                  border: '1px solid rgba(239,68,68,0.25)',
-                  borderRadius: '6px',
-                  padding: '2px 8px',
-                  fontSize: '0.75rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Limpiar
-              </button>
-            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Origen:</span>
-            <select 
-              value={originService} 
+            <select
+              value={originService}
               onChange={e => setOriginService(e.target.value)}
               style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
             >
@@ -330,8 +261,8 @@ export default function TransfersDatabasePanel({ transferHistory = [] }) {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Destino:</span>
-            <select 
-              value={destinationService} 
+            <select
+              value={destinationService}
               onChange={e => setDestinationService(e.target.value)}
               style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
             >
@@ -351,35 +282,26 @@ export default function TransfersDatabasePanel({ transferHistory = [] }) {
             />
           </div>
 
-          <button 
-            className="glass-button primary" 
-            onClick={handleExportExcel} 
-            disabled={!hasDateRange || filteredData.length === 0}
-            style={{ 
-              background: (!hasDateRange || filteredData.length === 0) ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-              opacity: (!hasDateRange || filteredData.length === 0) ? 0.5 : 1,
-              cursor: (!hasDateRange || filteredData.length === 0) ? 'not-allowed' : 'pointer'
-            }}
-          >
+          <button className="glass-button primary" onClick={handleExportExcel} style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>
             <Download size={16} /> Exportar Excel
           </button>
         </div>
       </div>
 
       {/* Dynamic Insights Grid */}
-      <div className="insights-container hide-on-print" style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-        gap: '16px', 
+      <div className="insights-container hide-on-print" style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '16px',
         marginBottom: '4px',
-        padding: '0 10px' 
+        padding: '0 10px'
       }}>
         {/* Card 1: Total de Traslados */}
-        <div className="glass-panel" style={{ 
-          padding: '16px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '16px', 
+        <div className="glass-panel" style={{
+          padding: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
           background: 'rgba(255,255,255,0.02)',
           borderLeft: '4px solid #8b5cf6',
           borderRadius: '12px'
@@ -394,11 +316,11 @@ export default function TransfersDatabasePanel({ transferHistory = [] }) {
         </div>
 
         {/* Card 2: Servicio Origen Principal */}
-        <div className="glass-panel" style={{ 
-          padding: '16px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '16px', 
+        <div className="glass-panel" style={{
+          padding: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
           background: 'rgba(255,255,255,0.02)',
           borderLeft: '4px solid #ec4899',
           borderRadius: '12px'
@@ -413,11 +335,11 @@ export default function TransfersDatabasePanel({ transferHistory = [] }) {
         </div>
 
         {/* Card 3: Servicio Destino Principal */}
-        <div className="glass-panel" style={{ 
-          padding: '16px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '16px', 
+        <div className="glass-panel" style={{
+          padding: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
           background: 'rgba(255,255,255,0.02)',
           borderLeft: '4px solid #3b82f6',
           borderRadius: '12px'
@@ -432,11 +354,11 @@ export default function TransfersDatabasePanel({ transferHistory = [] }) {
         </div>
 
         {/* Card 4: Estada Promedio Pre-Traslado */}
-        <div className="glass-panel" style={{ 
-          padding: '16px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '16px', 
+        <div className="glass-panel" style={{
+          padding: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
           background: 'rgba(255,255,255,0.02)',
           borderLeft: '4px solid #10b981',
           borderRadius: '12px'
@@ -451,11 +373,11 @@ export default function TransfersDatabasePanel({ transferHistory = [] }) {
         </div>
 
         {/* Card 5: Comuna Mayor Frecuencia */}
-        <div className="glass-panel" style={{ 
-          padding: '16px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '16px', 
+        <div className="glass-panel" style={{
+          padding: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
           background: 'rgba(255,255,255,0.02)',
           borderLeft: '4px solid #f59e0b',
           borderRadius: '12px'
@@ -536,22 +458,10 @@ export default function TransfersDatabasePanel({ transferHistory = [] }) {
                   </td>
                 </tr>
               ))
-            ) : !hasDateRange ? (
-              <tr>
-                <td colSpan="17" className="db-empty" style={{ padding: '60px 16px', textAlign: 'center' }}>
-                  <Calendar size={42} color="#8b5cf6" style={{ opacity: 0.6, margin: '0 auto 14px', display: 'block' }} />
-                  <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: 6 }}>
-                    Seleccione un periodo de fechas
-                  </div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto', lineHeight: 1.5 }}>
-                    Ingrese la fecha <strong>Desde</strong> y <strong>Hasta</strong> en el panel superior para cargar y visualizar los registros de traslados solicitados.
-                  </div>
-                </td>
-              </tr>
             ) : (
               <tr>
-                <td colSpan="17" className="db-empty" style={{ padding: '40px 16px', textAlign: 'center' }}>
-                  No se encontraron registros de traslados para el periodo seleccionado ({startDate} al {endDate}).
+                <td colSpan="17" className="db-empty">
+                  No se encontraron registros de traslados para este periodo, filtros o búsqueda.
                 </td>
               </tr>
             )}

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Database, Search, Download, Filter, Printer, Calendar } from 'lucide-react';
+import { Database, Search, Download, Filter, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
@@ -22,7 +22,7 @@ const formatDateToDDMMYYYY = (dateVal) => {
       const year = d.getFullYear();
       return `${day}-${month}-${year}`;
     }
-  } catch (e) {}
+  } catch (e) { }
   return '—';
 };
 
@@ -42,11 +42,6 @@ const parseEntryDate = (entry) => {
 
 export default function DatabasePanel({ bedsData, procedures = [] }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-
-  const todayStr = new Date().toISOString().split('T')[0];
-  const hasDateRange = Boolean(startDate && endDate);
 
   const patientsData = useMemo(() => {
     const data = [];
@@ -58,19 +53,19 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
         return a.localeCompare(b);
       });
       sectors.forEach(sector => {
-        const rooms = [...(bedsData[floor][sector] || [])].sort((a, b) => 
+        const rooms = [...(bedsData[floor][sector] || [])].sort((a, b) =>
           String(a.roomId).localeCompare(String(b.roomId), undefined, { numeric: true })
         );
         rooms.forEach(room => {
-          const beds = [...(room.beds || [])].sort((a, b) => 
+          const beds = [...(room.beds || [])].sort((a, b) =>
             String(a.id).localeCompare(String(b.id), undefined, { numeric: true })
           );
           beds.forEach(bed => {
             if (bed.status === 'occupied' && bed.patient) {
-              
+
               // Normalize data
               const p = bed;
-              
+
               // Helper for diagnoses
               let dxList = [];
               if (p.diagnosis) {
@@ -140,7 +135,7 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
                     const diffTime = Math.abs(new Date() - date);
                     estada = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + ' días';
                   }
-                } catch (e) {}
+                } catch (e) { }
               }
 
               // Build Actualizacion (Evoluciones + Novedades)
@@ -202,7 +197,6 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
 
               // Servicio de acueste is destination unit requested/saved (bed.destino) falling back to bed tag/type
               const servicioAcueste = bed.destino || bed.tag || bed.type || 'No definido';
-              const admDateObj = admDate ? new Date(admDate) : null;
 
               data.push({
                 servicio: servicioAcueste,
@@ -210,7 +204,6 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
                 sala: room.roomId,
                 cama: bed.id,
                 fechaIngreso: formatDateTime(admDate),
-                rawAdmissionDate: admDateObj,
                 precauciones: precStr,
                 nombre: p.patient,
                 run: p.rut || '—',
@@ -229,45 +222,23 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
   }, [bedsData]);
 
   const filteredData = useMemo(() => {
-    if (!startDate || !endDate) return [];
-
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-
-    let result = patientsData.filter(row => {
-      const adm = row.rawAdmissionDate;
-      if (adm && !isNaN(adm.getTime())) {
-        return adm >= start && adm <= end;
-      }
-      if (row.actualizacion && Array.isArray(row.actualizacion)) {
-        return row.actualizacion.some(act => act.rawDate && act.rawDate >= start && act.rawDate <= end);
-      }
-      return false;
-    });
-
-    if (searchTerm) {
-      result = result.filter(row => 
-        Object.entries(row).some(([key, val]) => {
-          if (key === 'rawAdmissionDate') return false;
-          if (key === 'actualizacion' && Array.isArray(val)) {
-            return val.some(act => 
-              matchesSearch(act.texto, searchTerm) || 
-              matchesSearch(act.fecha, searchTerm)
-            );
-          }
-          return matchesSearch(String(val || ''), searchTerm);
-        })
-      );
-    }
-
-    return result;
-  }, [patientsData, searchTerm, startDate, endDate]);
+    if (!searchTerm) return patientsData;
+    return patientsData.filter(row =>
+      Object.entries(row).some(([key, val]) => {
+        if (key === 'actualizacion' && Array.isArray(val)) {
+          return val.some(act =>
+            matchesSearch(act.texto, searchTerm) ||
+            matchesSearch(act.fecha, searchTerm)
+          );
+        }
+        return matchesSearch(String(val), searchTerm);
+      })
+    );
+  }, [patientsData, searchTerm]);
 
   const handleExportExcel = () => {
-    if (!hasDateRange || filteredData.length === 0) return;
-    
+    if (filteredData.length === 0) return;
+
     const headers = [
       'SERVICIO DE ACUESTE',
       'SALA',
@@ -283,7 +254,7 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
       'EDAD',
       'COMUNA'
     ];
-    
+
     const rows = filteredData.map(row => [
       row.servicio || '',
       row.sala || '',
@@ -301,13 +272,13 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
       row.edad || '',
       row.comuna || ''
     ]);
-    
+
     // Crear la hoja y el libro de Excel
     const data = [headers, ...rows];
     const ws = XLSX.utils.aoa_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Entrega de Turnos");
-    
+
     // Auto-ajuste de ancho de columnas básico
     const wscols = headers.map(() => ({ wch: 20 }));
     wscols[3].wch = 20; // Fecha Ingreso
@@ -336,113 +307,11 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
           </div>
           <div>
             <h2 className="db-title">Base de Datos Entrega Turnos</h2>
-            <p className="db-subtitle">
-              {hasDateRange 
-                ? `Exportación y revisión de pacientes actualmente en cama (${filteredData.length} registros cargados)`
-                : 'Seleccione un periodo de fechas (Desde - Hasta) para consultar los registros'}
-            </p>
+            <p className="db-subtitle">Exportación y revisión de pacientes actualmente en cama ({filteredData.length} registros)</p>
           </div>
         </div>
 
-        <div className="db-actions hide-on-print" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <div className="date-filter-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Periodo:</span>
-            <input 
-              type="date" 
-              value={startDate} 
-              onChange={e => setStartDate(e.target.value)}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
-            />
-            <span style={{ color: 'var(--text-muted)' }}>-</span>
-            <input 
-              type="date" 
-              value={endDate} 
-              onChange={e => setEndDate(e.target.value)}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
-            />
-            <span style={{ width: '1px', height: '20px', background: 'var(--border-subtle)', margin: '0 4px' }} />
-            <button
-              onClick={() => { setStartDate(todayStr); setEndDate(todayStr); }}
-              title="Ver ingresos de hoy"
-              style={{
-                background: startDate === todayStr && endDate === todayStr ? 'var(--accent)' : 'rgba(0,212,255,0.12)',
-                color: startDate === todayStr && endDate === todayStr ? '#000' : 'var(--accent)',
-                border: '1px solid var(--accent-border)',
-                borderRadius: '6px',
-                padding: '2px 10px',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s'
-              }}
-            >
-              Hoy
-            </button>
-            <button
-              onClick={() => {
-                const now = new Date();
-                const y = now.getFullYear();
-                const m = String(now.getMonth() + 1).padStart(2, '0');
-                const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
-                setStartDate(`${y}-${m}-01`);
-                setEndDate(`${y}-${m}-${lastDay}`);
-              }}
-              title="Ver ingresos de este mes"
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '6px',
-                padding: '2px 10px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Este mes
-            </button>
-            <button
-              onClick={() => {
-                const y = new Date().getFullYear();
-                setStartDate(`${y}-01-01`);
-                setEndDate(todayStr);
-              }}
-              title="Ver todos los pacientes ingresados este año"
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '6px',
-                padding: '2px 10px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Año Actual
-            </button>
-            {hasDateRange && (
-              <button
-                onClick={() => { setStartDate(''); setEndDate(''); }}
-                title="Limpiar periodo"
-                style={{
-                  background: 'rgba(239,68,68,0.1)',
-                  color: '#f87171',
-                  border: '1px solid rgba(239,68,68,0.25)',
-                  borderRadius: '6px',
-                  padding: '2px 8px',
-                  fontSize: '0.75rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Limpiar
-              </button>
-            )}
-          </div>
-
+        <div className="db-actions hide-on-print">
           <div className="search-container" style={{ margin: 0 }}>
             <Search size={16} color="var(--text-secondary)" />
             <input
@@ -453,17 +322,7 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button 
-            className="glass-button primary" 
-            onClick={handleExportExcel}
-            disabled={!hasDateRange || filteredData.length === 0}
-            style={{ 
-              background: (!hasDateRange || filteredData.length === 0) ? 'rgba(255,255,255,0.05)' : 'var(--accent)',
-              color: (!hasDateRange || filteredData.length === 0) ? 'var(--text-muted)' : '#000',
-              opacity: (!hasDateRange || filteredData.length === 0) ? 0.5 : 1,
-              cursor: (!hasDateRange || filteredData.length === 0) ? 'not-allowed' : 'pointer'
-            }}
-          >
+          <button className="glass-button primary" onClick={handleExportExcel}>
             <Download size={16} /> Exportar Excel
           </button>
         </div>
@@ -526,22 +385,10 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
                   <td>{row.comuna}</td>
                 </tr>
               ))
-            ) : !hasDateRange ? (
-              <tr>
-                <td colSpan="13" className="db-empty" style={{ padding: '60px 16px', textAlign: 'center' }}>
-                  <Calendar size={42} color="var(--accent)" style={{ opacity: 0.6, margin: '0 auto 14px', display: 'block' }} />
-                  <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: 6 }}>
-                    Seleccione un periodo de fechas
-                  </div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto', lineHeight: 1.5 }}>
-                    Ingrese la fecha <strong>Desde</strong> y <strong>Hasta</strong> en el panel superior (o use los accesos rápidos como "Hoy" o "Este mes") para cargar y consultar los registros de entrega de turnos.
-                  </div>
-                </td>
-              </tr>
             ) : (
               <tr>
-                <td colSpan="13" className="db-empty" style={{ padding: '40px 16px', textAlign: 'center' }}>
-                  No se encontraron pacientes con ingreso o actividad en el periodo seleccionado ({startDate} al {endDate}).
+                <td colSpan="13" className="db-empty">
+                  No se encontraron pacientes que coincidan con la búsqueda.
                 </td>
               </tr>
             )}

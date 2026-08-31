@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
+import {
   Activity, Search, User, LogOut, KeyRound, Palette
 } from 'lucide-react';
 import './App.css';
@@ -21,12 +21,12 @@ import BlockedBedsReportPanel from './components/BlockedBedsReportPanel';
 import GeneralBedStatusPanel from './components/GeneralBedStatusPanel';
 import Navbar from './components/Navbar';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
-import { 
-  useFirestoreCollection, 
-  addFirestoreDoc, 
-  updateFirestoreDoc, 
+import {
+  useFirestoreCollection,
+  addFirestoreDoc,
+  updateFirestoreDoc,
   deleteFirestoreDoc,
-  bulkAddFirestoreDocs 
+  bulkAddFirestoreDocs
 } from './hooks/useFirestoreCollection';
 import { sanitizeBedsStructure } from './utils/bedSanitizer';
 import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
@@ -44,14 +44,14 @@ const initialHodomRequests = [];
 
 // All available themes
 const THEMES = [
-  { id: 'dark',     label: 'Dark',     cls: 'theme-dark',     dots: ['#00d4ff','#8b5cf6','#080a10'], dark: true  },
-  { id: 'light',    label: 'Light',    cls: 'theme-light',    dots: ['#005f8a','#7c3aed','#b8cfe8'], dark: false },
-  { id: 'emerald',  label: 'Zafiro',   cls: 'theme-emerald',  dots: ['#2563eb','#6366f1','#eff6ff'], dark: false },
-  { id: 'crimson',  label: 'Crimson',  cls: 'theme-crimson',  dots: ['#ef4444','#c084fc','#100608'], dark: true  },
-  { id: 'forest',   label: 'Forest',   cls: 'theme-forest',   dots: ['#22c55e','#a78bfa','#051008'], dark: true  },
-  { id: 'sunset',   label: 'Sunset',   cls: 'theme-sunset',   dots: ['#f97316','#a78bfa','#100800'], dark: true  },
-  { id: 'midnight', label: 'Midnight', cls: 'theme-midnight', dots: ['#818cf8','#c084fc','#010510'], dark: true  },
-  { id: 'slate',    label: 'Slate',    cls: 'theme-slate',    dots: ['#475569','#7c3aed','#e2e8f0'], dark: false },
+  { id: 'dark', label: 'Dark', cls: 'theme-dark', dots: ['#00d4ff', '#8b5cf6', '#080a10'], dark: true },
+  { id: 'light', label: 'Light', cls: 'theme-light', dots: ['#005f8a', '#7c3aed', '#b8cfe8'], dark: false },
+  { id: 'emerald', label: 'Zafiro', cls: 'theme-emerald', dots: ['#2563eb', '#6366f1', '#eff6ff'], dark: false },
+  { id: 'crimson', label: 'Crimson', cls: 'theme-crimson', dots: ['#ef4444', '#c084fc', '#100608'], dark: true },
+  { id: 'forest', label: 'Forest', cls: 'theme-forest', dots: ['#22c55e', '#a78bfa', '#051008'], dark: true },
+  { id: 'sunset', label: 'Sunset', cls: 'theme-sunset', dots: ['#f97316', '#a78bfa', '#100800'], dark: true },
+  { id: 'midnight', label: 'Midnight', cls: 'theme-midnight', dots: ['#818cf8', '#c084fc', '#010510'], dark: true },
+  { id: 'slate', label: 'Slate', cls: 'theme-slate', dots: ['#475569', '#7c3aed', '#e2e8f0'], dark: false },
 ];
 
 function App() {
@@ -127,29 +127,29 @@ function App() {
   const isHodomView = currentView === 'hodom' || currentView === 'dashboard';
   const isProceduresView = currentView === 'interconsultas' || currentView === 'dashboard' || currentView === 'database' || currentView === 'altas_database';
 
-  const dischargesCol = useFirestoreCollection('discharges', { 
-    orderByField: 'dischargeAt', 
-    realtime: false, 
-    enabled: isSyncEnabled && isDischargesView 
+  const dischargesCol = useFirestoreCollection('discharges', {
+    orderByField: 'dischargeAt',
+    realtime: false,
+    enabled: isSyncEnabled && isDischargesView
   });
-  const transfersCol = useFirestoreCollection('transfers', { 
-    orderByField: 'fechaTraslado', 
-    realtime: false, 
-    enabled: isSyncEnabled && isTransfersView, 
-    initialData: MOCK_TRANSFERS 
+  const transfersCol = useFirestoreCollection('transfers', {
+    orderByField: 'fechaTraslado',
+    realtime: false,
+    enabled: isSyncEnabled && isTransfersView,
+    initialData: MOCK_TRANSFERS
   });
-  const blockLogsCol = useFirestoreCollection('blockLogs', { 
-    orderByField: 'blockedAt', 
-    realtime: false, 
-    enabled: isSyncEnabled && isBlockLogsView 
+  const blockLogsCol = useFirestoreCollection('blockLogs', {
+    orderByField: 'blockedAt',
+    realtime: false,
+    enabled: isSyncEnabled && isBlockLogsView
   });
-  const hodomCol = useFirestoreCollection('hodomRequests', { 
-    orderByField: 'solicitadaAt', 
-    enabled: isSyncEnabled && isHodomView 
+  const hodomCol = useFirestoreCollection('hodomRequests', {
+    orderByField: 'solicitadaAt',
+    enabled: isSyncEnabled && isHodomView
   });
-  const proceduresCol = useFirestoreCollection('procedures', { 
-    orderByField: 'createdAt', 
-    enabled: isSyncEnabled && isProceduresView 
+  const proceduresCol = useFirestoreCollection('procedures', {
+    orderByField: 'createdAt',
+    enabled: isSyncEnabled && isProceduresView
   });
 
   // Alias y adaptadores de compatibilidad
@@ -247,7 +247,7 @@ function App() {
     if (req) {
       handleHodomMarkDone(req.id);
     }
-    
+
     // Liberar cama → cleaning
     setBedsData(prev => {
       const next = JSON.parse(JSON.stringify(prev));
@@ -470,7 +470,7 @@ function App() {
         </div>
       );
     }
-    
+
     return (
       <div className="app-container" style={{ padding: '24px 0', minHeight: '100vh', overflowY: 'auto' }}>
         <Toaster position="top-right" richColors />
@@ -711,30 +711,30 @@ function App() {
       )}
       {requestingWaitingIC && (
         <InterconsultaModal
-          bed={{ 
-            patient: requestingWaitingIC.name || requestingWaitingIC.nombre, 
-            rut: requestingWaitingIC.rut, 
-            age: requestingWaitingIC.age || requestingWaitingIC.edad, 
-            roomId: 'Espera', 
+          bed={{
+            patient: requestingWaitingIC.name || requestingWaitingIC.nombre,
+            rut: requestingWaitingIC.rut,
+            age: requestingWaitingIC.age || requestingWaitingIC.edad,
+            roomId: 'Espera',
             id: requestingWaitingIC.id,
             diagnosis: requestingWaitingIC.diagnosis || requestingWaitingIC.dxPrincipal
           }}
           currentUser={currentUser}
           onConfirm={(formData) => {
-             setWaitingList(prev => prev.map(p => {
-               if (p.id === requestingWaitingIC.id) {
-                 return { ...p, interconsultas: [...(p.interconsultas || []), formData] };
-               }
-               return p;
-             }));
-             if (editingPatient && editingPatient.id === requestingWaitingIC.id) {
-               setEditingPatient(prev => ({ ...prev, interconsultas: [...(prev.interconsultas || []), formData] }));
-             }
-             if (viewingPatient && viewingPatient.id === requestingWaitingIC.id) {
-               setViewingPatient(prev => ({ ...prev, interconsultas: [...(prev.interconsultas || []), formData] }));
-             }
-             setRequestingWaitingIC(null);
-             toast.success(`Interconsulta a ${formData.especialidadDestino} solicitada para paciente en espera`);
+            setWaitingList(prev => prev.map(p => {
+              if (p.id === requestingWaitingIC.id) {
+                return { ...p, interconsultas: [...(p.interconsultas || []), formData] };
+              }
+              return p;
+            }));
+            if (editingPatient && editingPatient.id === requestingWaitingIC.id) {
+              setEditingPatient(prev => ({ ...prev, interconsultas: [...(prev.interconsultas || []), formData] }));
+            }
+            if (viewingPatient && viewingPatient.id === requestingWaitingIC.id) {
+              setViewingPatient(prev => ({ ...prev, interconsultas: [...(prev.interconsultas || []), formData] }));
+            }
+            setRequestingWaitingIC(null);
+            toast.success(`Interconsulta a ${formData.especialidadDestino} solicitada para paciente en espera`);
           }}
           onClose={() => setRequestingWaitingIC(null)}
         />
@@ -770,12 +770,12 @@ function App() {
         <InfrastructureManagement bedsData={bedsData} setBedsData={setBedsData} />
       )}
       {currentView === 'insights' && (
-        <InsightsDashboard 
-          bedsData={bedsData} 
-          waitingList={waitingList} 
-          transferHistory={transferHistory} 
-          blockLog={blockLog} 
-          dischargesLog={dischargesLog} 
+        <InsightsDashboard
+          bedsData={bedsData}
+          waitingList={waitingList}
+          transferHistory={transferHistory}
+          blockLog={blockLog}
+          dischargesLog={dischargesLog}
         />
       )}
       {currentView === 'general_status' && (
@@ -785,16 +785,16 @@ function App() {
         <DatabasePanel bedsData={bedsData} procedures={procedures} />
       )}
       {currentView === 'altas_database' && (
-        <DischargesDatabasePanel 
+        <DischargesDatabasePanel
           discharges={dischargesLog}
           procedures={procedures}
           onUpdateDischarge={(id, updates) => updateFirestoreDoc('discharges', id, updates)}
           onDeleteDischarge={(id) => deleteFirestoreDoc('discharges', id)}
           onAddDischarge={(item) => addFirestoreDoc('discharges', item)}
-          bedsData={bedsData} 
-          setBedsData={setBedsData} 
+          bedsData={bedsData}
+          setBedsData={setBedsData}
           setWaitingList={setWaitingList}
-          userRole={currentUser.role} 
+          userRole={currentUser.role}
         />
       )}
       {currentView === 'traslados_database' && (
@@ -826,9 +826,9 @@ function App() {
       )}
 
       {/* Global Footer */}
-      <footer className="hide-on-print" style={{ 
-        textAlign: 'center', 
-        padding: '32px 16px 24px', 
+      <footer className="hide-on-print" style={{
+        textAlign: 'center',
+        padding: '32px 16px 24px',
         color: 'var(--text-secondary)',
         display: 'flex',
         flexDirection: 'column',

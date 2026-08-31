@@ -23,7 +23,7 @@ const formatDateToDDMMYYYY = (dateVal) => {
       const year = d.getFullYear();
       return `${day}-${month}-${year}`;
     }
-  } catch (e) {}
+  } catch (e) { }
   return '—';
 };
 
@@ -56,13 +56,13 @@ const ESTABLECIMIENTOS_RED = {
 };
 
 const DESTINOS = [
-  { id: 'Domicilio',                      label: 'Domicilio',                      icon: '🏠' },
-  { id: 'Hospitalización domiciliaria',   label: 'Hospitalización domiciliaria',   icon: '🏥' },
-  { id: 'Otro establecimiento',           label: 'Otro establecimiento',           icon: '🏨' },
-  { id: 'Red Privada',                    label: 'Red Privada',                    icon: '🏢' },
-  { id: 'Alta administrativa',            label: 'Alta administrativa',            icon: '📋' },
-  { id: 'Fuga',                           label: 'Fuga',                           icon: '🚶' },
-  { id: 'Fallecido',                      label: 'Fallecido',                      icon: '✝️' },
+  { id: 'Domicilio', label: 'Domicilio', icon: '🏠' },
+  { id: 'Hospitalización domiciliaria', label: 'Hospitalización domiciliaria', icon: '🏥' },
+  { id: 'Otro establecimiento', label: 'Otro establecimiento', icon: '🏨' },
+  { id: 'Red Privada', label: 'Red Privada', icon: '🏢' },
+  { id: 'Alta administrativa', label: 'Alta administrativa', icon: '📋' },
+  { id: 'Fuga', label: 'Fuga', icon: '🚶' },
+  { id: 'Fallecido', label: 'Fallecido', icon: '✝️' },
 ];
 
 const EditAltaModal = ({ row, onClose, onSave }) => {
@@ -78,14 +78,14 @@ const EditAltaModal = ({ row, onClose, onSave }) => {
     observaciones: p.observaciones || ''
   });
 
-  const handleChange = (e) => setFormData({...formData, [e.target.name]: e.target.value});
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   return (
     <div className="modal-overlay" style={{ zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
       <div className="modal-content glass-panel" style={{ width: 'min(96vw, 600px)', maxHeight: '90vh', overflowY: 'auto', padding: 24, background: 'var(--panel-bg)', border: '1px solid var(--glass-border)', borderRadius: 16 }}>
         <h3 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)' }}>Editar Registro de Alta</h3>
         <p style={{ fontSize: '0.85rem', color: '#10b981', margin: '0 0 16px 0', fontWeight: 600 }}>Hab {row.sala} - Cama {row.cama}</p>
-        
+
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div>
             <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Nombre</label>
@@ -99,7 +99,7 @@ const EditAltaModal = ({ row, onClose, onSave }) => {
             <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Diagnósticos</label>
             <input className="glass-input" name="diagnosticos" value={formData.diagnosticos} onChange={handleChange} style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }} />
           </div>
-          
+
           <div style={{ gridColumn: '1 / -1' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Destino (Servicio de Destino)</label>
             <select className="glass-input" name="destino" value={formData.destino} onChange={handleChange} style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }}>
@@ -111,10 +111,10 @@ const EditAltaModal = ({ row, onClose, onSave }) => {
           {formData.destino === 'Otro establecimiento' && (
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Establecimiento en Red</label>
-              <select 
-                className="glass-input" 
-                name="establecimientoRed" 
-                value={formData.establecimientoRed} 
+              <select
+                className="glass-input"
+                name="establecimientoRed"
+                value={formData.establecimientoRed}
                 onChange={e => {
                   const val = e.target.value;
                   setFormData(prev => ({
@@ -122,7 +122,7 @@ const EditAltaModal = ({ row, onClose, onSave }) => {
                     establecimientoRed: val,
                     otroEstablecimientoDetalle: val === 'Otro' ? prev.otroEstablecimientoDetalle : ''
                   }));
-                }} 
+                }}
                 style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }}
               >
                 <option value="">-- Seleccione establecimiento --</option>
@@ -165,20 +165,20 @@ const EditAltaModal = ({ row, onClose, onSave }) => {
   );
 };
 
-export default function DischargesDatabasePanel({ 
-  discharges = [], 
+export default function DischargesDatabasePanel({
+  discharges = [],
   procedures = [],
-  onUpdateDischarge, 
+  onUpdateDischarge,
   onDeleteDischarge,
-  onRevertDischarge, 
-  bedsData, 
-  setBedsData, 
-  waitingListDischarges, 
-  setWaitingListDischarges, 
-  dischargesLog, 
-  setDischargesLog, 
-  setWaitingList, 
-  userRole 
+  onRevertDischarge,
+  bedsData,
+  setBedsData,
+  waitingListDischarges,
+  setWaitingListDischarges,
+  dischargesLog,
+  setDischargesLog,
+  setWaitingList,
+  userRole
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const currentYear = new Date().getFullYear();
@@ -200,7 +200,7 @@ export default function DischargesDatabasePanel({
   const patientsData = useMemo(() => {
     const data = [];
     const seenLogIds = new Set();
-    const seenKeys  = new Set();
+    const seenKeys = new Set();
     const dupKey = (nombre, fecha) => `${(nombre || '').toLowerCase().trim()}|${fecha || ''}`;
 
     const formatDateTime = (isoString) => {
@@ -237,9 +237,9 @@ export default function DischargesDatabasePanel({
       const precStr = precautions.length > 0 ? precautions.join(', ') : 'Ninguna';
 
       const dischargeTimestamp = p.cleaningAt || p.dischargeAt || null;
-      const dischargeDateObj   = dischargeTimestamp ? new Date(dischargeTimestamp) : null;
-      const fechaAlta          = formatDateTime(dischargeTimestamp);
-      const admDate            = p.admissionDate || p.assignedAt || p.createdAt;
+      const dischargeDateObj = dischargeTimestamp ? new Date(dischargeTimestamp) : null;
+      const fechaAlta = formatDateTime(dischargeTimestamp);
+      const admDate = p.admissionDate || p.assignedAt || p.createdAt;
 
       let estada = meta.estada || '—';
       if (admDate && dischargeDateObj && !meta.estada) {
@@ -247,7 +247,7 @@ export default function DischargesDatabasePanel({
           const d = new Date(admDate);
           if (!isNaN(d.getTime()) && !isNaN(dischargeDateObj.getTime()))
             estada = Math.ceil(Math.abs(dischargeDateObj - d) / 86400000) + ' días';
-        } catch (e) {}
+        } catch (e) { }
       }
 
       let updates = [];
@@ -315,19 +315,19 @@ export default function DischargesDatabasePanel({
     rawDischargesList.forEach(p => {
       if (p._reverted) return;
       const nombre = p.patient || p.patientName || p.nombre || '';
-      const ts     = p.cleaningAt || p.dischargeAt || '';
-      const key    = dupKey(nombre, ts);
+      const ts = p.cleaningAt || p.dischargeAt || '';
+      const key = dupKey(nombre, ts);
       if (p._logId) seenLogIds.add(p._logId);
       if (p.id) seenLogIds.add(p.id);
       seenKeys.add(key);
 
       data.push(buildRow(p, {
-        sala:    p.habitacion || p.roomId || '—',
-        cama:    p.cama || p.bedId || '—',
+        sala: p.habitacion || p.roomId || '—',
+        cama: p.cama || p.bedId || '—',
         bedType: p.bedType || '—',
         isWaiting: p._source === 'waitingList' || p.isWaitingListDischarge,
-        source:  'discharges',
-        estada:  (p._source === 'waitingList' || p.isWaitingListDischarge) ? 'Alta previa a asignación' : undefined
+        source: 'discharges',
+        estada: (p._source === 'waitingList' || p.isWaitingListDischarge) ? 'Alta previa a asignación' : undefined
       }));
     });
 
@@ -371,15 +371,15 @@ export default function DischargesDatabasePanel({
 
             extractAll(bed).forEach(p => {
               const nombre = p.patient || p.patientName || p.nombre || '';
-              const ts     = p.cleaningAt || p.dischargeAt || '';
-              const key    = dupKey(nombre, ts);
+              const ts = p.cleaningAt || p.dischargeAt || '';
+              const key = dupKey(nombre, ts);
               if (seenKeys.has(key)) return;
               seenKeys.add(key);
               data.push(buildRow(p, {
-                sala:    room.roomId,
-                cama:    bed.id,
+                sala: room.roomId,
+                cama: bed.id,
                 bedType: bed.tag || bed.type || '',
-                source:  'legacy_bed'
+                source: 'legacy_bed'
               }));
             });
           });
@@ -390,8 +390,8 @@ export default function DischargesDatabasePanel({
     if (Array.isArray(waitingListDischarges)) {
       waitingListDischarges.forEach(p => {
         const nombre = p.patient || p.patientName || p.nombre || '';
-        const ts     = p.dischargeAt || '';
-        const key    = dupKey(nombre, ts);
+        const ts = p.dischargeAt || '';
+        const key = dupKey(nombre, ts);
         if (seenKeys.has(key)) return;
         seenKeys.add(key);
 
@@ -442,10 +442,10 @@ export default function DischargesDatabasePanel({
     if (!startDate || !endDate) return [];
 
     let result = patientsData;
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    const [sy, sm, sd] = startDate.split('-').map(Number);
+    const start = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
+    const [ey, em, ed] = endDate.split('-').map(Number);
+    const end = new Date(ey, em - 1, ed, 23, 59, 59, 999);
     result = result.filter(row => {
       const dDate = row.rawDischargeDate;
       if (!dDate) return false;
@@ -453,7 +453,7 @@ export default function DischargesDatabasePanel({
     });
 
     if (searchTerm) {
-      result = result.filter(row => 
+      result = result.filter(row =>
         Object.entries(row).some(([key, val]) => {
           if (key === 'rawDischargeDate') return false;
           if (key === 'actualizacion' && Array.isArray(val)) {
@@ -597,8 +597,8 @@ export default function DischargesDatabasePanel({
         _editedAt: new Date().toISOString()
       });
     }
-    if (setWaitingListDischarges) setWaitingListDischarges(prev => prev.map(p => (p.id === docId) ? {...p, ...updatedData} : p));
-    if (setDischargesLog) setDischargesLog(prev => prev.map(p => (p.id === docId) ? {...p, ...updatedData} : p));
+    if (setWaitingListDischarges) setWaitingListDischarges(prev => prev.map(p => (p.id === docId) ? { ...p, ...updatedData } : p));
+    if (setDischargesLog) setDischargesLog(prev => prev.map(p => (p.id === docId) ? { ...p, ...updatedData } : p));
     toast.success('Registro de alta actualizado correctamente');
     setEditingRow(null);
   };
@@ -668,7 +668,7 @@ export default function DischargesDatabasePanel({
                     const ppTs = pp.cleaningAt || pp.dischargeAt;
                     const ppName = (pp.patient || pp.patientName || '').toLowerCase().trim();
                     if ((pp.id && docId && String(pp.id) === String(docId)) ||
-                        (dischargeTs && ppTs === dischargeTs && rawName && ppName === rawName)) {
+                      (dischargeTs && ppTs === dischargeTs && rawName && ppName === rawName)) {
                       newBed.previousPatient = null;
                       bedChanged = true;
                     }
@@ -679,7 +679,7 @@ export default function DischargesDatabasePanel({
                     const ldTs = ld.cleaningAt || ld.dischargeAt;
                     const ldName = (ld.patient || ld.patientName || '').toLowerCase().trim();
                     if ((ld.id && docId && String(ld.id) === String(docId)) ||
-                        (dischargeTs && ldTs === dischargeTs && rawName && ldName === rawName)) {
+                      (dischargeTs && ldTs === dischargeTs && rawName && ldName === rawName)) {
                       newBed.lastDischarge = null;
                       bedChanged = true;
                     }
@@ -718,7 +718,7 @@ export default function DischargesDatabasePanel({
           <div>
             <h2 className="db-title" style={{ color: '#10b981' }}>Base de Datos de Altas</h2>
             <p className="db-subtitle">
-              {hasDateRange 
+              {hasDateRange
                 ? `Exportación y revisión de pacientes con alta previa (${filteredData.length} registros cargados)`
                 : 'Seleccione un periodo de fechas (Desde - Hasta) para consultar los registros'}
             </p>
@@ -728,16 +728,16 @@ export default function DischargesDatabasePanel({
         <div className="db-actions hide-on-print" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div className="date-filter-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Periodo:</span>
-            <input 
-              type="date" 
-              value={startDate} 
+            <input
+              type="date"
+              value={startDate}
               onChange={e => setStartDate(e.target.value)}
               style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
             />
             <span style={{ color: 'var(--text-muted)' }}>-</span>
-            <input 
-              type="date" 
-              value={endDate} 
+            <input
+              type="date"
+              value={endDate}
               onChange={e => setEndDate(e.target.value)}
               style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
             />
@@ -815,11 +815,11 @@ export default function DischargesDatabasePanel({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button 
-            className="glass-button primary" 
-            onClick={handleExportExcel} 
+          <button
+            className="glass-button primary"
+            onClick={handleExportExcel}
             disabled={!hasDateRange || filteredData.length === 0}
-            style={{ 
+            style={{
               background: (!hasDateRange || filteredData.length === 0) ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #10b981, #059669)',
               opacity: (!hasDateRange || filteredData.length === 0) ? 0.5 : 1,
               cursor: (!hasDateRange || filteredData.length === 0) ? 'not-allowed' : 'pointer'
@@ -908,26 +908,26 @@ export default function DischargesDatabasePanel({
                   <td>{row.comuna}</td>
                   {isAdminOrGestor && (
                     <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                      <button 
-                        className="glass-button secondary" 
-                        onClick={() => setEditingRow(row)} 
+                      <button
+                        className="glass-button secondary"
+                        onClick={() => setEditingRow(row)}
                         style={{ padding: '4px 8px', marginRight: '4px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }}
                         title="Editar Alta"
                       >
                         <Edit2 size={14} />
                       </button>
-                      <button 
-                        className="glass-button secondary" 
-                        onClick={() => handleRevokeDischarge(row.sala, row.cama, row)} 
+                      <button
+                        className="glass-button secondary"
+                        onClick={() => handleRevokeDischarge(row.sala, row.cama, row)}
                         style={{ padding: '4px 8px', marginRight: isAdmin ? '4px' : '0', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.2)' }}
                         title="Revocar Alta (Deshacer)"
                       >
                         <RotateCcw size={14} />
                       </button>
                       {isAdmin && (
-                        <button 
-                          className="glass-button secondary" 
-                          onClick={() => handleDeleteDischarge(row.sala, row.cama, row)} 
+                        <button
+                          className="glass-button secondary"
+                          onClick={() => handleDeleteDischarge(row.sala, row.cama, row)}
                           style={{ padding: '4px 8px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
                           title="Eliminar Registro de Alta"
                         >
@@ -960,12 +960,12 @@ export default function DischargesDatabasePanel({
           </tbody>
         </table>
       </div>
-      
+
       {editingRow && (
-        <EditAltaModal 
-          row={editingRow} 
-          onClose={() => setEditingRow(null)} 
-          onSave={(data) => handleSaveEdit(editingRow.sala, editingRow.cama, data)} 
+        <EditAltaModal
+          row={editingRow}
+          onClose={() => setEditingRow(null)}
+          onSave={(data) => handleSaveEdit(editingRow.sala, editingRow.cama, data)}
         />
       )}
     </div>
