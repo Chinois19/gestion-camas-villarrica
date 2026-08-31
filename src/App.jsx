@@ -145,10 +145,12 @@ function App() {
   });
   const hodomCol = useFirestoreCollection('hodomRequests', {
     orderByField: 'solicitadaAt',
+    realtime: false,
     enabled: isSyncEnabled && isHodomView
   });
   const proceduresCol = useFirestoreCollection('procedures', {
     orderByField: 'createdAt',
+    realtime: false,
     enabled: isSyncEnabled && isProceduresView
   });
 
