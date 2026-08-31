@@ -25,6 +25,7 @@ import {
   useFirestoreCollection, 
   addFirestoreDoc, 
   updateFirestoreDoc, 
+  deleteFirestoreDoc,
   bulkAddFirestoreDocs 
 } from './hooks/useFirestoreCollection';
 import { sanitizeBedsStructure } from './utils/bedSanitizer';
@@ -788,6 +789,7 @@ function App() {
           discharges={dischargesLog}
           procedures={procedures}
           onUpdateDischarge={(id, updates) => updateFirestoreDoc('discharges', id, updates)}
+          onDeleteDischarge={(id) => deleteFirestoreDoc('discharges', id)}
           onAddDischarge={(item) => addFirestoreDoc('discharges', item)}
           bedsData={bedsData} 
           setBedsData={setBedsData} 

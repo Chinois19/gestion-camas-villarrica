@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
-import { Database, Search, Download, Filter, Printer, Calendar, Edit2, RotateCcw } from 'lucide-react';
+import { Database, Search, Download, Filter, Printer, Calendar, Edit2, RotateCcw, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
 import { matchesSearch } from '../utils/search';
 import { formatAgeDetailed } from '../utils/age';
+import { deleteFirestoreDoc } from '../hooks/useFirestoreCollection';
 import { toast } from 'sonner';
 
 const formatDateToDDMMYYYY = (dateVal) => {
@@ -168,6 +169,7 @@ export default function DischargesDatabasePanel({
   discharges = [], 
   procedures = [],
   onUpdateDischarge, 
+  onDeleteDischarge,
   onRevertDischarge, 
   bedsData, 
   setBedsData, 
@@ -185,7 +187,8 @@ export default function DischargesDatabasePanel({
   const [endDate, setEndDate] = useState(`${currentYear}-12-31`);
   const [editingRow, setEditingRow] = useState(null);
 
-  const isAdminOrGestor = userRole === 'superadmin' || userRole === 'administrador' || userRole === 'gestor_camas';
+  const isAdmin = userRole === 'superadmin' || userRole === 'administrador' || userRole === 'admin';
+  const isAdminOrGestor = isAdmin || userRole === 'gestor_camas';
 
   // Usar discharges prioritariamente, con fallback a dischargesLog
   const rawDischargesList = (Array.isArray(discharges) && discharges.length > 0)
@@ -597,6 +600,111 @@ export default function DischargesDatabasePanel({
     setEditingRow(null);
   };
 
+  const handleDeleteDischarge = async (roomId, bedId, row) => {
+    const patientName = row?.nombre || row?.rawBedData?.patient || 'este paciente';
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar permanentemente el registro de alta de "${patientName}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    const docId = row?.id || row?.rawBedData?.id || row?.rawBedData?._logId;
+
+    try {
+      if (docId) {
+        if (onDeleteDischarge) {
+          await onDeleteDischarge(docId);
+        } else {
+          await deleteFirestoreDoc('discharges', docId);
+        }
+      }
+
+      if (setWaitingListDischarges && (row?.isWaitingListDischarge || row?._source === 'waitingListDischarges')) {
+        setWaitingListDischarges(prev => Array.isArray(prev) ? prev.filter(p => (p.id || p._logId) !== docId) : prev);
+      }
+
+      if (setDischargesLog) {
+        setDischargesLog(prev => Array.isArray(prev) ? prev.filter(p => (p.id || p._logId) !== docId) : prev);
+      }
+
+      // Si el registro proviene de bedsData legacy, limpiar las referencias
+      if (setBedsData && bedsData) {
+        const raw = row?.rawBedData || {};
+        const dischargeTs = raw.cleaningAt || raw.dischargeAt;
+        const rawName = (raw.patient || raw.patientName || row.nombre || '').toLowerCase().trim();
+
+        setBedsData(prev => {
+          if (!prev || typeof prev !== 'object') return prev;
+          const next = JSON.parse(JSON.stringify(prev));
+          let modified = false;
+
+          for (const f in next) {
+            if (!next[f] || typeof next[f] !== 'object' || Array.isArray(next[f])) continue;
+            for (const s in next[f]) {
+              if (!Array.isArray(next[f][s])) continue;
+              next[f][s] = next[f][s].map(room => {
+                let roomChanged = false;
+                const newBeds = (room.beds || []).map(b => {
+                  let bedChanged = false;
+                  const newBed = { ...b };
+
+                  if (Array.isArray(newBed.dischargeHistory)) {
+                    const filtered = newBed.dischargeHistory.filter(dh => {
+                      if (dh.id && docId && String(dh.id) === String(docId)) return false;
+                      const dhTs = dh.cleaningAt || dh.dischargeAt;
+                      const dhName = (dh.patient || dh.patientName || '').toLowerCase().trim();
+                      if (dischargeTs && dhTs === dischargeTs && rawName && dhName === rawName) return false;
+                      return true;
+                    });
+                    if (filtered.length !== newBed.dischargeHistory.length) {
+                      newBed.dischargeHistory = filtered;
+                      bedChanged = true;
+                    }
+                  }
+
+                  if (newBed.previousPatient) {
+                    const pp = newBed.previousPatient;
+                    const ppTs = pp.cleaningAt || pp.dischargeAt;
+                    const ppName = (pp.patient || pp.patientName || '').toLowerCase().trim();
+                    if ((pp.id && docId && String(pp.id) === String(docId)) ||
+                        (dischargeTs && ppTs === dischargeTs && rawName && ppName === rawName)) {
+                      newBed.previousPatient = null;
+                      bedChanged = true;
+                    }
+                  }
+
+                  if (newBed.lastDischarge) {
+                    const ld = newBed.lastDischarge;
+                    const ldTs = ld.cleaningAt || ld.dischargeAt;
+                    const ldName = (ld.patient || ld.patientName || '').toLowerCase().trim();
+                    if ((ld.id && docId && String(ld.id) === String(docId)) ||
+                        (dischargeTs && ldTs === dischargeTs && rawName && ldName === rawName)) {
+                      newBed.lastDischarge = null;
+                      bedChanged = true;
+                    }
+                  }
+
+                  if (bedChanged) roomChanged = true;
+                  return newBed;
+                });
+
+                if (roomChanged) {
+                  modified = true;
+                  return { ...room, beds: newBeds };
+                }
+                return room;
+              });
+            }
+          }
+          return modified ? next : prev;
+        });
+      }
+
+      toast.success('Registro de alta eliminado correctamente');
+    } catch (error) {
+      console.error('Error al eliminar registro de alta:', error);
+      toast.error('Error al eliminar el registro de alta');
+    }
+  };
+
   return (
     <div className="database-panel-container printable-area">
       <div className="database-header hide-on-print" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.1) 100%)', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
@@ -778,18 +886,28 @@ export default function DischargesDatabasePanel({
                       <button 
                         className="glass-button secondary" 
                         onClick={() => handleRevokeDischarge(row.sala, row.cama, row)} 
-                        style={{ padding: '4px 8px', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.2)' }}
+                        style={{ padding: '4px 8px', marginRight: isAdmin ? '4px' : '0', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.2)' }}
                         title="Revocar Alta (Deshacer)"
                       >
                         <RotateCcw size={14} />
                       </button>
+                      {isAdmin && (
+                        <button 
+                          className="glass-button secondary" 
+                          onClick={() => handleDeleteDischarge(row.sala, row.cama, row)} 
+                          style={{ padding: '4px 8px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                          title="Eliminar Registro de Alta"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </td>
                   )}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="14" className="db-empty">
+                <td colSpan={isAdminOrGestor ? 15 : 14} className="db-empty">
                   No se encontraron registros de altas para este periodo o búsqueda.
                 </td>
               </tr>
