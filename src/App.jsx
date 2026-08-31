@@ -99,12 +99,6 @@ function App() {
   // Only sync clinical data if user is authenticated or in a public form route
   const isSyncEnabled = !!currentUser || isPublicRoute;
 
-  // ── Auto-migración a colecciones independientes en primer inicio ──
-  useEffect(() => {
-    if (isSyncEnabled) {
-      runCollectionsMigration().catch(err => console.error('[Migration] Error silencioso:', err));
-    }
-  }, [isSyncEnabled]);
 
   // ── ESTADO OPERATIVO DE CAMAS Y ESPERA (Documentos ligeros fijos) ─────────────
   const [bedsData, setBedsData, bedsLoading] = useFirebaseSync('appState', 'bedsData', initialBedsData, { enabled: isSyncEnabled });
