@@ -232,10 +232,14 @@ const breakdownRecordByDay = (record, currentTime) => {
 export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole }) {
   const [search, setSearch] = useState('');
   const [filterCausal, setFilterCausal] = useState('all');
-  const [filterMonth, setFilterMonth] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [editingRow, setEditingRow] = useState(null);
   const [savedToast, setSavedToast] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const hasDateRange = Boolean(startDate && endDate);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(Date.now()), 60000); // refresh every minute
@@ -246,15 +250,25 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
 
   /* ── Filter & sort data ── */
   const rows = useMemo(() => {
-    const june2025 = new Date('2025-06-01T00:00:00');
+    if (!startDate || !endDate) return [];
+
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
     
-    // 1. Expand all raw blockLog records into daily snapshot records
+    // 1. Expand all raw blockLog records into daily snapshot records intersecting with [start, end]
     const allDailySnapshots = [];
     (blockLog || []).forEach(r => {
-      const d = parseDate(r.blockedAt);
-      if (d && d >= june2025) {
+      const bStart = parseDate(r.blockedAt);
+      const bEnd = r.unblockedAt ? parseDate(r.unblockedAt) : new Date(currentTime);
+      if (bStart && bEnd && bStart <= end && bEnd >= start) {
         const dailyItems = breakdownRecordByDay(r, currentTime);
-        allDailySnapshots.push(...dailyItems);
+        dailyItems.forEach(item => {
+          if (item.currentDate >= start && item.currentDate <= end) {
+            allDailySnapshots.push(item);
+          }
+        });
       }
     });
 
@@ -263,14 +277,6 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
 
     if (filterCausal !== 'all') {
       filtered = filtered.filter(item => item.causal === filterCausal);
-    }
-
-    if (filterMonth) {
-      filtered = filtered.filter(item => {
-        const d = item.currentDate;
-        const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        return ym === filterMonth;
-      });
     }
 
     if (search.trim()) {
@@ -292,7 +298,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
       // Then by bed name
       return (a.cama || '').localeCompare(b.cama || '');
     });
-  }, [blockLog, search, filterCausal, filterMonth, currentTime]);
+  }, [blockLog, search, filterCausal, startDate, endDate, currentTime]);
 
   /* ── Handle manual save ── */
   const handleSave = (updated) => {
@@ -306,6 +312,8 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
 
   /* ── Export XLSX ── */
   const handleExport = () => {
+    if (!hasDateRange || rows.length === 0) return;
+
     const headers = [
       'Día de Registro', 
       'Cama', 
@@ -345,6 +353,12 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
 
   /* ── Stats summary ── */
   const stats = useMemo(() => {
+    if (!hasDateRange) {
+      const byReason = {};
+      CAUSALES.forEach(c => { byReason[c] = 0; });
+      return { total: 0, activos: 0, censoCount: 0, parcialCount: 0, byReason };
+    }
+
     const total = rows.length; // total daily block snapshots shown in the table
     // Count currently active blocks: count the raw blockLog entries that have no unblockedAt date
     const activos = (blockLog || []).filter(r => !r.unblockedAt).length;
@@ -360,7 +374,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
     });
     
     return { total, activos, censoCount, parcialCount, byReason };
-  }, [rows, blockLog]);
+  }, [rows, blockLog, hasDateRange]);
 
   const freezeTS = getFreezeTimestamp();
 
@@ -396,7 +410,9 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
               Informe de Camas Bloqueadas
             </h2>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
-              Fotografía diaria de bloqueos · Junio 2025 en adelante · Corte 17:00 del día anterior
+              {hasDateRange 
+                ? `Fotografía diaria de bloqueos (${rows.length} registros cargados) · Corte 17:00 del día anterior`
+                : 'Seleccione un periodo de fechas (Desde - Hasta) para generar el informe'}
             </p>
           </div>
         </div>
@@ -409,7 +425,18 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
             <RefreshCw size={12} />
             Congelado al: {freezeTS.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </div>
-          <button className="glass-button primary" onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button 
+            className="glass-button primary" 
+            onClick={handleExport}
+            disabled={!hasDateRange || rows.length === 0}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6,
+              opacity: (!hasDateRange || rows.length === 0) ? 0.5 : 1,
+              cursor: (!hasDateRange || rows.length === 0) ? 'not-allowed' : 'pointer'
+            }}
+          >
             <Download size={15} /> Exportar XLSX
           </button>
         </div>
@@ -441,33 +468,143 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
 
       {/* ── FILTERS ── */}
       <div className="glass-panel" style={{ padding: '16px 20px', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-          <input className="glass-input" placeholder="Buscar cama, servicio, causal..."
-            value={search} onChange={e => setSearch(e.target.value)}
-            style={{ width: '100%', paddingLeft: 36, boxSizing: 'border-box' }} />
+        <div className="date-filter-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Periodo:</span>
+          <input 
+            type="date" 
+            value={startDate} 
+            onChange={e => setStartDate(e.target.value)}
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
+          />
+          <span style={{ color: 'var(--text-muted)' }}>-</span>
+          <input 
+            type="date" 
+            value={endDate} 
+            onChange={e => setEndDate(e.target.value)}
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
+          />
+          <span style={{ width: '1px', height: '20px', background: 'var(--border-subtle)', margin: '0 4px' }} />
+          <button
+            onClick={() => { setStartDate(todayStr); setEndDate(todayStr); }}
+            title="Ver bloqueos de hoy"
+            style={{
+              background: startDate === todayStr && endDate === todayStr ? '#ef4444' : 'rgba(239,68,68,0.12)',
+              color: startDate === todayStr && endDate === todayStr ? '#fff' : '#f87171',
+              border: '1px solid rgba(239,68,68,0.35)',
+              borderRadius: '6px',
+              padding: '2px 10px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s'
+            }}
+          >
+            Hoy
+          </button>
+          <button
+            onClick={() => {
+              const now = new Date();
+              const y = now.getFullYear();
+              const m = String(now.getMonth() + 1).padStart(2, '0');
+              const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+              setStartDate(`${y}-${m}-01`);
+              setEndDate(`${y}-${m}-${lastDay}`);
+            }}
+            title="Ver bloqueos de este mes"
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '6px',
+              padding: '2px 10px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Este Mes
+          </button>
+          <button
+            onClick={() => {
+              const y = new Date().getFullYear();
+              setStartDate(`${y}-01-01`);
+              setEndDate(todayStr);
+            }}
+            title="Ver bloqueos de este año"
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '6px',
+              padding: '2px 10px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Año Actual
+          </button>
+          {hasDateRange && (
+            <button
+              onClick={() => { setStartDate(''); setEndDate(''); }}
+              title="Limpiar periodo"
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                color: '#f87171',
+                border: '1px solid rgba(239,68,68,0.25)',
+                borderRadius: '6px',
+                padding: '2px 8px',
+                fontSize: '0.75rem',
+                cursor: 'pointer'
+              }}
+            >
+              Limpiar
+            </button>
+          )}
         </div>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Filter size={14} color="var(--text-secondary)" />
-          <select className="glass-input" value={filterCausal} onChange={e => setFilterCausal(e.target.value)} style={{ minWidth: 220 }}>
+          <select className="glass-input" value={filterCausal} onChange={e => setFilterCausal(e.target.value)} style={{ minWidth: 200 }}>
             <option value="all">Todas las causales</option>
             {CAUSALES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
-        <input type="month" className="glass-input" value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
-          style={{ minWidth: 160 }} title="Filtrar por mes" />
+
+        <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
+          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <input className="glass-input" placeholder="Buscar cama, servicio, observación..."
+            value={search} onChange={e => setSearch(e.target.value)}
+            style={{ width: '100%', paddingLeft: 36, boxSizing: 'border-box' }} />
+        </div>
+
         <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginLeft: 'auto' }}>
-          {rows.length} registro{rows.length !== 1 ? 's' : ''} encontrado{rows.length !== 1 ? 's' : ''}
+          {hasDateRange ? `${rows.length} registro${rows.length !== 1 ? 's' : ''} cargado${rows.length !== 1 ? 's' : ''}` : 'Sin periodo seleccionado'}
         </div>
       </div>
 
       {/* ── TABLE ── */}
       <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
         {rows.length === 0 ? (
-          <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <Lock size={40} style={{ opacity: 0.2, marginBottom: 12 }} />
-            <div>No hay registros de bloqueo para el período seleccionado.</div>
-          </div>
+          !hasDateRange ? (
+            <div style={{ padding: '60px 16px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <Lock size={42} style={{ opacity: 0.3, marginBottom: 14, color: '#ef4444' }} />
+              <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: 6 }}>
+                Seleccione un periodo de fechas
+              </div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto', lineHeight: 1.5 }}>
+                Ingrese la fecha <strong>Desde</strong> y <strong>Hasta</strong> en el panel de filtros superior (o use los accesos rápidos como "Hoy" o "Este Mes") para calcular y visualizar el informe de camas bloqueadas.
+              </div>
+            </div>
+          ) : (
+            <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <Lock size={40} style={{ opacity: 0.2, marginBottom: 12 }} />
+              <div>No hay registros de bloqueo para el período seleccionado ({startDate} al {endDate}).</div>
+            </div>
+          )
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>

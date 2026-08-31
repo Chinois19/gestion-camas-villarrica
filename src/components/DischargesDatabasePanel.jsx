@@ -183,9 +183,11 @@ export default function DischargesDatabasePanel({
   const [searchTerm, setSearchTerm] = useState('');
   const currentYear = new Date().getFullYear();
   const todayStr = new Date().toISOString().split('T')[0];
-  const [startDate, setStartDate] = useState(`${currentYear}-01-01`);
-  const [endDate, setEndDate] = useState(`${currentYear}-12-31`);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [editingRow, setEditingRow] = useState(null);
+
+  const hasDateRange = Boolean(startDate && endDate);
 
   const isAdmin = userRole === 'superadmin' || userRole === 'administrador' || userRole === 'admin';
   const isAdminOrGestor = isAdmin || userRole === 'gestor_camas';
@@ -437,18 +439,19 @@ export default function DischargesDatabasePanel({
   }, [bedsData, waitingListDischarges, rawDischargesList]);
 
   const filteredData = useMemo(() => {
+    if (!startDate || !endDate) return [];
+
     let result = patientsData;
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      result = result.filter(row => {
-        const dDate = row.rawDischargeDate;
-        if (!dDate) return true;
-        return dDate >= start && dDate <= end;
-      });
-    }
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    result = result.filter(row => {
+      const dDate = row.rawDischargeDate;
+      if (!dDate) return false;
+      return dDate >= start && dDate <= end;
+    });
+
     if (searchTerm) {
       result = result.filter(row => 
         Object.entries(row).some(([key, val]) => {
@@ -714,7 +717,11 @@ export default function DischargesDatabasePanel({
           </div>
           <div>
             <h2 className="db-title" style={{ color: '#10b981' }}>Base de Datos de Altas</h2>
-            <p className="db-subtitle">Exportación y revisión de pacientes con alta previa ({filteredData.length} registros)</p>
+            <p className="db-subtitle">
+              {hasDateRange 
+                ? `Exportación y revisión de pacientes con alta previa (${filteredData.length} registros cargados)`
+                : 'Seleccione un periodo de fechas (Desde - Hasta) para consultar los registros'}
+            </p>
           </div>
         </div>
 
@@ -780,6 +787,23 @@ export default function DischargesDatabasePanel({
             >
               Este mes
             </button>
+            {hasDateRange && (
+              <button
+                onClick={() => { setStartDate(''); setEndDate(''); }}
+                title="Limpiar periodo"
+                style={{
+                  background: 'rgba(239,68,68,0.1)',
+                  color: '#f87171',
+                  border: '1px solid rgba(239,68,68,0.25)',
+                  borderRadius: '6px',
+                  padding: '2px 8px',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Limpiar
+              </button>
+            )}
           </div>
           <div className="search-container" style={{ margin: 0 }}>
             <Search size={16} color="var(--text-secondary)" />
@@ -791,7 +815,16 @@ export default function DischargesDatabasePanel({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="glass-button primary" onClick={handleExportExcel} style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+          <button 
+            className="glass-button primary" 
+            onClick={handleExportExcel} 
+            disabled={!hasDateRange || filteredData.length === 0}
+            style={{ 
+              background: (!hasDateRange || filteredData.length === 0) ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #10b981, #059669)',
+              opacity: (!hasDateRange || filteredData.length === 0) ? 0.5 : 1,
+              cursor: (!hasDateRange || filteredData.length === 0) ? 'not-allowed' : 'pointer'
+            }}
+          >
             <Download size={16} /> Exportar Excel
           </button>
         </div>
@@ -905,10 +938,22 @@ export default function DischargesDatabasePanel({
                   )}
                 </tr>
               ))
+            ) : !hasDateRange ? (
+              <tr>
+                <td colSpan={isAdminOrGestor ? 15 : 14} className="db-empty" style={{ padding: '60px 16px', textAlign: 'center' }}>
+                  <Calendar size={42} color="#10b981" style={{ opacity: 0.6, margin: '0 auto 14px', display: 'block' }} />
+                  <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: 6 }}>
+                    Seleccione un periodo de fechas
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto', lineHeight: 1.5 }}>
+                    Ingrese la fecha <strong>Desde</strong> y <strong>Hasta</strong> en el panel superior (o use los accesos rápidos como "Hoy" o "Este mes") para cargar y consultar los registros de altas.
+                  </div>
+                </td>
+              </tr>
             ) : (
               <tr>
-                <td colSpan={isAdminOrGestor ? 15 : 14} className="db-empty">
-                  No se encontraron registros de altas para este periodo o búsqueda.
+                <td colSpan={isAdminOrGestor ? 15 : 14} className="db-empty" style={{ padding: '40px 16px', textAlign: 'center' }}>
+                  No se encontraron registros de altas para el periodo seleccionado ({startDate} al {endDate}).
                 </td>
               </tr>
             )}
