@@ -21,8 +21,12 @@ import BlockedBedsReportPanel from './components/BlockedBedsReportPanel';
 import GeneralBedStatusPanel from './components/GeneralBedStatusPanel';
 import Navbar from './components/Navbar';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
-import { useFirestoreCollection } from './hooks/useFirestoreCollection';
-import { runCollectionsMigration } from './utils/migrationService';
+import { 
+  useFirestoreCollection, 
+  addFirestoreDoc, 
+  updateFirestoreDoc, 
+  bulkAddFirestoreDocs 
+} from './hooks/useFirestoreCollection';
 import { sanitizeBedsStructure } from './utils/bedSanitizer';
 import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
 import { MOCK_TRANSFERS } from './data/mockTransfers';
@@ -115,12 +119,37 @@ function App() {
     }
   }, [bedsData, bedsLoading, isSyncEnabled, setBedsData]);
 
-  // ── COLECCIONES INDEPENDIENTES DE FIRESTORE (Registros individuales) ─────────
-  const dischargesCol = useFirestoreCollection('discharges', { orderByField: 'dischargeAt', enabled: isSyncEnabled });
-  const transfersCol = useFirestoreCollection('transfers', { orderByField: 'fechaTraslado', enabled: isSyncEnabled, initialData: MOCK_TRANSFERS });
-  const blockLogsCol = useFirestoreCollection('blockLogs', { orderByField: 'blockedAt', enabled: isSyncEnabled });
-  const hodomCol = useFirestoreCollection('hodomRequests', { orderByField: 'solicitadaAt', enabled: isSyncEnabled });
-  const proceduresCol = useFirestoreCollection('procedures', { orderByField: 'createdAt', enabled: isSyncEnabled });
+  // ── COLECCIONES INDEPENDIENTES DE FIRESTORE (Carga por demanda / Lazy Loading) ──
+  const isDischargesView = currentView === 'altas_database' || currentView === 'insights';
+  const isTransfersView = currentView === 'traslados_database' || currentView === 'insights';
+  const isBlockLogsView = currentView === 'blocked_beds' || currentView === 'insights';
+  const isHodomView = currentView === 'hodom' || currentView === 'dashboard';
+  const isProceduresView = currentView === 'interconsultas' || currentView === 'dashboard' || currentView === 'database' || currentView === 'altas_database';
+
+  const dischargesCol = useFirestoreCollection('discharges', { 
+    orderByField: 'dischargeAt', 
+    realtime: false, 
+    enabled: isSyncEnabled && isDischargesView 
+  });
+  const transfersCol = useFirestoreCollection('transfers', { 
+    orderByField: 'fechaTraslado', 
+    realtime: false, 
+    enabled: isSyncEnabled && isTransfersView, 
+    initialData: MOCK_TRANSFERS 
+  });
+  const blockLogsCol = useFirestoreCollection('blockLogs', { 
+    orderByField: 'blockedAt', 
+    realtime: false, 
+    enabled: isSyncEnabled && isBlockLogsView 
+  });
+  const hodomCol = useFirestoreCollection('hodomRequests', { 
+    orderByField: 'solicitadaAt', 
+    enabled: isSyncEnabled && isHodomView 
+  });
+  const proceduresCol = useFirestoreCollection('procedures', { 
+    orderByField: 'createdAt', 
+    enabled: isSyncEnabled && isProceduresView 
+  });
 
   // Alias y adaptadores de compatibilidad
   const hodomRequests = hodomCol.data;
@@ -638,15 +667,15 @@ function App() {
           waitingList={waitingList}
           setWaitingList={setWaitingList}
           procedures={procedures}
-          onAddProcedure={proceduresCol.addItem}
+          onAddProcedure={(item) => addFirestoreDoc('procedures', item)}
           onHodomSubmit={handleHodomSubmit}
           onMarkHodomDoneByBed={handleHodomMarkDoneByBed}
           onEditPatient={handleEditPatient}
           onViewPatient={handleViewPatient}
-          onAddTransfers={transfersCol.bulkAdd}
-          onAddDischarge={dischargesCol.addItem}
-          onAddBlockLog={blockLogsCol.addItem}
-          onUpdateBlockLog={blockLogsCol.updateItem}
+          onAddTransfers={(items) => bulkAddFirestoreDocs('transfers', items)}
+          onAddDischarge={(item) => addFirestoreDoc('discharges', item)}
+          onAddBlockLog={(item) => addFirestoreDoc('blockLogs', item)}
+          onUpdateBlockLog={(id, updates) => updateFirestoreDoc('blockLogs', id, updates)}
           user={currentUser}
           onRequestWaitingIC={(patient) => setRequestingWaitingIC(patient)}
         />
@@ -758,8 +787,8 @@ function App() {
         <DischargesDatabasePanel 
           discharges={dischargesLog}
           procedures={procedures}
-          onUpdateDischarge={dischargesCol.updateItem}
-          onAddDischarge={dischargesCol.addItem}
+          onUpdateDischarge={(id, updates) => updateFirestoreDoc('discharges', id, updates)}
+          onAddDischarge={(item) => addFirestoreDoc('discharges', item)}
           bedsData={bedsData} 
           setBedsData={setBedsData} 
           setWaitingList={setWaitingList}
@@ -778,7 +807,7 @@ function App() {
               // Si se actualizó un elemento individual:
               const changed = updatedList.find((item, idx) => JSON.stringify(item) !== JSON.stringify(blockLog[idx]));
               if (changed && changed.id) {
-                blockLogsCol.updateItem(changed.id, changed).catch(e => console.error(e));
+                updateFirestoreDoc('blockLogs', changed.id, changed).catch(e => console.error(e));
               }
             }
           }}
