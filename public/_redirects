@@ -1,6 +1,3 @@
-/* SPA Redirect rule for Cloudflare Pages */
-/* Ensure routes redirect to index.html for Single Page Application */
-/solicitud /#solicitud-publica 302
-/solicitud-publica /#solicitud-publica 302
-/* Any other route serves index.html */
-/* 200 */
+/solicitud    /#solicitud-publica    302
+/solicitud-publica    /#solicitud-publica    302
+/*    /index.html    200
