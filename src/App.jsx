@@ -125,7 +125,7 @@ function App() {
   const isTransfersView = currentView === 'traslados_database' || currentView === 'insights';
   const isBlockLogsView = currentView === 'blocked_beds' || currentView === 'insights';
   const isHodomView = currentView === 'hodom' || currentView === 'dashboard';
-  const isProceduresView = currentView === 'interconsultas' || currentView === 'dashboard' || currentView === 'database' || currentView === 'altas_database';
+  const isProceduresView = currentView === 'interconsultas' || currentView === 'database' || currentView === 'altas_database';
 
   const dischargesCol = useFirestoreCollection('discharges', {
     orderByField: 'dischargeAt',
