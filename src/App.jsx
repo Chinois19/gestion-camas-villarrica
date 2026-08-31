@@ -73,7 +73,14 @@ function App() {
   const themeBtnRef = useRef(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [isPublicRoute] = useState(() => {
-    return window.location.hash.includes('#solicitud-publica') || window.location.search.includes('public=solicitud');
+    const path = window.location.pathname.toLowerCase();
+    return (
+      window.location.hash.includes('#solicitud-publica') ||
+      window.location.search.includes('public=solicitud') ||
+      path === '/solicitud' ||
+      path === '/solicitud-publica' ||
+      path.startsWith('/solicitud')
+    );
   });
 
   // Keep Firebase Auth state synchronized

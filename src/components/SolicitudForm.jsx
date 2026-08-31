@@ -735,6 +735,19 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
               ✏️ Editar
             </button>
           )}
+          <button
+            type="button"
+            className="glass-button"
+            style={{ padding: '8px 14px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', borderColor: 'rgba(56,189,248,0.3)' }}
+            onClick={() => {
+              const link = `${window.location.origin}/#solicitud-publica`;
+              navigator.clipboard.writeText(link);
+              toast.success('¡Enlace público copiado al portapapeles!');
+            }}
+            title="Copiar enlace público de solicitud para compartir"
+          >
+            🔗 Copiar Enlace Público
+          </button>
           {canEditDateTime && !isViewMode ? (
             /* Superadmin/Gestor: campos editables para ingreso retroactivo */
             <>
