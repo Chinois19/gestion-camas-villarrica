@@ -481,9 +481,30 @@ function App() {
             const cleanRut = (rut) => (rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
             const newRut = cleanRut(newPatient.rut);
             if (newRut) {
+              // Verificar si ya está en lista de espera
               const dup = waitingList.find(p => cleanRut(p.rut) === newRut);
               if (dup) {
                 toast.error(`⚠️ Paciente ${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra en la lista de espera.`);
+                return false;
+              }
+              // CRÍTICO: Verificar si ya está acostado en alguna cama
+              let bedInfo = '';
+              let foundInBed = false;
+              outer: for (const floor in bedsData) {
+                for (const sector in bedsData[floor]) {
+                  for (const room of bedsData[floor][sector]) {
+                    for (const bed of room.beds) {
+                      if ((bed.status === 'occupied' || bed.status === 'pending_hodom') && cleanRut(bed.rut) === newRut) {
+                        bedInfo = `Hab ${room.roomId} — Cama ${bed.id} (Paciente: ${bed.patient})`;
+                        foundInBed = true;
+                        break outer;
+                      }
+                    }
+                  }
+                }
+              }
+              if (foundInBed) {
+                toast.error(`⚠️ Paciente ${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra hospitalizado en ${bedInfo}`);
                 return false;
               }
             }

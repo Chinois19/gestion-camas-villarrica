@@ -517,9 +517,42 @@ export default function Dashboard({
   const confirmAssignment = async (assignmentData) => {
     const { roomId, bedId, patient } = pendingAssignment;
 
+    // ── VERIFICACIÓN CRÍTICA ANTI-DUPLICADO ──────────────────────────────────
+    // Re-verificar el RUT justo antes de escribir, para cubrir condiciones de
+    // carrera cuando dos usuarios están asignando el mismo paciente en paralelo.
+    const patientRutClean = (patient.rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
+    if (patientRutClean) {
+      let alreadyInBedFinal = false;
+      let existingBedInfoFinal = '';
+      outer: for (const floor in bedsData) {
+        for (const sector in bedsData[floor]) {
+          for (const room of bedsData[floor][sector]) {
+            for (const b of room.beds) {
+              if ((b.status === 'occupied' || b.status === 'pending_hodom') && b.rut) {
+                const bRut = b.rut.replace(/[^0-9kK]/g, '').toLowerCase();
+                if (bRut && bRut === patientRutClean) {
+                  alreadyInBedFinal = true;
+                  existingBedInfoFinal = `Hab ${room.roomId} — Cama ${b.id} (Paciente: ${b.patient})`;
+                  break outer;
+                }
+              }
+            }
+          }
+        }
+      }
+      if (alreadyInBedFinal) {
+        toast.error(`⚠️ No se puede acostar: el paciente ${patient.name} (RUT: ${patient.rut}) ya figura hospitalizado en ${existingBedInfoFinal}.`);
+        setPendingAssignment(null);
+        setSelectedPatient(null);
+        return;
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     // Capturar datos del paciente antes de cerrar el modal
     const patientData = { ...pendingAssignment.patient };
     const patientId = patient.id;
+
 
     // Usar función updater con deep clone para que la transacción de Firebase
     // pueda recalcular correctamente con datos frescos del servidor
