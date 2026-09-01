@@ -35,7 +35,7 @@ import { Toaster, toast } from 'sonner';
 
 import { logoutUser } from './utils/authService';
 import { auth } from './firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 
 // Pre-fill some realistic interconsultas in the DUMMY_DATA to make the initial view visually rich
 const initialBedsData = JSON.parse(JSON.stringify(DUMMY_DATA));
@@ -100,6 +100,26 @@ function App() {
     });
     return () => unsubscribe();
   }, [currentUser, isPublicRoute]);
+
+  // ── LOGIN ANÓNIMO PARA RUTA PÚBLICA ──────────────────────────────────────
+  // El formulario público (/solicitud) necesita acceder a Firestore sin que
+  // el usuario esté logueado. Firebase Auth Anónimo satisface la regla
+  // "request.auth != null" sin exponer credenciales ni datos sensibles.
+  useEffect(() => {
+    if (!isPublicRoute) return;
+    signInAnonymously(auth).catch(err => {
+      console.error('[App] Error al iniciar sesión anónima para formulario público:', err);
+    });
+  }, [isPublicRoute]);
+
+  // Timeout de seguridad: si el formulario público no carga en 8 segundos,
+  // desbloquear la UI para que no quede el spinner atascado indefinidamente.
+  const [publicLoadTimeout, setPublicLoadTimeout] = useState(false);
+  useEffect(() => {
+    if (!isPublicRoute) return;
+    const timer = setTimeout(() => setPublicLoadTimeout(true), 8000);
+    return () => clearTimeout(timer);
+  }, [isPublicRoute]);
 
   // Only sync clinical data if user is authenticated or in a public form route
   const isSyncEnabled = !!currentUser || isPublicRoute;
@@ -463,7 +483,7 @@ function App() {
 
   // ── PUBLIC ROUTE ───────────────────────────────────────────────────────────
   if (isPublicRoute) {
-    if (waitingLoading) {
+    if (waitingLoading && !publicLoadTimeout) {
       return (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column', gap: '16px' }}>
           <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.1)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
@@ -472,6 +492,7 @@ function App() {
         </div>
       );
     }
+
 
     return (
       <div className="app-container" style={{ padding: '24px 0', minHeight: '100vh', overflowY: 'auto' }}>
