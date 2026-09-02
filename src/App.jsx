@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Activity, Search, User, LogOut, KeyRound, Palette
 } from 'lucide-react';
@@ -34,6 +34,7 @@ import { MOCK_TRANSFERS } from './data/mockTransfers';
 import { Toaster, toast } from 'sonner';
 
 import { logoutUser } from './utils/authService';
+import { checkAndMigrateWaitingList } from './utils/waitingListMigration';
 import { auth } from './firebase';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 
@@ -125,9 +126,57 @@ function App() {
   const isSyncEnabled = !!currentUser || isPublicRoute;
 
 
-  // ── ESTADO OPERATIVO DE CAMAS Y ESPERA (Documentos ligeros fijos) ─────────────
+  // ── ESTADO OPERATIVO DE CAMAS (Documentos ligeros fijos) ─────────────────────
   const [bedsData, setBedsData, bedsLoading] = useFirebaseSync('appState', 'bedsData', initialBedsData, { enabled: isSyncEnabled });
-  const [waitingList, setWaitingList, waitingLoading] = useFirebaseSync('appState', 'waitingList', WAITING_LIST, { enabled: isSyncEnabled });
+
+  // ── COLECCIÓN INDEPENDIENTE DE LISTA DE ESPERA (Tiempo Real) ───────────────
+  const waitingCol = useFirestoreCollection('waitingList', {
+    realtime: true,
+    enabled: isSyncEnabled,
+    initialData: WAITING_LIST
+  });
+  const waitingList = waitingCol.data;
+  const waitingLoading = waitingCol.loading;
+
+  // ── Migración preventiva automática desde appState/waitingList si correspondiera ─
+  useEffect(() => {
+    if (isSyncEnabled) {
+      checkAndMigrateWaitingList();
+    }
+  }, [isSyncEnabled]);
+
+  // ── Adaptador seguro para componentes que llaman a setWaitingList(prev => ...) ──
+  const setWaitingList = useCallback(async (updaterOrData) => {
+    if (typeof updaterOrData === 'function') {
+      const currentList = waitingCol.data;
+      const nextList = updaterOrData(currentList);
+      if (Array.isArray(nextList)) {
+        const nextIds = new Set(nextList.map(p => p?.id));
+        const currentIds = new Set(currentList.map(p => p?.id));
+
+        for (const r of currentList) {
+          if (r?.id && !nextIds.has(r.id)) {
+            await deleteFirestoreDoc('waitingList', r.id).catch(e => console.warn(e));
+          }
+        }
+        for (const a of nextList) {
+          if (a && (!a.id || !currentIds.has(a.id))) {
+            await addFirestoreDoc('waitingList', a).catch(e => console.warn(e));
+          }
+        }
+        for (const m of nextList) {
+          if (m?.id && currentIds.has(m.id)) {
+            const prevItem = currentList.find(c => c.id === m.id);
+            if (JSON.stringify(prevItem) !== JSON.stringify(m)) {
+              await updateFirestoreDoc('waitingList', m.id, m).catch(e => console.warn(e));
+            }
+          }
+        }
+        return true;
+      }
+    }
+    return false;
+  }, [waitingCol.data]);
 
   // ── Sanitización y auto-reparación preventiva de camas con IDs corruptos ────────
   useEffect(() => {
@@ -328,12 +377,11 @@ function App() {
 
   const handleMarkICDone = (roomId, bedId, icId, newState = 'realizada', observaciones = '') => {
     if (roomId === 'Espera') {
-      setWaitingList(prev => prev.map(p => {
-        if (p.id === bedId) {
-          return { ...p, interconsultas: (p.interconsultas || []).map(ic => ic.id === icId ? { ...ic, estado: newState, observaciones, resueltaAt: new Date().toISOString() } : ic) };
-        }
-        return p;
-      }));
+      const p = waitingList.find(pt => pt.id === bedId);
+      if (p) {
+        const nextICs = (p.interconsultas || []).map(ic => ic.id === icId ? { ...ic, estado: newState, observaciones, resueltaAt: new Date().toISOString() } : ic);
+        updateFirestoreDoc('waitingList', bedId, { interconsultas: nextICs });
+      }
       toast.success(`Interconsulta marcada como ${newState}`);
       return;
     }
@@ -365,12 +413,11 @@ function App() {
 
   const handleDeleteIC = (roomId, bedId, icId) => {
     if (roomId === 'Espera') {
-      setWaitingList(prev => prev.map(p => {
-        if (p.id === bedId) {
-          return { ...p, interconsultas: (p.interconsultas || []).filter(ic => ic.id !== icId) };
-        }
-        return p;
-      }));
+      const p = waitingList.find(pt => pt.id === bedId);
+      if (p) {
+        const nextICs = (p.interconsultas || []).filter(ic => ic.id !== icId);
+        updateFirestoreDoc('waitingList', bedId, { interconsultas: nextICs });
+      }
       toast.success('Interconsulta eliminada');
       return;
     }
@@ -441,14 +488,17 @@ function App() {
       }
     }
 
-    const res = await setWaitingList(prev => [newPatient, ...prev]);
-    if (res !== false) {
-      toast.success(`Solicitud ingresada correctamente para ${newPatient.name}`);
-      return true;
-    } else {
-      toast.error('Error al guardar la solicitud en el servidor');
-      return false;
+    try {
+      const res = await addFirestoreDoc('waitingList', newPatient);
+      if (res) {
+        toast.success(`Solicitud ingresada correctamente para ${newPatient.name}`);
+        return true;
+      }
+    } catch (err) {
+      console.error('Error al agregar paciente a waitingList:', err);
     }
+    toast.error('Error al guardar la solicitud en el servidor');
+    return false;
   };
 
   // Pending counts for nav badges
@@ -529,8 +579,13 @@ function App() {
                 return false;
               }
             }
-            const res = await setWaitingList(prev => [newPatient, ...prev]);
-            return res !== false;
+            try {
+              const res = await addFirestoreDoc('waitingList', newPatient);
+              return !!res;
+            } catch (err) {
+              console.error('Error al ingresar paciente remoto en waitingList:', err);
+              return false;
+            }
           }}
           currentUser={{ name: "Usuario Remoto (Web)", role: "public", username: "public" }}
         />
@@ -733,12 +788,16 @@ function App() {
           currentUser={currentUser}
           onRequestIC={() => setRequestingWaitingIC(editingPatient || viewingPatient)}
           onUpdatePatient={async (updated) => {
-            const res = await setWaitingList(prev => prev.map(p => p.id === updated.id ? updated : p));
-            if (res !== false) {
-              setEditingPatient(null);
-              setViewingPatient(null);
-              setCurrentView('dashboard');
-              return true;
+            try {
+              const res = await updateFirestoreDoc('waitingList', updated.id, updated);
+              if (res) {
+                setEditingPatient(null);
+                setViewingPatient(null);
+                setCurrentView('dashboard');
+                return true;
+              }
+            } catch (err) {
+              console.error('Error actualizando paciente en waitingList:', err);
             }
             return false;
           }}
@@ -764,18 +823,16 @@ function App() {
             diagnosis: requestingWaitingIC.diagnosis || requestingWaitingIC.dxPrincipal
           }}
           currentUser={currentUser}
-          onConfirm={(formData) => {
-            setWaitingList(prev => prev.map(p => {
-              if (p.id === requestingWaitingIC.id) {
-                return { ...p, interconsultas: [...(p.interconsultas || []), formData] };
-              }
-              return p;
-            }));
+          onConfirm={async (formData) => {
+            const patient = waitingList.find(p => p.id === requestingWaitingIC.id);
+            const currentICs = patient?.interconsultas || [];
+            const nextICs = [...currentICs, formData];
+            await updateFirestoreDoc('waitingList', requestingWaitingIC.id, { interconsultas: nextICs });
             if (editingPatient && editingPatient.id === requestingWaitingIC.id) {
-              setEditingPatient(prev => ({ ...prev, interconsultas: [...(prev.interconsultas || []), formData] }));
+              setEditingPatient(prev => ({ ...prev, interconsultas: nextICs }));
             }
             if (viewingPatient && viewingPatient.id === requestingWaitingIC.id) {
-              setViewingPatient(prev => ({ ...prev, interconsultas: [...(prev.interconsultas || []), formData] }));
+              setViewingPatient(prev => ({ ...prev, interconsultas: nextICs }));
             }
             setRequestingWaitingIC(null);
             toast.success(`Interconsulta a ${formData.especialidadDestino} solicitada para paciente en espera`);

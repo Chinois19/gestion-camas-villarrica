@@ -15,6 +15,7 @@ import { matchesSearch } from '../utils/search';
 import { formatAgeDetailed } from '../utils/age';
 import cie10Data from '../data/cie10.json';
 import { DndContext, useDroppable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { addFirestoreDoc, deleteFirestoreDoc, updateFirestoreDoc } from '../hooks/useFirestoreCollection';
 import { toast } from 'sonner';
 
 const checkCompatibility = (bed, patient) => {
@@ -636,8 +637,9 @@ export default function Dashboard({
     // Primero escribir bedsData; solo si tiene éxito, remover de waitingList
     const success = await setBedsData(bedsUpdater);
     if (success !== false) {
-      // Solo remover de la lista de espera si la escritura de camas fue exitosa
-      setWaitingList(prev => prev.filter(p => p.id !== patientId));
+      // Remover atómicamente de la colección waitingList
+      deleteFirestoreDoc('waitingList', patientId).catch(e => console.warn(e));
+      if (setWaitingList) setWaitingList(prev => prev.filter(p => p.id !== patientId));
       toast.success(`Paciente ${patientData.name || 'asignado'} acostado en Cama ${bedId}`);
     } else {
       console.error('[Dashboard] ❌ Asignación fallida: la escritura de bedsData fue bloqueada o falló. El paciente permanece en la lista de espera.');
@@ -870,8 +872,9 @@ export default function Dashboard({
     const bedId = bed.id;
 
     if (dischargingPatient.isWaiting) {
-      // 1. Remove from waiting list
-      setWaitingList(prev => prev.filter(p => p.id !== bedId));
+      // 1. Remove from waiting list atómicamente
+      deleteFirestoreDoc('waitingList', bedId).catch(e => console.warn(e));
+      if (setWaitingList) setWaitingList(prev => prev.filter(p => p.id !== bedId));
 
       const dischargeRecord = {
         id: `wait_dis_${bedId}`,
@@ -1149,7 +1152,8 @@ export default function Dashboard({
       });
 
       if (success !== false) {
-        setWaitingList(prev => [...prev, requestToRestore]);
+        addFirestoreDoc('waitingList', requestToRestore).catch(e => console.warn(e));
+        if (setWaitingList) setWaitingList(prev => [...prev, requestToRestore]);
         toast.success('Acueste revocado; paciente devuelto a la lista de espera');
       } else {
         console.error('[Dashboard] ❌ Revocación fallida: no se pudo liberar la cama.');

@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
 import { matchesSearch } from '../utils/search';
 import { formatAgeDetailed } from '../utils/age';
-import { deleteFirestoreDoc } from '../hooks/useFirestoreCollection';
+import { deleteFirestoreDoc, addFirestoreDoc } from '../hooks/useFirestoreCollection';
 import { toast } from 'sonner';
 
 const formatDateToDDMMYYYY = (dateVal) => {
@@ -543,21 +543,24 @@ export default function DischargesDatabasePanel({
       if (!window.confirm(`¿Estás seguro de que deseas revocar el alta y volver a colocar al paciente en la lista de espera?`)) return;
       if (docId && onUpdateDischarge) await onUpdateDischarge(docId, { _reverted: true, _revertedAt: new Date().toISOString() });
       if (setWaitingListDischarges) setWaitingListDischarges(prev => prev.filter(p => (p.id || p._logId) !== docId));
+      const rawId = row?.rawBedData?.id;
+      const waitId = (typeof rawId === 'string' && rawId.startsWith('wait_dis_'))
+        ? rawId.replace('wait_dis_', '')
+        : (rawId || bedId || `wait_${Date.now()}`);
+      const restoredPatient = {
+        id: waitId,
+        name: row.nombre || row?.rawBedData?.patient || 'Paciente',
+        rut: row.run || row?.rawBedData?.rut || '',
+        diagnosis: row.diagnosticos || row?.rawBedData?.diagnosis || '',
+        age: row.edad || row?.rawBedData?.age || '',
+        status: 'waiting',
+        requestedAt: row.requestedAt || row?.rawBedData?.requestedAt || new Date().toISOString()
+      };
+      await addFirestoreDoc('waitingList', restoredPatient).catch(e => console.warn(e));
       if (setWaitingList) {
         setWaitingList(prev => {
-          const rawId = row?.rawBedData?.id;
-          const waitId = (typeof rawId === 'string' && rawId.startsWith('wait_dis_'))
-            ? rawId.replace('wait_dis_', '')
-            : (rawId || bedId || `wait_${Date.now()}`);
           if (prev.some(p => p.id === waitId || p.id === rawId || p.id === bedId)) return prev;
-          return [...prev, {
-            id: waitId,
-            name: row.nombre || row?.rawBedData?.patient || 'Paciente',
-            rut: row.run || row?.rawBedData?.rut || '',
-            diagnosis: row.diagnosticos || row?.rawBedData?.diagnosis || '',
-            age: row.edad || row?.rawBedData?.age || '',
-            status: 'waiting'
-          }];
+          return [...prev, restoredPatient];
         });
       }
       toast.success(`Alta revocada`);
