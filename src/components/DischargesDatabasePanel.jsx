@@ -65,12 +65,17 @@ const DESTINOS = [
   { id: 'Fallecido', label: 'Fallecido', icon: '✝️' },
 ];
 
+import { ESPECIALIDADES } from '../data/formData';
+
 const EditAltaModal = ({ row, onClose, onSave }) => {
   const p = row.rawBedData || {};
   const [formData, setFormData] = useState({
     nombre: p.patient || p.patientName || p.nombre || row.nombre || '',
     run: p.rut || row.run || '',
     diagnosticos: Array.isArray(p.diagnosis) ? p.diagnosis.join(' | ') : (p.diagnosis || row.diagnosticos || ''),
+    especialidadTratante: Array.isArray(p.especialidadTratante)
+      ? p.especialidadTratante.join(', ')
+      : (p.especialidadTratante || p.especialidad || (row.especialidades !== 'No asignada' ? row.especialidades : '') || ''),
     destino: p.destino || '',
     establecimientoRed: p.establecimientoRed || '',
     otroEstablecimientoDetalle: p.otroEstablecimientoDetalle || '',
@@ -98,6 +103,40 @@ const EditAltaModal = ({ row, onClose, onSave }) => {
           <div style={{ gridColumn: '1 / -1' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Diagnósticos</label>
             <input className="glass-input" name="diagnosticos" value={formData.diagnosticos} onChange={handleChange} style={{ width: '100%', marginTop: 4, boxSizing: 'border-box' }} />
+          </div>
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Especialidad Tratante</label>
+            <div style={{ display: 'flex', gap: '8px', marginTop: 4 }}>
+              <input
+                className="glass-input"
+                name="especialidadTratante"
+                value={formData.especialidadTratante}
+                onChange={handleChange}
+                placeholder="Ej: Medicina Interna, Cirugía General..."
+                style={{ flex: 1, boxSizing: 'border-box' }}
+              />
+              <select
+                className="glass-input"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setFormData(prev => ({
+                      ...prev,
+                      especialidadTratante: prev.especialidadTratante
+                        ? `${prev.especialidadTratante}, ${e.target.value}`
+                        : e.target.value
+                    }));
+                  }
+                }}
+                style={{ width: '180px', boxSizing: 'border-box' }}
+                value=""
+              >
+                <option value="">+ Añadir especialidad</option>
+                {ESPECIALIDADES.map(esp => (
+                  <option key={esp} value={esp}>{esp}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div style={{ gridColumn: '1 / -1' }}>
@@ -226,6 +265,10 @@ export default function DischargesDatabasePanel({
       if (p.especialidadTratante) {
         if (Array.isArray(p.especialidadTratante)) specs = [...specs, ...p.especialidadTratante];
         else specs.push(p.especialidadTratante);
+      }
+      if (p.especialidad) {
+        if (Array.isArray(p.especialidad)) specs = [...specs, ...p.especialidad];
+        else specs.push(p.especialidad);
       }
       const uniqueSpecs = [...new Set(specs.filter(Boolean))].join(', ');
 
@@ -406,10 +449,21 @@ export default function DischargesDatabasePanel({
         const dischargeDateObj = p.dischargeAt ? new Date(p.dischargeAt) : null;
         let dxList = [];
         if (p.diagnosis) {
-          if (Array.isArray(p.diagnosis)) dxList = [...p.diagnosis];
+          if (Array.isArray(p.diagnosis)) dxList = [...dxList, ...p.diagnosis];
           else dxList.push(p.diagnosis);
         }
         const uniqueDx = [...new Set(dxList.filter(Boolean))].join(' | ');
+
+        let specs = [];
+        if (p.especialidadTratante) {
+          if (Array.isArray(p.especialidadTratante)) specs = [...specs, ...p.especialidadTratante];
+          else specs.push(p.especialidadTratante);
+        }
+        if (p.especialidad) {
+          if (Array.isArray(p.especialidad)) specs = [...specs, ...p.especialidad];
+          else specs.push(p.especialidad);
+        }
+        const uniqueSpecs = [...new Set(specs.filter(Boolean))].join(', ');
 
         data.push({
           id: p.id || p._logId,
@@ -426,7 +480,7 @@ export default function DischargesDatabasePanel({
           run: p.rut || '—',
           edad: formatAgeDetailed(p.fechaNacimiento, p.age || p.edad),
           diagnosticos: uniqueDx || 'No registrado',
-          especialidades: 'No asignada',
+          especialidades: uniqueSpecs || 'No asignada',
           actualizacion: [{ texto: 'Alta previa a asignación de cama', fecha: formatDateToDDMMYYYY(p.dischargeAt), rawDate: p.dischargeAt ? new Date(p.dischargeAt) : new Date() }],
           comuna: p.comuna || '—',
           isWaitingListDischarge: true,
@@ -469,7 +523,7 @@ export default function DischargesDatabasePanel({
   const handleExportExcel = () => {
     if (filteredData.length === 0) return;
     const headers = [
-      'SERVICIO', 'SALA', 'CAMA', 'ESTADA', 'FECHA INGRESO', 'FECHA ALTA', 'PRECAUCIONES', 'NOMBRE', 'RUN', 'EDAD', 'DIAGNÓSTICOS', 'ESPECIALIDADES', 'DESTINO', 'ESTABLECIMIENTO RED', 'RED PRIVADA DETALLE', 'OBSERVACIONES', 'ACTUALIZACIONES'
+      'SERVICIO', 'SALA', 'CAMA', 'ESTADA', 'FECHA INGRESO', 'FECHA ALTA', 'PRECAUCIONES', 'NOMBRE', 'RUN', 'EDAD', 'DIAGNÓSTICOS', 'ESPECIALIDAD TRATANTE', 'DESTINO', 'ESTABLECIMIENTO RED', 'RED PRIVADA DETALLE', 'OBSERVACIONES', 'ACTUALIZACIONES'
     ];
     const data = filteredData.map(row => {
       const p = row.rawBedData || {};
@@ -584,11 +638,16 @@ export default function DischargesDatabasePanel({
 
   const handleSaveEdit = async (roomId, bedId, updatedData) => {
     const docId = editingRow?.id;
+    const especialidadList = updatedData.especialidadTratante
+      ? updatedData.especialidadTratante.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+
     if (docId && onUpdateDischarge) {
       await onUpdateDischarge(docId, {
         patient: updatedData.nombre, patientName: updatedData.nombre, nombre: updatedData.nombre,
         rut: updatedData.run, run: updatedData.run,
         diagnosis: updatedData.diagnosticos,
+        especialidadTratante: especialidadList,
         destino: updatedData.destino,
         establecimientoRed: updatedData.establecimientoRed,
         otroEstablecimientoDetalle: updatedData.otroEstablecimientoDetalle || '',
@@ -597,8 +656,12 @@ export default function DischargesDatabasePanel({
         _editedAt: new Date().toISOString()
       });
     }
-    if (setWaitingListDischarges) setWaitingListDischarges(prev => prev.map(p => (p.id === docId) ? { ...p, ...updatedData } : p));
-    if (setDischargesLog) setDischargesLog(prev => prev.map(p => (p.id === docId) ? { ...p, ...updatedData } : p));
+    if (setWaitingListDischarges) {
+      setWaitingListDischarges(prev => prev.map(p => (p.id === docId) ? { ...p, ...updatedData, especialidadTratante: especialidadList } : p));
+    }
+    if (setDischargesLog) {
+      setDischargesLog(prev => prev.map(p => (p.id === docId) ? { ...p, ...updatedData, especialidadTratante: especialidadList } : p));
+    }
     toast.success('Registro de alta actualizado correctamente');
     setEditingRow(null);
   };
@@ -845,7 +908,7 @@ export default function DischargesDatabasePanel({
               <th>RUN</th>
               <th>EDAD</th>
               <th>DIAGNÓSTICOS</th>
-              <th>ESPECIALIDADES</th>
+              <th>ESPECIALIDAD TRATANTE</th>
               <th>ACTUALIZACIÓN</th>
               <th>COMUNA</th>
               {isAdminOrGestor && <th style={{ textAlign: 'center' }}>ACCIONES</th>}

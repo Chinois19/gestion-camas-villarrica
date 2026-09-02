@@ -784,9 +784,9 @@ export default function Dashboard({
       if (typeof bedsData[floor] !== 'object') continue;
       for (const sector in bedsData[floor]) {
         if (!Array.isArray(bedsData[floor][sector])) continue;
-        const room = bedsData[floor][sector].find(r => r.roomId === roomId);
+        const room = bedsData[floor][sector].find(r => String(r.roomId) === String(roomId));
         if (room) {
-          targetBed = room.beds?.find(b => b.id === bedId);
+          targetBed = room.beds?.find(b => String(b.id) === String(bedId));
           if (targetBed) {
             targetFloor = floor;
             targetSector = sector;
@@ -797,23 +797,37 @@ export default function Dashboard({
       if (targetBed) break;
     }
 
+    // 1. Guardar en bedsData (objeto de cama)
+    try {
+      await updateBedState(roomId, bedId, {
+        novedades: [newEntry, ...(targetBed?.novedades || [])]
+      });
+    } catch (err) {
+      console.warn('[Dashboard] No se pudo actualizar novedades en bedsData:', err);
+    }
+
+    // 2. Guardar en la colección independiente 'procedures' de Firestore si está disponible
     if (onAddProcedure) {
-      const procDoc = {
-        id: String(newEntry.id || `proc_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`),
-        bedId,
-        roomId,
-        floor: targetFloor,
-        sector: targetSector,
-        patientName: targetBed?.patient || targetBed?.patientName || targetBed?.nombre || '',
-        rut: targetBed?.rut || targetBed?.run || '',
-        fecha: newEntry.fecha || new Date().toLocaleString('es-CL'),
-        createdAt: new Date().toISOString(),
-        usuario: newEntry.usuario || user?.name || user?.username || 'Personal Clínico',
-        rol: newEntry.rol || user?.role || 'Clínico',
-        contenido: newEntry.contenido || '',
-        tipo: 'procedimiento'
-      };
-      return await onAddProcedure(procDoc);
+      try {
+        const procDoc = {
+          id: String(newEntry.id || `proc_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`),
+          bedId: String(bedId),
+          roomId: String(roomId),
+          floor: targetFloor || '',
+          sector: targetSector || '',
+          patientName: targetBed?.patient || targetBed?.patientName || targetBed?.nombre || '',
+          rut: targetBed?.rut || targetBed?.run || '',
+          fecha: newEntry.fecha || new Date().toLocaleString('es-CL'),
+          createdAt: new Date().toISOString(),
+          usuario: newEntry.usuario || user?.name || user?.username || 'Personal Clínico',
+          rol: newEntry.rol || user?.role || 'Clínico',
+          contenido: newEntry.contenido || '',
+          tipo: 'procedimiento'
+        };
+        await onAddProcedure(procDoc);
+      } catch (procErr) {
+        console.warn('[Dashboard] Error al registrar procedure en Firestore (se guardó en cama):', procErr);
+      }
     }
   };
 
