@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { Database, Search, Download, Calendar, Filter, RefreshCw, FileSpreadsheet, AlertCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
-import { formatAgeDetailed } from '../utils/age';
 import './DatabasePanel.css';
 
 // ── Constantes ─────────────────────────────────────────────────────────────
@@ -16,8 +15,9 @@ const SERVICES = [
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
+// Los campos vacíos devuelven siempre cadena vacía '' (en blanco)
 const fmtDateTime = (val) => {
-  if (!val) return '—';
+  if (!val) return '';
   try {
     const d = new Date(val);
     if (isNaN(d.getTime())) return String(val);
@@ -29,7 +29,7 @@ const fmtDateTime = (val) => {
 };
 
 const fmtDate = (val) => {
-  if (!val) return '—';
+  if (!val) return '';
   try {
     const d = new Date(val);
     if (isNaN(d.getTime())) return String(val);
@@ -38,32 +38,61 @@ const fmtDate = (val) => {
 };
 
 const diffHours = (start, end) => {
-  if (!start || !end) return null;
+  if (!start || !end) return '';
   try {
     const diff = new Date(end) - new Date(start);
-    if (isNaN(diff) || diff < 0) return null;
+    if (isNaN(diff) || diff < 0) return '';
     const hours = Math.floor(diff / 3600000);
     const mins = Math.floor((diff % 3600000) / 60000);
     return `${hours}h ${mins}m`;
-  } catch { return null; }
+  } catch { return ''; }
 };
 
 const diffDays = (start, end) => {
-  if (!start || !end) return null;
+  if (!start || !end) return '';
   try {
     const diff = new Date(end) - new Date(start);
-    if (isNaN(diff) || diff < 0) return null;
+    if (isNaN(diff) || diff < 0) return '';
     return Math.ceil(diff / 86400000);
-  } catch { return null; }
+  } catch { return ''; }
 };
 
 const joinArr = (val) => {
-  if (!val) return '—';
-  if (Array.isArray(val)) return val.filter(Boolean).join(' | ') || '—';
-  return String(val) || '—';
+  if (!val) return '';
+  if (Array.isArray(val)) return val.filter(Boolean).join(' | ') || '';
+  return String(val) || '';
 };
 
 const cleanRut = (r) => (r || '').replace(/[^0-9kK]/g, '').toLowerCase();
+
+// Cálculo numérico exacto de edad en años enteros
+const getAgeYears = (birthDateStr, fallbackAge) => {
+  if (birthDateStr) {
+    try {
+      const parts = String(birthDateStr).split('-');
+      if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        const b = new Date(y, m, d);
+        if (!isNaN(b.getTime())) {
+          const today = new Date();
+          let age = today.getFullYear() - b.getFullYear();
+          const monthDiff = today.getMonth() - b.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < b.getDate())) {
+            age--;
+          }
+          if (age >= 0) return age;
+        }
+      }
+    } catch { }
+  }
+  if (fallbackAge !== undefined && fallbackAge !== null && fallbackAge !== '' && fallbackAge !== '—') {
+    const num = parseInt(fallbackAge, 10);
+    if (!isNaN(num)) return num;
+  }
+  return '';
+};
 
 // ── Fusión inteligente y desduplicación de eventos clínicos ────────────────
 function mergeEvent(existing, incoming) {
@@ -135,12 +164,23 @@ function getAllEvents(dischargesLog = [], bedsData = {}) {
     }
   };
 
-  // 1. Colección directa discharges de Firestore (fuente principal con datos completos)
+  // 1. Colección directa discharges de Firestore (altas con acueste y altas sin acueste)
   (Array.isArray(dischargesLog) ? dischargesLog : []).forEach((d) => {
     addOrMerge(d);
   });
 
-  // 2. Historial de altas legacy en bedsData (solo dischargeHistory real, omitiendo previousPatient)
+  // 2. Altas directas legacy de lista de espera si existieran en bedsData
+  if (Array.isArray(bedsData?.waitingListDischarges)) {
+    bedsData.waitingListDischarges.forEach((d) => {
+      addOrMerge({
+        ...d,
+        isWaitingListDischarge: true,
+        _source: 'waitingList'
+      });
+    });
+  }
+
+  // 3. Historial de altas legacy en bedsData (dischargeHistory de camas)
   const floors = Object.keys(bedsData || {}).filter(
     (key) =>
       key !== 'waitingListDischarges' &&
@@ -153,7 +193,7 @@ function getAllEvents(dischargesLog = [], bedsData = {}) {
     Object.keys(bedsData[floor] || {}).forEach((sector) => {
       (bedsData[floor][sector] || []).forEach((room) => {
         (room.beds || []).forEach((bed) => {
-          // Historial de altas en esta cama (si tiene altas históricas completas)
+          // Historial de altas en esta cama
           if (Array.isArray(bed.dischargeHistory)) {
             bed.dischargeHistory
               .filter((r) => !r._reverted && (r.patient || r.patientName || r.nombre))
@@ -193,49 +233,57 @@ function buildRows(events, transfers) {
     const orig = d.originalWaitingRequest || d.rawBedData?.originalWaitingRequest || d;
 
     // ── Solicitud
-    // Compatible con requestedAt (estándar SolicitudForm), solicitadaAt, createdAt, timestamp
     const solicitudAt = orig.requestedAt || orig.solicitadaAt || orig.createdAt || orig.timestamp || d.requestedAt || null;
-    const nombre = d.patient || d.patientName || d.nombre || orig.name || orig.nombre || '—';
-    const nombreSocial = d.nombreSocial || orig.nombreSocial || '—';
-    const rut = d.rut || d.run || orig.rut || orig.run || '—';
-    const edad = formatAgeDetailed(d.fechaNacimiento || orig.fechaNacimiento, d.age || d.edad || orig.age || orig.edad) || '—';
-    const sexo = d.sex || d.sexo || orig.sex || orig.sexo || '—';
-    const prevision = d.prevision || orig.prevision || '—';
-    const comuna = d.comuna || orig.comuna || '—';
-    const dxPrincipal = d.dxPrincipal || orig.dxPrincipal || joinArr(d.diagnosis) || joinArr(orig.diagnosis) || '—';
-    const dxSecundarios = joinArr(orig.secondaryCodes || d.secondaryCodes) || '—';
-    const servicioSol = orig.servicioSol || orig.origin || d.servicioSol || d.origin || '—';
-    const medicoSol = orig.medicoSol || d.medicoSol || '—';
-    const especialidadMedico = orig.especialidadMedico || d.especialidadMedico || '—';
-    const prioridad = orig.prioridad || orig.priority || d.prioridad || d.priority || '—';
-    const destinoSol = orig.destino || orig.bedTypeRequired || d.destino || d.bedTypeRequired || '—';
-    const requisitosUGP = orig.requisitosUGP || d.requisitosUGP || '—';
-    const reqEnfermeria = orig.reqEnfermeria || d.reqEnfermeria || '—';
+    const nombre = d.patient || d.patientName || d.nombre || orig.name || orig.nombre || '';
+    const rut = d.rut || d.run || orig.rut || orig.run || '';
+    const edadNum = getAgeYears(d.fechaNacimiento || orig.fechaNacimiento, d.age || d.edad || orig.age || orig.edad);
+    const sexo = d.sex || d.sexo || orig.sex || orig.sexo || '';
+    const prevision = d.prevision || orig.prevision || '';
+    const comuna = d.comuna || orig.comuna || '';
+    const dxPrincipal = d.dxPrincipal || orig.dxPrincipal || joinArr(d.diagnosis) || joinArr(orig.diagnosis) || '';
+    const dxSecundarios = joinArr(orig.secondaryCodes || d.secondaryCodes) || '';
+    const servicioSol = orig.servicioSol || orig.origin || d.servicioSol || d.origin || '';
+    const medicoSol = orig.medicoSol || d.medicoSol || '';
+    const especialidadMedico = orig.especialidadMedico || d.especialidadMedico || '';
+    const prioridad = orig.prioridad || orig.priority || d.prioridad || d.priority || '';
+    const destinoSol = orig.destino || orig.bedTypeRequired || d.destino || d.bedTypeRequired || '';
+    const requisitosUGP = orig.requisitosUGP || d.requisitosUGP || '';
+    const reqEnfermeria = orig.reqEnfermeria || d.reqEnfermeria || '';
+
+    // ── Detección de egreso sin acueste (alta directa desde lista de espera)
+    const isWaitingDischarge = Boolean(
+      d._source === 'waitingList' ||
+      d.isWaitingListDischarge ||
+      (d.habitacion === 'Lista de Espera' && !d.assignedAt && !d.admissionDate)
+    );
 
     // ── Acueste
-    const acuesteAt = d.assignedAt || d.admissionDate || d.fechaIngreso || orig.assignedAt || null;
-    const tiempoEspera = diffHours(solicitudAt, acuesteAt);
+    const acuesteAt = isWaitingDischarge ? null : (d.assignedAt || d.admissionDate || d.fechaIngreso || orig.assignedAt || null);
+    const tiempoEspera = isWaitingDischarge ? '' : diffHours(solicitudAt, acuesteAt);
     const especialidadTratante = joinArr(d.especialidadTratante || orig.especialidadTratante);
-    const sala = d.roomId || d.habitacion || d.sala || d.salaOrigen || '—';
-    const cama = d.bedId || d.cama || d.camaOrigen || '—';
+    const sala = isWaitingDischarge ? 'Lista de Espera (Sin Cama)' : (d.roomId || d.habitacion || d.sala || d.salaOrigen || '');
+    const cama = isWaitingDischarge ? '' : (d.bedId || d.cama || d.camaOrigen || '');
     const aislamiento = joinArr(d.aislamiento || orig.aislamiento);
 
     // ── Alta
-    const isCurrentlyAdmitted = d._status === 'occupied' || (!d.cleaningAt && !d.dischargeAt && (d.patient || d.nombre));
-    const altaAt = d.cleaningAt || d.dischargeAt || d.fechaAlta || null;
-    const diasEstadiaTotal = altaAt
-      ? diffDays(acuesteAt, altaAt)
-      : (acuesteAt ? diffDays(acuesteAt, new Date()) : '—');
+    const isCurrentlyAdmitted = !isWaitingDischarge && (d._status === 'occupied' || (!d.cleaningAt && !d.dischargeAt && (d.patient || d.nombre)));
+    const altaAt = isCurrentlyAdmitted ? null : (d.cleaningAt || d.dischargeAt || d.fechaAlta || null);
+    const diasEstadiaTotal = isWaitingDischarge
+      ? ''
+      : (altaAt ? diffDays(acuesteAt, altaAt) : (acuesteAt ? diffDays(acuesteAt, new Date()) : ''));
+
     const servicioAlta = isCurrentlyAdmitted
       ? (especialidadTratante || 'En hospitalización')
-      : (joinArr(d.especialidadTratante) || '—');
+      : (joinArr(d.especialidadTratante) || '');
     const destinoAlta = isCurrentlyAdmitted
       ? 'En hospitalización (Cama activa)'
-      : (d.destino || '—');
-    const establecimientoDestino = d.establecimientoRed || d.otroEstablecimientoDetalle || d.redPrivadaDetalle || '—';
-    const grd = d.grdId ? `${d.grdId}${d.grdName ? ' - ' + d.grdName : ''}` : '—';
-    const severidad = d.severity || '—';
-    const diasGrd = d.projectedDays || '—';
+      : (d.destino || '');
+    const establecimientoDestino = d.establecimientoRed || d.otroEstablecimientoDetalle || d.redPrivadaDetalle || '';
+
+    // ── Tipo de Evento / Acueste
+    const tipoEvento = isWaitingDischarge
+      ? 'Alta directa sin acueste (Lista de Espera)'
+      : (isCurrentlyAdmitted ? 'Hospitalizado activo' : 'Hospitalización con acueste');
 
     // ── Traslados del mismo paciente (por RUT o Nombre)
     const rutClean = cleanRut(rut);
@@ -258,11 +306,11 @@ function buildRows(events, transfers) {
       const t = patientTransfers[i - 1];
       if (t) {
         transferCols[`Traslado ${i} - Fecha`] = fmtDateTime(t.fechaTraslado);
-        transferCols[`Traslado ${i} - Serv. Origen`] = t.servicioOrigen || '—';
-        transferCols[`Traslado ${i} - Cama Origen`] = `${t.salaOrigen || ''}/${t.camaOrigen || ''}` || '—';
-        transferCols[`Traslado ${i} - Serv. Destino`] = t.servicioDestino || '—';
-        transferCols[`Traslado ${i} - Cama Destino`] = `${t.salaDestino || ''}/${t.camaDestino || ''}` || '—';
-        transferCols[`Traslado ${i} - Días en Serv. Origen`] = t.estada || '—';
+        transferCols[`Traslado ${i} - Serv. Origen`] = t.servicioOrigen || '';
+        transferCols[`Traslado ${i} - Cama Origen`] = (t.salaOrigen || t.camaOrigen) ? `${t.salaOrigen || ''}/${t.camaOrigen || ''}` : '';
+        transferCols[`Traslado ${i} - Serv. Destino`] = t.servicioDestino || '';
+        transferCols[`Traslado ${i} - Cama Destino`] = (t.salaDestino || t.camaDestino) ? `${t.salaDestino || ''}/${t.camaDestino || ''}` : '';
+        transferCols[`Traslado ${i} - Días en Serv. Origen`] = t.estada || '';
       } else {
         transferCols[`Traslado ${i} - Fecha`] = '';
         transferCols[`Traslado ${i} - Serv. Origen`] = '';
@@ -274,12 +322,13 @@ function buildRows(events, transfers) {
     }
 
     rows.push({
+      // IDENTIFICACIÓN DEL EVENTO
+      'Tipo de Evento': tipoEvento,
       // SOLICITUD
       'Fecha/Hora Solicitud': fmtDateTime(solicitudAt),
       'Nombre Paciente': nombre,
-      'Nombre Social': nombreSocial,
       'RUT': rut,
-      'Edad': edad,
+      'Edad (Años)': edadNum !== '' ? edadNum : '',
       'Sexo': sexo,
       'Previsión': prevision,
       'Comuna': comuna,
@@ -294,7 +343,7 @@ function buildRows(events, transfers) {
       'Req. Enfermería': reqEnfermeria,
       // ACUESTE
       'Fecha/Hora Acueste': fmtDateTime(acuesteAt),
-      'Tiempo de Espera (Solicitud→Acueste)': tiempoEspera || '—',
+      'Tiempo de Espera (Solicitud→Acueste)': tiempoEspera,
       'Esp. Tratante (Acueste)': especialidadTratante,
       'Sala': sala,
       'Cama': cama,
@@ -303,18 +352,17 @@ function buildRows(events, transfers) {
       ...transferCols,
       // ALTA
       'Fecha/Hora Alta': fmtDateTime(altaAt),
-      'Días Totales de Estadía': diasEstadiaTotal != null ? diasEstadiaTotal : '—',
+      'Días Totales de Estadía': diasEstadiaTotal !== '' ? diasEstadiaTotal : '',
       'Servicio de Alta': servicioAlta,
       'Destino Alta': destinoAlta,
       'Establecimiento Destino': establecimientoDestino,
-      'GRD': grd,
-      'Severidad GRD': severidad,
-      'Días GRD Proyectados': diasGrd,
-      // META
+      // META INTERNA
       _rutClean: rutClean,
       _acuesteAt: acuesteAt,
       _solicitudAt: solicitudAt,
       _altaAt: altaAt,
+      _isWaitingDischarge: isWaitingDischarge,
+      _tipoEvento: tipoEvento,
     });
   });
 
@@ -327,6 +375,7 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
   const [startDate, setStartDate] = useState(DEFAULT_START_DATE);
   const [endDate, setEndDate] = useState(today);
   const [serviceFilter, setServiceFilter] = useState('todos');
+  const [eventTypeFilter, setEventTypeFilter] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
   const [rows, setRows] = useState(null); // null = sin consultar aún
   const [loading, setLoading] = useState(false);
@@ -352,31 +401,40 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
         // 1. Extraer todos los eventos combinados de Firestore y camas
         const allEvents = getAllEvents(dischargesLog, bedsData);
 
-        // 2. Filtrar por rango de fechas evaluando cualquiera de los hitos del evento clínico
+        // 2. Filtrar por rango de fechas según las fechas del evento clínico
         const filteredEvents = allEvents.filter((d) => {
           const orig = d.originalWaitingRequest || d.rawBedData?.originalWaitingRequest || d;
           const solicitudAt = orig.requestedAt || orig.solicitadaAt || orig.createdAt || orig.timestamp || d.requestedAt || null;
           const acuesteAt = d.assignedAt || d.admissionDate || d.fechaIngreso || orig.assignedAt || null;
           const altaAt = d.cleaningAt || d.dischargeAt || d.fechaAlta || d.fecha || d._loggedAt || null;
 
-          // Convertir a objetos Date válidos
           const dates = [solicitudAt, acuesteAt, altaAt]
             .map((s) => (s ? new Date(s) : null))
             .filter((dt) => dt && !isNaN(dt.getTime()));
 
-          // Si el registro tiene fechas, comprobar si alguna cae en el período
           if (dates.length > 0) {
             return dates.some((dt) => dt >= start && dt <= end);
           }
 
-          // Si no tiene fecha registrable, incluirlo para evitar pérdidas de datos
           return true;
         });
 
         const built = buildRows(filteredEvents, transferHistory);
 
-        // Filtrar por servicio
         let result = built;
+
+        // Filtrar por tipo de evento (acueste vs sin acueste vs activos)
+        if (eventTypeFilter !== 'todos') {
+          if (eventTypeFilter === 'sin_acueste') {
+            result = result.filter((r) => r._isWaitingDischarge);
+          } else if (eventTypeFilter === 'con_acueste') {
+            result = result.filter((r) => !r._isWaitingDischarge && r._tipoEvento === 'Hospitalización con acueste');
+          } else if (eventTypeFilter === 'activos') {
+            result = result.filter((r) => r._tipoEvento === 'Hospitalizado activo');
+          }
+        }
+
+        // Filtrar por servicio
         if (serviceFilter !== 'todos') {
           result = result.filter((r) =>
             (r['Esp. Tratante (Acueste)'] || '').toLowerCase().includes(serviceFilter.toLowerCase()) ||
@@ -409,7 +467,7 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
         setLoading(false);
       }
     }, 50);
-  }, [startDate, endDate, serviceFilter, searchTerm, dischargesLog, bedsData, transferHistory]);
+  }, [startDate, endDate, eventTypeFilter, serviceFilter, searchTerm, dischargesLog, bedsData, transferHistory]);
 
   const handleExport = () => {
     if (!rows || rows.length === 0) {
@@ -421,7 +479,7 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
     const exportRows = rows.map((r) => {
       const clean = {};
       Object.entries(r).forEach(([k, v]) => {
-        if (!k.startsWith('_')) clean[k] = v;
+        if (!k.startsWith('_')) clean[k] = v !== null && v !== undefined ? v : '';
       });
       return clean;
     });
@@ -444,10 +502,11 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
 
   // Columnas visibles en la tabla de vista previa
   const PREVIEW_COLS = [
+    'Tipo de Evento',
     'Fecha/Hora Solicitud',
     'Nombre Paciente',
     'RUT',
-    'Edad',
+    'Edad (Años)',
     'Dx Principal (CIE-10)',
     'Servicio Solicitante',
     'Fecha/Hora Acueste',
@@ -474,7 +533,7 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
           <div>
             <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Base de Datos General</h2>
             <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-              Evento completo del paciente · Solicitud → Acueste → Traslados → Alta
+              Evento completo del paciente · Solicitud → Acueste / Lista de Espera → Traslados → Alta
             </p>
           </div>
         </div>
@@ -499,7 +558,7 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
           </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '12px', marginBottom: '16px' }}>
           {/* Fecha Desde */}
           <div>
             <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px' }}>
@@ -586,6 +645,24 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
             </div>
           </div>
 
+          {/* Tipo de Evento / Acueste */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+              Tipo de Evento
+            </label>
+            <select
+              className="glass-input"
+              value={eventTypeFilter}
+              style={{ width: '100%', fontSize: '0.85rem' }}
+              onChange={(e) => { setEventTypeFilter(e.target.value); setRows(null); }}
+            >
+              <option value="todos">Todos los eventos</option>
+              <option value="sin_acueste">Alta sin acueste (Lista de Espera)</option>
+              <option value="con_acueste">Hospitalización con acueste</option>
+              <option value="activos">Hospitalizados activos</option>
+            </select>
+          </div>
+
           {/* Servicio */}
           <div>
             <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px' }}>
@@ -622,7 +699,7 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
           </div>
         </div>
 
-        {/* Aviso de filtro */}
+        {/* Aviso informativo */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px',
           borderRadius: '8px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)',
@@ -630,8 +707,7 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
         }}>
           <AlertCircle size={14} style={{ color: '#818cf8', flexShrink: 0 }} />
           <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            El filtro evalúa la fecha del evento clínico del paciente (solicitud, acueste o alta).
-            Puedes ajustar libremente la fecha o usar los accesos directos.
+            La columna <strong>Tipo de Evento</strong> te permite distinguir inmediatamente entre <strong>Hospitalización con acueste</strong> y <strong>Alta directa sin acueste (Lista de Espera)</strong>.
           </span>
         </div>
 
@@ -699,7 +775,7 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
               Los datos se cargan bajo demanda. El reporte incluye el evento completo del paciente:
-              solicitud, acueste, traslados y alta.
+              solicitud, acueste o egreso de lista de espera, traslados y alta.
             </div>
           </div>
         </div>
@@ -762,16 +838,16 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
                     {PREVIEW_COLS.map((col) => (
                       <td key={col} style={{
                         padding: '8px 12px',
-                        maxWidth: '200px',
+                        maxWidth: '220px',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
                         color: col === 'Nombre Paciente' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                        fontWeight: col === 'Nombre Paciente' ? 600 : 400
+                        fontWeight: col === 'Nombre Paciente' || col === 'Tipo de Evento' ? 600 : 400
                       }}
                         title={String(row[col] || '')}
                       >
-                        {row[col] ?? '—'}
+                        {row[col] !== null && row[col] !== undefined && row[col] !== '' ? row[col] : ''}
                       </td>
                     ))}
                   </tr>
