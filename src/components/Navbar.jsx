@@ -68,6 +68,12 @@ export default function Navbar({ currentView, onNavigate, navPermissions, badges
           show: navPermissions.canDatabase,
         },
         {
+          id: 'general_database',
+          label: 'Base de Datos General',
+          icon: <Database size={16} />,
+          show: navPermissions.canDatabase,
+        },
+        {
           id: 'blocked_beds',
           label: 'Informe de Camas Bloqueadas',
           icon: <Lock size={16} />,

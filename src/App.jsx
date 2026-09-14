@@ -19,6 +19,7 @@ import DischargesDatabasePanel from './components/DischargesDatabasePanel';
 import TransfersDatabasePanel from './components/TransfersDatabasePanel';
 import BlockedBedsReportPanel from './components/BlockedBedsReportPanel';
 import GeneralBedStatusPanel from './components/GeneralBedStatusPanel';
+import GeneralDatabasePanel from './components/GeneralDatabasePanel';
 import Navbar from './components/Navbar';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
 import {
@@ -190,8 +191,8 @@ function App() {
   }, [bedsData, bedsLoading, isSyncEnabled, setBedsData]);
 
   // ── COLECCIONES INDEPENDIENTES DE FIRESTORE (Carga por demanda / Lazy Loading) ──
-  const isDischargesView = currentView === 'altas_database' || currentView === 'insights';
-  const isTransfersView = currentView === 'traslados_database' || currentView === 'insights';
+  const isDischargesView = currentView === 'altas_database' || currentView === 'insights' || currentView === 'general_database';
+  const isTransfersView = currentView === 'traslados_database' || currentView === 'insights' || currentView === 'general_database';
   const isBlockLogsView = currentView === 'blocked_beds' || currentView === 'insights';
   const isHodomView = currentView === 'hodom' || currentView === 'dashboard';
   const isProceduresView = currentView === 'interconsultas' || currentView === 'database' || currentView === 'altas_database';
@@ -900,6 +901,12 @@ function App() {
       )}
       {currentView === 'traslados_database' && (
         <TransfersDatabasePanel transferHistory={transferHistory || []} />
+      )}
+      {currentView === 'general_database' && (
+        <GeneralDatabasePanel
+          dischargesLog={dischargesLog || []}
+          transferHistory={transferHistory || []}
+        />
       )}
       {currentView === 'blocked_beds' && (
         <BlockedBedsReportPanel
