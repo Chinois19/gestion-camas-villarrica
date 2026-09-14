@@ -6,7 +6,7 @@ import { formatAgeDetailed } from '../utils/age';
 import './DatabasePanel.css';
 
 // ── Constantes ─────────────────────────────────────────────────────────────
-const MIN_DATE = '2025-08-01'; // Fecha mínima absoluta — no modificar
+const DEFAULT_START_DATE = '2025-08-01';
 
 const SERVICES = [
   'todos',
@@ -65,60 +65,155 @@ const joinArr = (val) => {
 
 const cleanRut = (r) => (r || '').replace(/[^0-9kK]/g, '').toLowerCase();
 
+// ── Extracción unificada de eventos desde Firestore y bedsData ──────────────
+function getAllEvents(dischargesLog = [], bedsData = {}) {
+  const events = [];
+  const seenKeys = new Set();
+  const dupKey = (nombre, ts) => `${(nombre || '').toLowerCase().trim()}|${ts || ''}`;
+
+  // 1. Colección directa discharges de Firestore
+  (Array.isArray(dischargesLog) ? dischargesLog : []).forEach((d) => {
+    const orig = d.originalWaitingRequest || d.rawBedData?.originalWaitingRequest || d;
+    const nombre = d.patient || d.patientName || d.nombre || orig?.name || orig?.nombre || '';
+    const ts = d.cleaningAt || d.dischargeAt || d.assignedAt || orig?.requestedAt || d.id || '';
+    const key = dupKey(nombre, ts);
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key);
+      events.push(d);
+    }
+  });
+
+  // 2. Historial de altas y pacientes acumulados en bedsData
+  const floors = Object.keys(bedsData || {}).filter(
+    (key) =>
+      key !== 'waitingListDischarges' &&
+      bedsData[key] &&
+      typeof bedsData[key] === 'object' &&
+      !Array.isArray(bedsData[key])
+  );
+
+  floors.forEach((floor) => {
+    Object.keys(bedsData[floor] || {}).forEach((sector) => {
+      (bedsData[floor][sector] || []).forEach((room) => {
+        (room.beds || []).forEach((bed) => {
+          // Historial de altas en esta cama
+          const extractHistory = (bedObj, depth = 0) => {
+            if (!bedObj || depth > 8) return [];
+            const recs = [];
+            if (Array.isArray(bedObj.dischargeHistory)) {
+              bedObj.dischargeHistory.filter((r) => !r._reverted).forEach((r) => recs.push(r));
+            }
+            if (bedObj.previousPatient && !bedObj.previousPatient._reverted) {
+              recs.push(bedObj.previousPatient);
+              extractHistory(bedObj.previousPatient, depth + 1).forEach((r) => recs.push(r));
+            }
+            if (bedObj.lastDischarge && !bedObj.lastDischarge._reverted) {
+              recs.push(bedObj.lastDischarge);
+            }
+            return recs;
+          };
+
+          extractHistory(bed).forEach((p) => {
+            const orig = p.originalWaitingRequest || p.rawBedData?.originalWaitingRequest || p;
+            const nombre = p.patient || p.patientName || p.nombre || orig?.name || orig?.nombre || '';
+            const ts = p.cleaningAt || p.dischargeAt || p.assignedAt || orig?.requestedAt || '';
+            const key = dupKey(nombre, ts);
+            if (!seenKeys.has(key)) {
+              seenKeys.add(key);
+              events.push({
+                ...p,
+                roomId: p.roomId || room.roomId,
+                bedId: p.bedId || bed.id,
+                _source: 'legacy_bed'
+              });
+            }
+          });
+
+          // Paciente actualmente acostado en la cama (evento activo)
+          if (bed.status === 'occupied' && (bed.patient || bed.nombre)) {
+            const nombre = bed.patient || bed.nombre || '';
+            const ts = bed.assignedAt || '';
+            const key = dupKey(nombre, ts);
+            if (!seenKeys.has(key)) {
+              seenKeys.add(key);
+              events.push({
+                ...bed,
+                roomId: room.roomId,
+                bedId: bed.id,
+                _status: 'occupied',
+                _source: 'active_bed'
+              });
+            }
+          }
+        });
+      });
+    });
+  });
+
+  return events;
+}
+
 // ── Construcción de filas del reporte ────────────────────────────────────────
-function buildRows(discharges, transfers) {
+function buildRows(events, transfers) {
   const rows = [];
 
-  discharges.forEach((d) => {
+  events.forEach((d) => {
     const orig = d.originalWaitingRequest || d.rawBedData?.originalWaitingRequest || d;
 
     // ── Solicitud
-    const solicitudAt = orig.createdAt || orig.timestamp || d.createdAt || null;
-    const nombre = d.patient || d.patientName || d.nombre || orig.name || '—';
+    // Compatible con requestedAt (estándar SolicitudForm), solicitadaAt, createdAt, timestamp
+    const solicitudAt = orig.requestedAt || orig.solicitadaAt || orig.createdAt || orig.timestamp || d.requestedAt || null;
+    const nombre = d.patient || d.patientName || d.nombre || orig.name || orig.nombre || '—';
     const nombreSocial = d.nombreSocial || orig.nombreSocial || '—';
-    const rut = d.rut || d.run || orig.rut || '—';
+    const rut = d.rut || d.run || orig.rut || orig.run || '—';
     const edad = formatAgeDetailed(d.fechaNacimiento || orig.fechaNacimiento, d.age || d.edad || orig.age || orig.edad) || '—';
     const sexo = d.sex || d.sexo || orig.sex || orig.sexo || '—';
     const prevision = d.prevision || orig.prevision || '—';
     const comuna = d.comuna || orig.comuna || '—';
-    const dxPrincipal = d.dxPrincipal || orig.dxPrincipal || joinArr(d.diagnosis) || '—';
+    const dxPrincipal = d.dxPrincipal || orig.dxPrincipal || joinArr(d.diagnosis) || joinArr(orig.diagnosis) || '—';
     const dxSecundarios = joinArr(orig.secondaryCodes || d.secondaryCodes) || '—';
-    const servicioSol = orig.servicioSol || d.servicioSol || '—';
+    const servicioSol = orig.servicioSol || orig.origin || d.servicioSol || d.origin || '—';
     const medicoSol = orig.medicoSol || d.medicoSol || '—';
     const especialidadMedico = orig.especialidadMedico || d.especialidadMedico || '—';
-    const prioridad = orig.prioridad || d.prioridad || '—';
-    const destinoSol = orig.destino || d.destino || '—';
+    const prioridad = orig.prioridad || orig.priority || d.prioridad || d.priority || '—';
+    const destinoSol = orig.destino || orig.bedTypeRequired || d.destino || d.bedTypeRequired || '—';
     const requisitosUGP = orig.requisitosUGP || d.requisitosUGP || '—';
     const reqEnfermeria = orig.reqEnfermeria || d.reqEnfermeria || '—';
 
     // ── Acueste
-    const acuesteAt = d.assignedAt || d.admissionDate || d.createdAt || null;
+    const acuesteAt = d.assignedAt || d.admissionDate || d.fechaIngreso || orig.assignedAt || null;
     const tiempoEspera = diffHours(solicitudAt, acuesteAt);
     const especialidadTratante = joinArr(d.especialidadTratante || orig.especialidadTratante);
-    const sala = d.roomId || d.habitacion || d.salaOrigen || '—';
+    const sala = d.roomId || d.habitacion || d.sala || d.salaOrigen || '—';
     const cama = d.bedId || d.cama || d.camaOrigen || '—';
     const aislamiento = joinArr(d.aislamiento || orig.aislamiento);
 
     // ── Alta
-    const altaAt = d.cleaningAt || d.dischargeAt || null;
-    const diasEstadiaTotal = diffDays(acuesteAt, altaAt);
-    const servicioAlta = joinArr(d.especialidadTratante) || '—';
-    const destinoAlta = d.destino || '—';
-    const establecimientoDestino = d.establecimientoRed || d.otroEstablecimientoDetalle || '—';
+    const isCurrentlyAdmitted = d._status === 'occupied' || (!d.cleaningAt && !d.dischargeAt && (d.patient || d.nombre));
+    const altaAt = d.cleaningAt || d.dischargeAt || d.fechaAlta || null;
+    const diasEstadiaTotal = altaAt
+      ? diffDays(acuesteAt, altaAt)
+      : (acuesteAt ? diffDays(acuesteAt, new Date()) : '—');
+    const servicioAlta = isCurrentlyAdmitted
+      ? (especialidadTratante || 'En hospitalización')
+      : (joinArr(d.especialidadTratante) || '—');
+    const destinoAlta = isCurrentlyAdmitted
+      ? 'En hospitalización (Cama activa)'
+      : (d.destino || '—');
+    const establecimientoDestino = d.establecimientoRed || d.otroEstablecimientoDetalle || d.redPrivadaDetalle || '—';
     const grd = d.grdId ? `${d.grdId}${d.grdName ? ' - ' + d.grdName : ''}` : '—';
     const severidad = d.severity || '—';
     const diasGrd = d.projectedDays || '—';
 
-    // ── Traslados del mismo paciente (por RUT)
+    // ── Traslados del mismo paciente (por RUT o Nombre)
     const rutClean = cleanRut(rut);
-    const patientTransfers = rutClean
+    const pNombre = (nombre || '').toLowerCase().trim();
+    const patientTransfers = (rutClean || pNombre)
       ? transfers
           .filter((t) => {
             const tRut = cleanRut(t.run || t.rut || '');
             if (tRut && rutClean && tRut === rutClean) return true;
-            // Fallback por nombre
             const tNombre = (t.nombre || '').toLowerCase().trim();
-            const pNombre = nombre.toLowerCase().trim();
             return tNombre && pNombre && tNombre === pNombre;
           })
           .sort((a, b) => new Date(a.fechaTraslado) - new Date(b.fechaTraslado))
@@ -187,6 +282,7 @@ function buildRows(discharges, transfers) {
       _rutClean: rutClean,
       _acuesteAt: acuesteAt,
       _solicitudAt: solicitudAt,
+      _altaAt: altaAt,
     });
   });
 
@@ -194,67 +290,83 @@ function buildRows(discharges, transfers) {
 }
 
 // ── Componente principal ────────────────────────────────────────────────────
-export default function GeneralDatabasePanel({ dischargesLog = [], transferHistory = [] }) {
+export default function GeneralDatabasePanel({ dischargesLog = [], transferHistory = [], bedsData = {} }) {
   const today = new Date().toISOString().split('T')[0];
-  const [startDate, setStartDate] = useState(MIN_DATE);
+  const [startDate, setStartDate] = useState(DEFAULT_START_DATE);
   const [endDate, setEndDate] = useState(today);
   const [serviceFilter, setServiceFilter] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
   const [rows, setRows] = useState(null); // null = sin consultar aún
   const [loading, setLoading] = useState(false);
 
-  // Asegurar fecha mínima
-  const safeStartDate = startDate < MIN_DATE ? MIN_DATE : startDate;
-
   const handleQuery = useCallback(() => {
-    if (!safeStartDate || !endDate) {
+    if (!startDate || !endDate) {
       toast.error('Selecciona un rango de fechas válido.');
       return;
     }
-    if (safeStartDate > endDate) {
+    if (startDate > endDate) {
       toast.error('La fecha de inicio no puede ser mayor a la fecha de término.');
       return;
     }
     setLoading(true);
 
-    // Pequeño timeout para no bloquear el UI durante el procesamiento
     setTimeout(() => {
       try {
-        const start = new Date(safeStartDate);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
+        const [sy, sm, sd] = startDate.split('-').map(Number);
+        const start = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
+        const [ey, em, ed] = endDate.split('-').map(Number);
+        const end = new Date(ey, em - 1, ed, 23, 59, 59, 999);
 
-        // Filtrar altas por fecha de solicitud (assignedAt o createdAt de la solicitud original)
-        const filteredDischarges = dischargesLog.filter((d) => {
+        // 1. Extraer todos los eventos combinados de Firestore y camas
+        const allEvents = getAllEvents(dischargesLog, bedsData);
+
+        // 2. Filtrar por rango de fechas evaluando cualquiera de los hitos del evento clínico
+        const filteredEvents = allEvents.filter((d) => {
           const orig = d.originalWaitingRequest || d.rawBedData?.originalWaitingRequest || d;
-          const solicitudAt = orig.createdAt || orig.timestamp || d.createdAt || null;
-          if (!solicitudAt) return false;
-          const dt = new Date(solicitudAt);
-          if (isNaN(dt.getTime())) return false;
-          // Fecha mínima absoluta
-          if (dt < new Date(MIN_DATE)) return false;
-          return dt >= start && dt <= end;
+          const solicitudAt = orig.requestedAt || orig.solicitadaAt || orig.createdAt || orig.timestamp || d.requestedAt || null;
+          const acuesteAt = d.assignedAt || d.admissionDate || d.fechaIngreso || orig.assignedAt || null;
+          const altaAt = d.cleaningAt || d.dischargeAt || d.fechaAlta || d.fecha || d._loggedAt || null;
+
+          // Convertir a objetos Date válidos
+          const dates = [solicitudAt, acuesteAt, altaAt]
+            .map((s) => (s ? new Date(s) : null))
+            .filter((dt) => dt && !isNaN(dt.getTime()));
+
+          // Si el registro tiene fechas, comprobar si alguna cae en el período
+          if (dates.length > 0) {
+            return dates.some((dt) => dt >= start && dt <= end);
+          }
+
+          // Si no tiene fecha registrable, incluirlo para evitar pérdidas de datos
+          return true;
         });
 
-        const built = buildRows(filteredDischarges, transferHistory);
+        const built = buildRows(filteredEvents, transferHistory);
 
         // Filtrar por servicio
         let result = built;
         if (serviceFilter !== 'todos') {
           result = result.filter((r) =>
             (r['Esp. Tratante (Acueste)'] || '').toLowerCase().includes(serviceFilter.toLowerCase()) ||
-            (r['Servicio de Alta'] || '').toLowerCase().includes(serviceFilter.toLowerCase())
+            (r['Servicio de Alta'] || '').toLowerCase().includes(serviceFilter.toLowerCase()) ||
+            (r['Servicio Solicitante'] || '').toLowerCase().includes(serviceFilter.toLowerCase())
           );
         }
 
-        // Filtrar por búsqueda
+        // Filtrar por búsqueda de texto
         if (searchTerm.trim()) {
           const q = searchTerm.trim().toLowerCase();
           result = result.filter((r) =>
             Object.values(r).some((v) => String(v || '').toLowerCase().includes(q))
           );
         }
+
+        // Ordenar descendentemente por fecha más reciente
+        result.sort((a, b) => {
+          const dateA = new Date(a._altaAt || a._acuesteAt || a._solicitudAt || 0);
+          const dateB = new Date(b._altaAt || b._acuesteAt || b._solicitudAt || 0);
+          return dateB - dateA;
+        });
 
         setRows(result);
         toast.success(`${result.length} evento(s) encontrado(s)`);
@@ -265,7 +377,7 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
         setLoading(false);
       }
     }, 50);
-  }, [safeStartDate, endDate, serviceFilter, searchTerm, dischargesLog, transferHistory]);
+  }, [startDate, endDate, serviceFilter, searchTerm, dischargesLog, bedsData, transferHistory]);
 
   const handleExport = () => {
     if (!rows || rows.length === 0) {
@@ -298,7 +410,7 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
     toast.success('Archivo .xlsx descargado correctamente');
   };
 
-  // Columnas visibles en la tabla de vista previa (subset)
+  // Columnas visibles en la tabla de vista previa
   const PREVIEW_COLS = [
     'Fecha/Hora Solicitud',
     'Nombre Paciente',
@@ -355,7 +467,7 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
           </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
           {/* Fecha Desde */}
           <div>
             <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px' }}>
@@ -364,18 +476,56 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
             <input
               type="date"
               className="glass-input"
-              value={startDate < MIN_DATE ? MIN_DATE : startDate}
-              min={MIN_DATE}
+              value={startDate}
               max={today}
               style={{ width: '100%', fontSize: '0.85rem' }}
               onChange={(e) => {
-                const v = e.target.value;
-                setStartDate(v < MIN_DATE ? MIN_DATE : v);
+                setStartDate(e.target.value);
                 setRows(null);
               }}
             />
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '3px' }}>
-              Mín: 01/08/2025
+            <div style={{ display: 'flex', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="glass-button"
+                style={{ padding: '2px 6px', fontSize: '0.65rem' }}
+                onClick={() => { setStartDate('2025-08-01'); setRows(null); }}
+              >
+                01/08/2025
+              </button>
+              <button
+                type="button"
+                className="glass-button"
+                style={{ padding: '2px 6px', fontSize: '0.65rem' }}
+                onClick={() => {
+                  const d = new Date();
+                  d.setDate(d.getDate() - 30);
+                  setStartDate(d.toISOString().split('T')[0]);
+                  setRows(null);
+                }}
+              >
+                Últimos 30d
+              </button>
+              <button
+                type="button"
+                className="glass-button"
+                style={{ padding: '2px 6px', fontSize: '0.65rem' }}
+                onClick={() => {
+                  const y = new Date().getFullYear();
+                  setStartDate(`${y}-01-01`);
+                  setRows(null);
+                }}
+              >
+                Año actual
+              </button>
+              <button
+                type="button"
+                className="glass-button"
+                style={{ padding: '2px 6px', fontSize: '0.65rem' }}
+                onClick={() => { setStartDate('2024-01-01'); setRows(null); }}
+              >
+                Todo
+              </button>
             </div>
           </div>
 
@@ -388,11 +538,20 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
               type="date"
               className="glass-input"
               value={endDate}
-              min={MIN_DATE}
               max={today}
               style={{ width: '100%', fontSize: '0.85rem' }}
               onChange={(e) => { setEndDate(e.target.value); setRows(null); }}
             />
+            <div style={{ display: 'flex', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="glass-button"
+                style={{ padding: '2px 6px', fontSize: '0.65rem' }}
+                onClick={() => { setEndDate(today); setRows(null); }}
+              >
+                Hoy
+              </button>
+            </div>
           </div>
 
           {/* Servicio */}
@@ -431,15 +590,16 @@ export default function GeneralDatabasePanel({ dischargesLog = [], transferHisto
           </div>
         </div>
 
-        {/* Aviso fecha mínima */}
+        {/* Aviso de filtro */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px',
-          borderRadius: '8px', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.25)',
+          borderRadius: '8px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)',
           marginBottom: '16px'
         }}>
-          <AlertCircle size={14} style={{ color: '#fbbf24', flexShrink: 0 }} />
-          <span style={{ fontSize: '0.75rem', color: 'rgba(251,191,36,0.9)' }}>
-            El reporte cubre eventos desde el <strong>01 de agosto de 2025</strong>. La fecha de filtro corresponde a la <strong>fecha de solicitud de cama</strong>.
+          <AlertCircle size={14} style={{ color: '#818cf8', flexShrink: 0 }} />
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            El filtro evalúa la fecha del evento clínico del paciente (solicitud, acueste o alta).
+            Puedes ajustar libremente la fecha o usar los accesos directos.
           </span>
         </div>
 

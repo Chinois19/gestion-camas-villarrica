@@ -906,6 +906,7 @@ function App() {
         <GeneralDatabasePanel
           dischargesLog={dischargesLog || []}
           transferHistory={transferHistory || []}
+          bedsData={bedsData}
         />
       )}
       {currentView === 'blocked_beds' && (
