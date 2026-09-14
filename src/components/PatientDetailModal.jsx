@@ -101,6 +101,12 @@ export default function PatientDetailModal({ patient, onClose }) {
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '2px' }}>PACIENTE</div>
                 <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{patient.name || patient.nombre || 'Sin nombre'}</div>
+                {patient.nombreSocial && (
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-color, #00d4ff)', marginTop: '4px' }}>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nombre Social: </span>
+                    {patient.nombreSocial}
+                  </div>
+                )}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>

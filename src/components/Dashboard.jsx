@@ -152,22 +152,63 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
       ) : (bed.patient || bed.status === 'pending_hodom') ? (
         <div className="patient-info" onDoubleClick={() => !isVisor && onEditGrd(room.roomId, bed)}>
           <div className="patient-details" style={{ width: '100%' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <div className="patient-main" style={{ width: '28px', height: '28px', minWidth: '28px', borderRadius: '50%', background: 'var(--glass-highlight)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <User size={14} />
-              </div>
-              <span className="patient-name has-tooltip" style={{ flex: 1 }}>
-                {bed.patient}
-                <div className="custom-tooltip">
-                  <strong>Detalles de Hospitalización</strong><br />
-                  <div style={{ marginTop: '4px' }}>
-                    <strong>Diagnóstico:</strong> {bed.diagnosis || 'No especificado'}<br />
-                    <strong>Ingreso:</strong> {bed.info || 'No especificado'}<br />
-                    <strong>GRD:</strong> {bed.grdName || 'No asignado'}
+            {(() => {
+              const birthDate = bed.fechaNacimiento || bed.originalWaitingRequest?.fechaNacimiento;
+              const fallbackAge = bed.age || bed.edad || bed.originalWaitingRequest?.age || bed.originalWaitingRequest?.edad;
+              const ageFormatted = formatAgeDetailed(birthDate, fallbackAge);
+              const sexDisplay = bed.sex || bed.sexo || bed.originalWaitingRequest?.sex || bed.originalWaitingRequest?.sexo;
+              const rutDisplay = bed.rut || bed.originalWaitingRequest?.rut;
+              const nombreSocialDisplay = bed.nombreSocial || bed.originalWaitingRequest?.nombreSocial;
+
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <div className="patient-main" style={{ width: '28px', height: '28px', minWidth: '28px', borderRadius: '50%', background: 'var(--glass-highlight)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <User size={14} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span className="patient-name has-tooltip" style={{ display: 'block', wordBreak: 'break-word' }}>
+                      {bed.patient}
+                      <div className="custom-tooltip">
+                        <strong>Detalles de Hospitalización</strong><br />
+                        <div style={{ marginTop: '4px' }}>
+                          {nombreSocialDisplay && <><strong>Nombre Social:</strong> {nombreSocialDisplay}<br /></>}
+                          {rutDisplay && <><strong>RUT:</strong> {rutDisplay}<br /></>}
+                          {ageFormatted !== '—' && <><strong>Edad:</strong> {ageFormatted}<br /></>}
+                          {sexDisplay && <><strong>Sexo:</strong> {sexDisplay}<br /></>}
+                          <strong>Diagnóstico:</strong> {bed.diagnosis || 'No especificado'}<br />
+                          <strong>Ingreso:</strong> {bed.info || 'No especificado'}<br />
+                          <strong>GRD:</strong> {bed.grdName || 'No asignado'}
+                        </div>
+                      </div>
+                    </span>
+                    {nombreSocialDisplay && (
+                      <div style={{ fontSize: '0.72rem', color: 'var(--accent-color, #00d4ff)', fontWeight: 600, marginTop: '1px', marginBottom: '2px', lineHeight: 1.2 }}>
+                        <span style={{ opacity: 0.75, fontSize: '0.65rem', textTransform: 'uppercase' }}>N. Social: </span>{nombreSocialDisplay}
+                      </div>
+                    )}
+                    {(ageFormatted !== '—' || sexDisplay || rutDisplay) && (
+                      <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', marginTop: '1px', lineHeight: 1.2 }}>
+                        {ageFormatted !== '—' && (
+                          <span style={{ color: 'var(--accent-color, #00d4ff)', fontWeight: 600 }}>
+                            {ageFormatted}
+                          </span>
+                        )}
+                        {sexDisplay && (
+                          <span>
+                            {ageFormatted !== '—' ? '• ' : ''}{sexDisplay}
+                          </span>
+                        )}
+                        {rutDisplay && (
+                          <span style={{ opacity: 0.85 }}>
+                            {(ageFormatted !== '—' || sexDisplay) ? '• ' : ''}{rutDisplay}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </span>
-            </div>
+              );
+            })()}
             {(bed.dxPrincipal || bed.diagnosis) && (
               <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', marginTop: '2px', marginBottom: '2px', lineHeight: 1.3 }}>
                 {bed.dxPrincipal || (Array.isArray(bed.diagnosis) ? bed.diagnosis.join(' • ') : bed.diagnosis)}
@@ -587,6 +628,7 @@ export default function Dashboard({
                     ...bed,
                     status: 'occupied',
                     patient: assignmentData.patientName,
+                    nombreSocial: patientData.nombreSocial || null,
                     rut: patientData.rut || null,
                     age: patientData.age || patientData.edad || null,
                     fechaNacimiento: patientData.fechaNacimiento || null,
@@ -1264,6 +1306,7 @@ export default function Dashboard({
       sourceBedInfo.projectedDays = newGrdData.projectedDays;
       sourceBedInfo.diagnosis = newGrdData.diagnosis;
       sourceBedInfo.rut = newGrdData.rut;
+      sourceBedInfo.nombreSocial = newGrdData.nombreSocial || sourceBedInfo.nombreSocial || null;
       sourceBedInfo.comuna = newGrdData.comuna;
       sourceBedInfo.prevision = newGrdData.prevision;
       sourceBedInfo.especialidadTratante = newGrdData.especialidadTratante;
@@ -1825,7 +1868,7 @@ export default function Dashboard({
                   let matchSearch = true;
                   if (searchQuery) {
                     const bStr = [
-                      bed.patient, bed.rut, bed.diagnosis, bed.info, bed.grdName, bed.id, room.roomId,
+                      bed.patient, bed.nombreSocial, bed.originalWaitingRequest?.nombreSocial, bed.rut, bed.diagnosis, bed.info, bed.grdName, bed.id, room.roomId,
                       ...(bed.especialidadTratante || []),
                       ...(bed.interconsultas?.map(ic => ic.especialidadDestino) || [])
                     ].filter(Boolean).join(' ');

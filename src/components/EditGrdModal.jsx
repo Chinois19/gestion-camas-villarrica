@@ -4,7 +4,7 @@ import { GRD_DATA, calculateProjectedDays, getGrdLimit } from '../data/grd';
 import SearchableSelect from './SearchableSelect';
 import MultiSearchableSelect from './MultiSearchableSelect';
 import { CIE10_OPTIONS } from '../data/cie10Options';
-import { ESPECIALIDADES } from '../data/formData';
+import { ESPECIALIDADES, ESPECIALIDADES_TRATANTES } from '../data/formData';
 import { formatAgeDetailed } from '../utils/age';
 import ViewInterconsultaModal from './ViewInterconsultaModal';
 import { toast } from 'sonner';
@@ -59,6 +59,7 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
     targetBedId: '',
     diagnosis: buildDiagnosisCodes(),
     rut: formatRut(bed.rut || '13.477.908-2'),
+    nombreSocial: bed.nombreSocial || bed.originalWaitingRequest?.nombreSocial || '',
     age: bed.age || '58',
     fechaNacimiento: bed.fechaNacimiento || '',
     sex: bed.sex || bed.sexo || 'Femenino',
@@ -172,6 +173,7 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
         diagnosis: formData.diagnosis,
         dxPrincipal: formData.dxPrincipal,
         rut: formData.rut,
+        nombreSocial: formData.nombreSocial || bed.nombreSocial || null,
         age: formData.age,
         fechaNacimiento: formData.fechaNacimiento,
         comuna: formData.comuna,
@@ -268,6 +270,12 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                     <div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Paciente</div>
                       <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{bed.patient}</div>
+                      {(bed.nombreSocial || bed.originalWaitingRequest?.nombreSocial) && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--accent-color, #00d4ff)', fontWeight: 600, marginTop: '2px' }}>
+                          <span style={{ fontSize: '0.65rem', opacity: 0.8, textTransform: 'uppercase' }}>Nombre Social: </span>
+                          {bed.nombreSocial || bed.originalWaitingRequest?.nombreSocial}
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -379,10 +387,10 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                       <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Especialidad Tratante</h4>
                     </div>
                     <MultiSearchableSelect
-                      options={ESPECIALIDADES.map(e => ({ value: e, label: e }))}
+                      options={ESPECIALIDADES_TRATANTES.map(e => ({ value: e, label: e }))}
                       value={formData.especialidadTratante}
                       onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))}
-                      placeholder="Buscar especialidad..."
+                      placeholder="Buscar especialidad tratante..."
                       maxSelections={2}
                     />
                   </div>

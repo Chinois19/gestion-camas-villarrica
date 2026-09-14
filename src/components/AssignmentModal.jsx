@@ -315,6 +315,11 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
                       <label>Nombre del Paciente</label>
                       <input type="text" name="patientName" value={formData.patientName} onChange={handleChange} className="glass-input" />
                     </div>
+                    {patient.nombreSocial && (
+                      <div className="form-group" style={{ gridColumn: '1 / -1', marginTop: '-6px' }}>
+                        <ReadOnlyField label="Nombre Social" value={patient.nombreSocial} />
+                      </div>
+                    )}
                     
                     <ReadOnlyField label="RUT" value={patient.rut} />
                     <ReadOnlyField label="Edad / Sexo" value={`${formatAgeDetailed(patient.fechaNacimiento, patient.age || patient.edad)} · ${patient.sex || patient.sexo || '—'}`} />

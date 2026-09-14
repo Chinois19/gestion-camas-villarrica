@@ -118,6 +118,11 @@ export const ESPECIALIDADES = [
   'Comité Cuidados de la Piel',
 ];
 
+// Especialidades clínicas tratantes (excluye Medicina de Urgencia y Emergencia ya que Urgencia solo solicita camas)
+export const ESPECIALIDADES_TRATANTES = ESPECIALIDADES.filter(
+  e => !e.toLowerCase().includes('urgencia') && !e.toLowerCase().includes('emergencia')
+);
+
 export const COMUNAS_CHILE = [
   // ── Región de Arica y Parinacota ─────────────
   'Arica','Camarones','General Lagos','Putre',

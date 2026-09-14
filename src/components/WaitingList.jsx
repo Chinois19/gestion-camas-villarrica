@@ -74,6 +74,11 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
           </div>
           <div className="patient-info-mini">
             <span className="p-name" style={{ marginRight: '4px' }}>{patient.name}</span>
+            {patient.nombreSocial && (
+              <div style={{ fontSize: '0.72rem', color: 'var(--accent-color, #00d4ff)', fontWeight: 600, marginTop: '1px', marginBottom: '2px', lineHeight: 1.2 }}>
+                <span style={{ opacity: 0.75, fontSize: '0.65rem', textTransform: 'uppercase' }}>N. Social: </span>{patient.nombreSocial}
+              </div>
+            )}
             <span className="p-age">{formatAgeDetailed(patient.fechaNacimiento, patient.age)} • {patient.origin}</span>
           </div>
         </div>
@@ -206,7 +211,7 @@ export default function WaitingList({ patients, onSelectPatient, onViewPatient, 
     let matchSearch = true;
     if (searchQuery) {
       const pStr = [
-        p.name, p.rut, p.diagnosis, p.origin, p.bedTypeRequired,
+        p.name, p.nombreSocial, p.rut, p.diagnosis, p.origin, p.bedTypeRequired,
         ...(p.especialidadTratante || [])
       ].filter(Boolean).join(' ');
       matchSearch = matchesSearch(pStr, searchQuery);

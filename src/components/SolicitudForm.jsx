@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, FileText, CheckCircle, User, Stethoscope, ArrowRightLeft, Activity, Search, X } from 'lucide-react';
 import cie10Data from '../data/cie10.json';
-import { SERVICIOS_SOLICITANTES, PREVISIONES, ESPECIALIDADES, COMUNAS_CHILE } from '../data/formData';
+import { SERVICIOS_SOLICITANTES, PREVISIONES, ESPECIALIDADES, ESPECIALIDADES_TRATANTES, COMUNAS_CHILE } from '../data/formData';
 import { MEDICOS } from '../data/medicos';
 import MultiSearchableSelect from './MultiSearchableSelect';
 import { matchesSearch } from '../utils/search';
@@ -284,7 +284,9 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
   const autocompleteRef = useRef(null);
 
   const [formData, setFormData] = useState(() => patientData ? {
-    nombre: patientData.name || '', rut: formatRut(patientData.rut || ''),
+    nombre: patientData.name || patientData.nombre || '',
+    nombreSocial: patientData.nombreSocial || '',
+    rut: formatRut(patientData.rut || ''),
     edad: patientData.age || '', sexo: patientData.sexo || '',
     fechaNacimiento: patientData.fechaNacimiento || '',
     prevision: patientData.prevision || '', comuna: patientData.comuna || '',
@@ -304,7 +306,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
     temp: patientData.temp || '', satO2: patientData.satO2 || '',
     glicemia: patientData.glicemia || '', evaDolor: patientData.evaDolor || '',
   } : {
-    nombre: '', rut: '', edad: '', sexo: '', fechaNacimiento: '', prevision: '', comuna: '',
+    nombre: '', nombreSocial: '', rut: '', edad: '', sexo: '', fechaNacimiento: '', prevision: '', comuna: '',
     dxPrincipal: '', dxCie10: '', dxGrupo: '',
     servicioSol: '', medicoSol: '', especialidadMedico: '', especialidadTratante: [], destino: 'Cuidados Medios',
     requisitosUGP: '', reqEnfermeria: '', procedimientosPendientes: '',
@@ -339,7 +341,9 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       setSecondaryCodes(patientData.secondaryCodes || []);
       setEvolutions(patientData.evolutions || []);
       setFormData({
-        nombre: patientData.name || '', rut: formatRut(patientData.rut || ''),
+        nombre: patientData.name || patientData.nombre || '',
+        nombreSocial: patientData.nombreSocial || '',
+        rut: formatRut(patientData.rut || ''),
         edad: patientData.age || '', sexo: patientData.sexo || '',
         fechaNacimiento: patientData.fechaNacimiento || '',
         prevision: patientData.prevision || '', comuna: patientData.comuna || '',
@@ -364,7 +368,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       setSecondaryCodes([]);
       setEvolutions([]);
       setFormData({
-        nombre: '', rut: '', edad: '', sexo: '', fechaNacimiento: '', prevision: '', comuna: '',
+        nombre: '', nombreSocial: '', rut: '', edad: '', sexo: '', fechaNacimiento: '', prevision: '', comuna: '',
         dxPrincipal: '', dxCie10: '', dxGrupo: '',
         servicioSol: '', medicoSol: '', especialidadMedico: '', especialidadTratante: [], destino: 'Cuidados Medios',
         requisitosUGP: '', reqEnfermeria: '', procedimientosPendientes: '',
@@ -545,7 +549,9 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
 
         const updateRes = await onUpdatePatient({
           ...patientData, ...formData, secondaryCodes, evolutions: evolWithSave,
-          name: formData.nombre?.toUpperCase(), age: parseInt(formData.edad) || 0, origin: formData.servicioSol,
+          name: formData.nombre?.toUpperCase(),
+          nombreSocial: formData.nombreSocial ? formData.nombreSocial.trim() : '',
+          age: parseInt(formData.edad) || 0, origin: formData.servicioSol,
           bedTypeRequired: formData.destino, updatedAt: new Date().toISOString(),
           updatedBy: currentUser?.name || 'Usuario',
           requestedAt: effectiveDate.toISOString(),
@@ -574,6 +580,7 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
       const newPatient = {
         id: `W-${Date.now()}`,
         name: formData.nombre?.toUpperCase() || 'PACIENTE SIN NOMBRE',
+        nombreSocial: formData.nombreSocial ? formData.nombreSocial.trim() : '',
         age: parseInt(formData.edad) || 0,
         fechaNacimiento: formData.fechaNacimiento,
         requestedAt: effectiveDate.toISOString(),
@@ -827,6 +834,11 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                       <ReadOnlyField label="Nombre Completo" value={formData.nombre} />
                       <ReadOnlyField label="RUT" value={formData.rut} />
                     </div>
+                    {formData.nombreSocial && (
+                      <div style={{ marginBottom: 10 }}>
+                        <ReadOnlyField label="Nombre Social" value={formData.nombreSocial} />
+                      </div>
+                    )}
                     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 10, marginBottom: 10 }}>
                       <ReadOnlyField label="Fecha de Nacimiento" value={formData.fechaNacimiento ? new Date(formData.fechaNacimiento).toLocaleDateString('es-CL', { timeZone: 'UTC' }) : '—'} />
                       <ReadOnlyField label="Edad" value={calculateAgeDetailed(formData.fechaNacimiento) || (formData.edad ? `${formData.edad} años` : '—')} />
@@ -842,6 +854,10 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr', gap: 10, marginBottom: 10 }}>
                       <div><FieldLabel>Nombre Completo <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Ej. Juan Pérez González" required autoComplete={"off"} /></div>
                       <div><FieldLabel>RUT <span style={{ color: '#ef4444' }}>*</span></FieldLabel><GInput name="rut" autoComplete={"off"} value={formData.rut} onChange={handleChange} maxLength={10} placeholder="12345678-9" required /></div>
+                    </div>
+                    <div style={{ marginBottom: 10 }}>
+                      <FieldLabel>Nombre Social</FieldLabel>
+                      <GInput name="nombreSocial" value={formData.nombreSocial || ''} onChange={handleChange} placeholder="Nombre social o de uso preferente (opcional)" autoComplete={"off"} />
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 10, marginBottom: 10 }}>
                       <div>
@@ -904,10 +920,10 @@ export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient
                       <FieldLabel>Especialidad Tratante (Hasta 2)</FieldLabel>
                       <MultiSearchableSelect
                         required
-                        options={ESPECIALIDADES.map(e => ({ value: e, label: e }))}
+                        options={ESPECIALIDADES_TRATANTES.map(e => ({ value: e, label: e }))}
                         value={formData.especialidadTratante}
                         onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))}
-                        placeholder="Buscar especialidad..."
+                        placeholder="Buscar especialidad tratante..."
                         maxSelections={2}
                       />
                     </div>
