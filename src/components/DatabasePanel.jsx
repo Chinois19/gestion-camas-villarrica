@@ -155,10 +155,30 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
               // Desde colección procedures
               if (Array.isArray(procedures)) {
                 const patientRut = (p.rut || p.run || '').replace(/[^0-9kK]/g, '').toLowerCase();
+                const patientName = (p.patient || p.patientName || p.nombre || '').toLowerCase().trim();
+                const admDate = p.admissionDate || p.assignedAt;
+
                 const matchedProcs = procedures.filter(pr => {
-                  if (pr.bedId && pr.bedId === bed.id) return true;
                   const prRut = (pr.rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
+                  const prName = (pr.patientName || pr.nombre || '').toLowerCase().trim();
+
+                  // 1. Coincidencia por RUN exacto del paciente
                   if (patientRut && prRut && patientRut === prRut) return true;
+
+                  // 2. Coincidencia por nombre exacto del paciente
+                  if (patientName && prName && patientName === prName) return true;
+
+                  // 3. Coincidencia por sala y cama: solo si ocurrió durante la estadía del paciente actual
+                  if (pr.bedId && pr.bedId === bed.id && (!pr.roomId || String(pr.roomId) === String(room.roomId))) {
+                    if (admDate) {
+                      const procDate = new Date(pr.createdAt || pr.fecha);
+                      const admDateTime = new Date(admDate);
+                      if (!isNaN(procDate.getTime()) && !isNaN(admDateTime.getTime())) {
+                        return procDate >= admDateTime;
+                      }
+                    }
+                  }
+
                   return false;
                 });
                 matchedProcs.forEach(nov => {
@@ -219,7 +239,7 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
       });
     });
     return data;
-  }, [bedsData]);
+  }, [bedsData, procedures]);
 
   const filteredData = useMemo(() => {
     if (!searchTerm) return patientsData;

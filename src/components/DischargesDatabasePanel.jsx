@@ -300,10 +300,29 @@ export default function DischargesDatabasePanel({
       // De la colección procedures
       if (Array.isArray(procedures)) {
         const patientRut = (p.rut || p.run || '').replace(/[^0-9kK]/g, '').toLowerCase();
+        const patientName = (p.patient || p.patientName || p.nombre || '').toLowerCase().trim();
+        const admDate = p.admissionDate || p.assignedAt;
+        const disDate = p.cleaningAt || p.dischargeAt;
+
         const matchedProcs = procedures.filter(pr => {
-          if (p.bedId && pr.bedId && pr.bedId === p.bedId) return true;
           const prRut = (pr.rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
+          const prName = (pr.patientName || pr.nombre || '').toLowerCase().trim();
+
+          // 1. Coincidencia por RUN exacto del paciente
           if (patientRut && prRut && patientRut === prRut) return true;
+
+          // 2. Coincidencia por nombre exacto del paciente
+          if (patientName && prName && patientName === prName) return true;
+
+          // 3. Coincidencia por cama: solo si ocurrió durante la hospitalización de este paciente
+          if (p.bedId && pr.bedId && pr.bedId === p.bedId) {
+            const procDate = new Date(pr.createdAt || pr.fecha);
+            if (!isNaN(procDate.getTime())) {
+              if (admDate && procDate < new Date(admDate)) return false;
+              if (disDate && procDate > new Date(disDate)) return false;
+              return true;
+            }
+          }
           return false;
         });
         matchedProcs.forEach(nov => {

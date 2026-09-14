@@ -644,7 +644,17 @@ export default function Dashboard({
                     servicioSol: patientData.servicioSol || null,
                     destino: patientData.destino || null,
                     prioridad: patientData.prioridad || null,
-                    diagnosis: assignmentData.diagnosis,
+                    diagnosis: (Array.isArray(assignmentData.diagnosis) && assignmentData.diagnosis.length > 0)
+                      ? assignmentData.diagnosis
+                      : (Array.isArray(patientData.diagnosis) && patientData.diagnosis.length > 0
+                          ? patientData.diagnosis
+                          : (patientData.dxPrincipal ? [patientData.dxPrincipal] : [])),
+                    dxPrincipal: patientData.dxPrincipal || assignmentData.dxPrincipal || (Array.isArray(assignmentData.diagnosis) ? assignmentData.diagnosis[0] : null) || null,
+                    dxCie10: patientData.dxCie10 || assignmentData.dxCie10 || null,
+                    dxGrupo: patientData.dxGrupo || assignmentData.dxGrupo || null,
+                    secondaryCodes: Array.isArray(patientData.secondaryCodes) && patientData.secondaryCodes.length > 0
+                      ? patientData.secondaryCodes
+                      : (Array.isArray(assignmentData.secondaryCodes) ? assignmentData.secondaryCodes : []),
                     especialidadTratante: patientData.especialidadTratante,
                     grdId: assignmentData.grdId,
                     grdName: assignmentData.grdName,

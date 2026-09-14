@@ -19,12 +19,11 @@ function ReadOnlyField({ label, value, color }) {
 }
 
 export default function AssignmentModal({ patient, bed, user, onConfirm, onClose }) {
-  // Reconstruir diagnóstico CIE-10 priorizando los campos codificados del formulario de solicitud.
+  // Reconstruir diagnóstico CIE-10 priorizando los campos codificados del formulario de solicitud
+  // sin descartar jamás diagnósticos clínicos descriptivos.
   const buildDiagnosisCodes = () => {
-    const cie10Regex = /^[A-Z]\d{2}(\.\d+)?/; // detecta formato CIE-10 real
-    // Si existe dxCie10 en el paciente, reconstruir desde esos campos
+    // 1. Si existe dxCie10 en el paciente, reconstruir con descripciones completas
     if (patient.dxCie10) {
-      // Buscar descripción completa desde CIE10_OPTIONS
       const mainOption = CIE10_OPTIONS.find(o => o.value.startsWith(patient.dxCie10));
       const mainCode = mainOption ? mainOption.value : patient.dxCie10;
       const result = [mainCode];
@@ -34,18 +33,20 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
           result.push(opt ? opt.value : sc);
         });
       }
-      return result;
+      return result.filter(Boolean);
     }
-    // Si diagnosis ya es un array, filtrar solo los que tengan formato CIE-10 real
-    if (Array.isArray(patient.diagnosis)) {
-      const cie10Entries = patient.diagnosis.filter(d => cie10Regex.test(d));
-      if (cie10Entries.length > 0) return cie10Entries;
+    // 2. Si diagnosis es un arreglo con elementos, preservarlo íntegro
+    if (Array.isArray(patient.diagnosis) && patient.diagnosis.length > 0) {
+      return patient.diagnosis.filter(Boolean);
     }
-    // Si diagnosis es string con formato CIE-10, usarlo
-    if (typeof patient.diagnosis === 'string' && cie10Regex.test(patient.diagnosis)) {
-      return [patient.diagnosis];
+    // 3. Si diagnosis es un string
+    if (typeof patient.diagnosis === 'string' && patient.diagnosis.trim()) {
+      return [patient.diagnosis.trim()];
     }
-    // Fallback: devolver vacío para que el usuario lo complete en el modal
+    // 4. Si tiene descripción clínica en dxPrincipal
+    if (patient.dxPrincipal && String(patient.dxPrincipal).trim()) {
+      return [String(patient.dxPrincipal).trim()];
+    }
     return [];
   };
 
@@ -121,8 +122,20 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
 
     setIsSaving(true);
     try {
+      // Resguardo estricto: no permitir vaciar el diagnóstico si el paciente ya tenía uno registrado
+      const effectiveDiagnosis = (Array.isArray(formData.diagnosis) && formData.diagnosis.length > 0)
+        ? formData.diagnosis
+        : (Array.isArray(patient.diagnosis) && patient.diagnosis.length > 0
+            ? patient.diagnosis
+            : (patient.dxPrincipal ? [patient.dxPrincipal] : []));
+
       await onConfirm({
         ...formData,
+        diagnosis: effectiveDiagnosis,
+        dxPrincipal: patient.dxPrincipal || (effectiveDiagnosis[0] || null),
+        dxCie10: patient.dxCie10 || null,
+        dxGrupo: patient.dxGrupo || null,
+        secondaryCodes: Array.isArray(patient.secondaryCodes) ? patient.secondaryCodes : [],
         waitMinutes,
         projectedDays,
         assignedAt: assignTime.toISOString(),
