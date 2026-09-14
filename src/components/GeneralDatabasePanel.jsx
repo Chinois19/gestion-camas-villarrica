@@ -65,25 +65,82 @@ const joinArr = (val) => {
 
 const cleanRut = (r) => (r || '').replace(/[^0-9kK]/g, '').toLowerCase();
 
+// ── Fusión inteligente y desduplicación de eventos clínicos ────────────────
+function mergeEvent(existing, incoming) {
+  const result = { ...existing };
+  for (const [key, val] of Object.entries(incoming)) {
+    if (val != null && val !== '—' && val !== '') {
+      const cur = result[key];
+      if (cur == null || cur === '—' || cur === '') {
+        result[key] = val;
+      }
+    }
+  }
+  if (!result.originalWaitingRequest && incoming.originalWaitingRequest) {
+    result.originalWaitingRequest = incoming.originalWaitingRequest;
+  }
+  return result;
+}
+
+function findMatchingEventIndex(events, incoming) {
+  const inRut = cleanRut(incoming.rut || incoming.run || incoming.originalWaitingRequest?.rut || '');
+  const inName = (incoming.patient || incoming.patientName || incoming.nombre || incoming.originalWaitingRequest?.name || '').toLowerCase().trim();
+  const inAlta = incoming.cleaningAt || incoming.dischargeAt || incoming.fechaAlta || null;
+  const inAcueste = incoming.assignedAt || incoming.admissionDate || incoming.fechaIngreso || null;
+  const inAltaDay = inAlta ? new Date(inAlta).toISOString().slice(0, 10) : null;
+  const inAcuesteDay = inAcueste ? new Date(inAcueste).toISOString().slice(0, 10) : null;
+
+  return events.findIndex((ex) => {
+    // 1. Mismo ID de documento o puntero de alta
+    if (incoming.id && (ex.id === incoming.id || ex.dischargeDocId === incoming.id)) return true;
+    if (incoming.dischargeDocId && ex.id === incoming.dischargeDocId) return true;
+    if (incoming._dischargeId && ex._dischargeId && incoming._dischargeId === ex._dischargeId) return true;
+
+    // 2. Mismo paciente por RUT o Nombre
+    const exRut = cleanRut(ex.rut || ex.run || ex.originalWaitingRequest?.rut || '');
+    const exName = (ex.patient || ex.patientName || ex.nombre || ex.originalWaitingRequest?.name || '').toLowerCase().trim();
+    const samePerson = (inRut && exRut && inRut === exRut) || (inName && exName && inName === exName);
+    if (!samePerson) return false;
+
+    // 3. Mismo evento clínico (mismo día de alta o mismo día de acueste)
+    const exAlta = ex.cleaningAt || ex.dischargeAt || ex.fechaAlta || null;
+    const exAcueste = ex.assignedAt || ex.admissionDate || ex.fechaIngreso || null;
+    const exAltaDay = exAlta ? new Date(exAlta).toISOString().slice(0, 10) : null;
+    const exAcuesteDay = exAcueste ? new Date(exAcueste).toISOString().slice(0, 10) : null;
+
+    if (inAltaDay && exAltaDay && inAltaDay === exAltaDay) return true;
+    if (inAcuesteDay && exAcuesteDay && inAcuesteDay === exAcuesteDay) return true;
+
+    // Fechas cercanas dentro de 24 horas para el mismo paciente
+    if (inAlta && exAlta) {
+      const diff = Math.abs(new Date(inAlta) - new Date(exAlta));
+      if (!isNaN(diff) && diff < 86400000) return true;
+    }
+
+    return false;
+  });
+}
+
 // ── Extracción unificada de eventos desde Firestore y bedsData ──────────────
 function getAllEvents(dischargesLog = [], bedsData = {}) {
   const events = [];
-  const seenKeys = new Set();
-  const dupKey = (nombre, ts) => `${(nombre || '').toLowerCase().trim()}|${ts || ''}`;
 
-  // 1. Colección directa discharges de Firestore
-  (Array.isArray(dischargesLog) ? dischargesLog : []).forEach((d) => {
-    const orig = d.originalWaitingRequest || d.rawBedData?.originalWaitingRequest || d;
-    const nombre = d.patient || d.patientName || d.nombre || orig?.name || orig?.nombre || '';
-    const ts = d.cleaningAt || d.dischargeAt || d.assignedAt || orig?.requestedAt || d.id || '';
-    const key = dupKey(nombre, ts);
-    if (!seenKeys.has(key)) {
-      seenKeys.add(key);
-      events.push(d);
+  const addOrMerge = (incoming) => {
+    if (!incoming) return;
+    const matchIdx = findMatchingEventIndex(events, incoming);
+    if (matchIdx >= 0) {
+      events[matchIdx] = mergeEvent(events[matchIdx], incoming);
+    } else {
+      events.push(incoming);
     }
+  };
+
+  // 1. Colección directa discharges de Firestore (fuente principal con datos completos)
+  (Array.isArray(dischargesLog) ? dischargesLog : []).forEach((d) => {
+    addOrMerge(d);
   });
 
-  // 2. Historial de altas y pacientes acumulados en bedsData
+  // 2. Historial de altas legacy en bedsData (solo dischargeHistory real, omitiendo previousPatient)
   const floors = Object.keys(bedsData || {}).filter(
     (key) =>
       key !== 'waitingListDischarges' &&
@@ -96,54 +153,29 @@ function getAllEvents(dischargesLog = [], bedsData = {}) {
     Object.keys(bedsData[floor] || {}).forEach((sector) => {
       (bedsData[floor][sector] || []).forEach((room) => {
         (room.beds || []).forEach((bed) => {
-          // Historial de altas en esta cama
-          const extractHistory = (bedObj, depth = 0) => {
-            if (!bedObj || depth > 8) return [];
-            const recs = [];
-            if (Array.isArray(bedObj.dischargeHistory)) {
-              bedObj.dischargeHistory.filter((r) => !r._reverted).forEach((r) => recs.push(r));
-            }
-            if (bedObj.previousPatient && !bedObj.previousPatient._reverted) {
-              recs.push(bedObj.previousPatient);
-              extractHistory(bedObj.previousPatient, depth + 1).forEach((r) => recs.push(r));
-            }
-            if (bedObj.lastDischarge && !bedObj.lastDischarge._reverted) {
-              recs.push(bedObj.lastDischarge);
-            }
-            return recs;
-          };
-
-          extractHistory(bed).forEach((p) => {
-            const orig = p.originalWaitingRequest || p.rawBedData?.originalWaitingRequest || p;
-            const nombre = p.patient || p.patientName || p.nombre || orig?.name || orig?.nombre || '';
-            const ts = p.cleaningAt || p.dischargeAt || p.assignedAt || orig?.requestedAt || '';
-            const key = dupKey(nombre, ts);
-            if (!seenKeys.has(key)) {
-              seenKeys.add(key);
-              events.push({
-                ...p,
-                roomId: p.roomId || room.roomId,
-                bedId: p.bedId || bed.id,
-                _source: 'legacy_bed'
+          // Historial de altas en esta cama (si tiene altas históricas completas)
+          if (Array.isArray(bed.dischargeHistory)) {
+            bed.dischargeHistory
+              .filter((r) => !r._reverted && (r.patient || r.patientName || r.nombre))
+              .forEach((p) => {
+                addOrMerge({
+                  ...p,
+                  roomId: p.roomId || room.roomId,
+                  bedId: p.bedId || bed.id,
+                  _source: 'legacy_bed'
+                });
               });
-            }
-          });
+          }
 
           // Paciente actualmente acostado en la cama (evento activo)
           if (bed.status === 'occupied' && (bed.patient || bed.nombre)) {
-            const nombre = bed.patient || bed.nombre || '';
-            const ts = bed.assignedAt || '';
-            const key = dupKey(nombre, ts);
-            if (!seenKeys.has(key)) {
-              seenKeys.add(key);
-              events.push({
-                ...bed,
-                roomId: room.roomId,
-                bedId: bed.id,
-                _status: 'occupied',
-                _source: 'active_bed'
-              });
-            }
+            addOrMerge({
+              ...bed,
+              roomId: room.roomId,
+              bedId: bed.id,
+              _status: 'occupied',
+              _source: 'active_bed'
+            });
           }
         });
       });
