@@ -258,10 +258,21 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
     end.setHours(23, 59, 59, 999);
 
     // 1. Expand all raw blockLog records into daily snapshot records intersecting with [start, end]
+    const MAX_BLOCK_DAYS = 30; // registros sin cerrar por más de 30 días = anomalía
     const allDailySnapshots = [];
     (blockLog || []).forEach(r => {
+      // Excluir registros auto-corregidos (huérfanos históricos)
+      if (r._autoFixed) return;
+
       const bStart = parseDate(r.blockedAt);
       const bEnd = r.unblockedAt ? parseDate(r.unblockedAt) : new Date(currentTime);
+
+      // Excluir anomalías: bloqueo sin cerrar de más de MAX_BLOCK_DAYS días
+      if (!r.unblockedAt && bStart) {
+        const openDays = (currentTime - bStart.getTime()) / (1000 * 60 * 60 * 24);
+        if (openDays > MAX_BLOCK_DAYS) return;
+      }
+
       if (bStart && bEnd && bStart <= end && bEnd >= start) {
         const dailyItems = breakdownRecordByDay(r, currentTime);
         dailyItems.forEach(item => {
