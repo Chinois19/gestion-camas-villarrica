@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Database, Search, Download, Filter, Printer } from 'lucide-react';
+import { useState, useMemo, useCallback } from 'react';
+import { Database, Search, Download, Filter, Printer, AlertTriangle, CheckCircle, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
@@ -40,8 +40,61 @@ const parseEntryDate = (entry) => {
   return new Date(0);
 };
 
-export default function DatabasePanel({ bedsData, procedures = [] }) {
+export default function DatabasePanel({ bedsData, procedures = [], blockLog = [], onUpdateBlockLog, userRole }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [cleanupRunning, setCleanupRunning] = useState(false);
+  const [cleanupResult, setCleanupResult] = useState(null); // { fixed, total }
+
+  /* ── Obtener todas las camas actualmente bloqueadas en bedsData ── */
+  const activeBedIds = useMemo(() => {
+    const ids = new Set();
+    Object.values(bedsData || {}).forEach(floor => {
+      if (typeof floor !== 'object' || Array.isArray(floor)) return;
+      Object.values(floor).forEach(sector => {
+        if (!Array.isArray(sector)) return;
+        sector.forEach(room => {
+          (room.beds || []).forEach(bed => {
+            if (bed.status === 'blocked') {
+              // Registrar tanto el blockLogId guardado como el nombre de cama
+              if (bed.blockLogId) ids.add(bed.blockLogId);
+              ids.add(`Hab. ${room.roomId} — Cama ${bed.id}`);
+            }
+          });
+        });
+      });
+    });
+    return ids;
+  }, [bedsData]);
+
+  /* ── Detectar registros huérfanos ── */
+  const orphanCount = useMemo(() => {
+    return (blockLog || []).filter(r => !r.unblockedAt && !activeBedIds.has(r.id) && !activeBedIds.has(r.cama)).length;
+  }, [blockLog, activeBedIds]);
+
+  /* ── Limpiar registros huérfanos ── */
+  const handleCleanupOrphans = useCallback(async () => {
+    if (!onUpdateBlockLog) return;
+    const orphans = (blockLog || []).filter(r => !r.unblockedAt && !activeBedIds.has(r.id) && !activeBedIds.has(r.cama));
+    if (orphans.length === 0) {
+      setCleanupResult({ fixed: 0, total: 0 });
+      return;
+    }
+    setCleanupRunning(true);
+    setCleanupResult(null);
+    const now = new Date().toISOString();
+    let fixed = 0;
+    for (const r of orphans) {
+      try {
+        await onUpdateBlockLog(r.id, { unblockedAt: now, _autoFixed: true, _autoFixedAt: now });
+        fixed++;
+      } catch (e) {
+        console.error('[DatabasePanel] Error cerrando registro huérfano', r.id, e);
+      }
+    }
+    setCleanupRunning(false);
+    setCleanupResult({ fixed, total: orphans.length });
+    toast.success(`Limpieza completada: ${fixed} de ${orphans.length} registros huérfanos cerrados`);
+  }, [blockLog, activeBedIds, onUpdateBlockLog]);
 
   const patientsData = useMemo(() => {
     const data = [];
@@ -348,6 +401,63 @@ export default function DatabasePanel({ bedsData, procedures = [] }) {
         </div>
       </div>
 
+      {/* ── Sección de limpieza de base de datos — solo visible para superadmin ── */}
+      {userRole === 'superadmin' && onUpdateBlockLog && (
+        <div className="hide-on-print" style={{
+          margin: '0 0 16px 0',
+          padding: '14px 18px',
+          borderRadius: 12,
+          background: orphanCount > 0 ? 'rgba(239,68,68,0.07)' : 'rgba(34,197,94,0.05)',
+          border: `1px solid ${orphanCount > 0 ? 'rgba(239,68,68,0.25)' : 'rgba(34,197,94,0.2)'}`,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {orphanCount > 0
+              ? <AlertTriangle size={18} color="#ef4444" />
+              : <CheckCircle size={18} color="#22c55e" />}
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: orphanCount > 0 ? '#fca5a5' : '#86efac' }}>
+                {orphanCount > 0
+                  ? `${orphanCount} registro${orphanCount !== 1 ? 's' : ''} de bloqueo huérfano${orphanCount !== 1 ? 's' : ''} detectado${orphanCount !== 1 ? 's' : ''}`
+                  : 'Base de datos de bloqueos íntegra'}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                {orphanCount > 0
+                  ? 'Camas que figuran bloqueadas en el registro pero ya están disponibles en el sistema. Corrija para limpiar el informe.'
+                  : 'No se detectaron bloqueos sin cerrar para camas actualmente disponibles.'}
+              </div>
+            </div>
+          </div>
+          {cleanupResult && (
+            <div style={{ fontSize: '0.78rem', color: '#86efac', fontWeight: 600 }}>
+              ✔ {cleanupResult.fixed}/{cleanupResult.total} corregidos
+            </div>
+          )}
+          {orphanCount > 0 && (
+            <button
+              className="glass-button"
+              onClick={handleCleanupOrphans}
+              disabled={cleanupRunning}
+              style={{
+                marginLeft: 'auto',
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'rgba(239,68,68,0.12)',
+                color: '#fca5a5',
+                border: '1px solid rgba(239,68,68,0.3)',
+                opacity: cleanupRunning ? 0.6 : 1,
+                cursor: cleanupRunning ? 'not-allowed' : 'pointer',
+                fontSize: '0.8rem', fontWeight: 700, padding: '8px 16px', borderRadius: 8
+              }}
+            >
+              <Wrench size={14} />
+              {cleanupRunning ? 'Limpiando...' : 'Limpiar Registros Huérfanos'}
+            </button>
+          )}
+        </div>
+      )}
       <div className="database-table-wrapper glass-panel printable-table-wrapper">
         <table className="db-table">
           <thead>

@@ -715,19 +715,23 @@ export default function Dashboard({
       contenido: `Bloqueo de cama por: ${reason}. ${observation ? `Observación: ${observation}` : ''}`
     };
 
+    const bedInfo = blockingBed.bed;
+    const servicio = bedInfo.tag || bedInfo.type || 'Sin servicio';
+    const logEntryId = `block-${timestamp}`;
+
+    // Guardar blockLogId en la cama para referenciarlo directamente al desbloquear
     updateBedState(blockingBed.roomId, blockingBed.bed.id, {
       status: 'blocked',
       blockedReason: reason,
       blockedObs: observation,
       blockedBy: user?.name || 'Usuario',
       blockedAt: formattedDate,
+      blockLogId: logEntryId,
       novedades: [newNovedad, ...(blockingBed.bed.novedades || [])]
     });
 
-    const bedInfo = blockingBed.bed;
-    const servicio = bedInfo.tag || bedInfo.type || 'Sin servicio';
     const logEntry = {
-      id: `block-${timestamp}`,
+      id: logEntryId,
       causal: reason,
       observation: observation || '',
       cama: `Hab. ${blockingBed.roomId} — Cama ${bedInfo.id}`,
@@ -765,32 +769,45 @@ export default function Dashboard({
       contenido: `Desbloqueo de cama. ${observation ? `Observación: ${observation}` : ''}`
     };
 
+    // Limpiar blockLogId de la cama al desbloquear
     updateBedState(unblockingBed.roomId, unblockingBed.bed.id, {
       status: 'available',
       blockedReason: null,
       blockedObs: null,
       blockedBy: null,
       blockedAt: null,
+      blockLogId: null,
       novedades: [newNovedad, ...(unblockingBed.bed.novedades || [])]
     });
 
+    const unblockedAtIso = now.toISOString();
     const bedId = `Hab. ${unblockingBed.roomId} — Cama ${unblockingBed.bed.id}`;
 
-    // 1. Actualizar en colección blockLogs
-    if (onUpdateBlockLog) {
-      // Intentar actualizar vía setBlockLog / onUpdateBlockLog
+    // 1. Actualizar Firestore directamente usando el blockLogId guardado en la cama
+    //    Este es el método principal y confiable — no depende de búsquedas en memoria
+    const directBlockLogId = unblockingBed.bed.blockLogId;
+    if (onUpdateBlockLog && directBlockLogId) {
+      onUpdateBlockLog(directBlockLogId, { unblockedAt: unblockedAtIso });
     }
 
+    // 2. Fallback: buscar por nombre de cama en el array en memoria para cerrar
+    //    cualquier registro adicional que no tenga unblockedAt (registros huérfanos previos)
     if (setBlockLog) {
       setBlockLog(prev => {
         const updated = [...(prev || [])];
-        const idx = updated.findIndex(r => r.cama === bedId && !r.unblockedAt);
-        if (idx !== -1) {
-          const entryId = updated[idx].id;
-          updated[idx] = { ...updated[idx], unblockedAt: now.toISOString() };
-          if (onUpdateBlockLog && entryId) {
-            onUpdateBlockLog(entryId, { unblockedAt: now.toISOString() });
+        let closedAny = false;
+        updated.forEach((r, idx) => {
+          if (r.cama === bedId && !r.unblockedAt) {
+            // Evitar duplicar el update del registro ya cerrado por el método directo
+            if (r.id !== directBlockLogId && onUpdateBlockLog) {
+              onUpdateBlockLog(r.id, { unblockedAt: unblockedAtIso });
+            }
+            updated[idx] = { ...r, unblockedAt: unblockedAtIso };
+            closedAny = true;
           }
+        });
+        if (!closedAny && !directBlockLogId) {
+          console.warn('[Dashboard] handleUnblockConfirm: no se encontró registro activo para cerrar en', bedId);
         }
         return updated;
       });

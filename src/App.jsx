@@ -777,6 +777,8 @@ function App() {
           onAddDischarge={(item) => addFirestoreDoc('discharges', item)}
           onAddBlockLog={(item) => addFirestoreDoc('blockLogs', item)}
           onUpdateBlockLog={(id, updates) => updateFirestoreDoc('blockLogs', id, updates)}
+          blockLog={blockLog || []}
+          setBlockLog={() => {}}
           user={currentUser}
           onRequestWaitingIC={(patient) => setRequestingWaitingIC(patient)}
         />
@@ -884,7 +886,13 @@ function App() {
         <GeneralBedStatusPanel bedsData={bedsData} />
       )}
       {currentView === 'database' && (
-        <DatabasePanel bedsData={bedsData} procedures={procedures} />
+        <DatabasePanel
+          bedsData={bedsData}
+          procedures={procedures}
+          blockLog={blockLog || []}
+          onUpdateBlockLog={(id, updates) => updateFirestoreDoc('blockLogs', id, updates)}
+          userRole={currentUser?.role}
+        />
       )}
       {currentView === 'altas_database' && (
         <DischargesDatabasePanel
