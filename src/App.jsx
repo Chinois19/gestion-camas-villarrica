@@ -128,7 +128,10 @@ function App() {
 
 
   // ── ESTADO OPERATIVO DE CAMAS (Documentos ligeros fijos) ─────────────────────
-  const [bedsData, setBedsData, bedsLoading] = useFirebaseSync('appState', 'bedsData', initialBedsData, { enabled: isSyncEnabled });
+  // bedsWritingRef: ref expuesta por el hook que indica si hay una escritura
+  // en vuelo. Usarla para bloquear el efecto de sanitización y evitar que
+  // sobreescriba acuestes recién guardados con datos obsoletos.
+  const [bedsData, setBedsData, bedsLoading, bedsWritingRef] = useFirebaseSync('appState', 'bedsData', initialBedsData, { enabled: isSyncEnabled });
 
   // ── COLECCIÓN INDEPENDIENTE DE LISTA DE ESPERA (Tiempo Real) ───────────────
   const waitingCol = useFirestoreCollection('waitingList', {
@@ -180,15 +183,19 @@ function App() {
   }, [waitingCol.data]);
 
   // ── Sanitización y auto-reparación preventiva de camas con IDs corruptos ────────
+  // IMPORTANTE: El guard `bedsWritingRef.current` evita que este efecto dispare
+  // una escritura con datos obsoletos mientras hay un acueste u otra operación
+  // en vuelo. Sin este guard, el revert + sanitize combinados eran la causa
+  // de la pérdida masiva de acuestes (bug detectado el 24/09/2026).
   useEffect(() => {
-    if (!bedsLoading && bedsData && isSyncEnabled) {
+    if (!bedsLoading && bedsData && isSyncEnabled && !bedsWritingRef.current) {
       const { cleaned, hasFixes } = sanitizeBedsStructure(bedsData);
       if (hasFixes) {
         console.log('[App] 🛡️ Sanitizando IDs de cama corruptos en bedsData...');
         setBedsData(cleaned);
       }
     }
-  }, [bedsData, bedsLoading, isSyncEnabled, setBedsData]);
+  }, [bedsData, bedsLoading, isSyncEnabled, setBedsData, bedsWritingRef]);
 
   // ── COLECCIONES INDEPENDIENTES DE FIRESTORE (Carga por demanda / Lazy Loading) ──
   const isDischargesView = currentView === 'altas_database' || currentView === 'insights' || currentView === 'general_database';

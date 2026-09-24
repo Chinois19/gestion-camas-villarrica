@@ -18,6 +18,11 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(() => enabled);
 
+  // Indica si hay una escritura en vuelo. Bloquea a onSnapshot de pisar
+  // el estado optimista y evita que el efecto de sanitización dispare
+  // una escritura con datos obsoletos durante la operación.
+  const isWritingRef = useRef(false);
+
   // Mantenemos una referencia al dato más reciente para updaters y sincronización
   const dataRef = useRef(data);
   useEffect(() => {
@@ -42,6 +47,14 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
       const unsubscribe = onSnapshot(
         docRef,
         (docSnap) => {
+          // Si hay una escritura activa, ignorar este evento de Firestore
+          // para no pisar el estado optimista local con datos potencialmente
+          // desactualizados (el eco de una escritura anterior o de otro cliente).
+          if (isWritingRef.current) {
+            initializedRef.current = true;
+            setLoading(false);
+            return;
+          }
           if (docSnap.exists()) {
             const firestoreData = docSnap.data().data;
             setData(firestoreData);
@@ -92,6 +105,10 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
 
   const updateData = useCallback(
     async (newDataOrUpdater) => {
+      // Señalizar escritura activa ANTES de cualquier operación asíncrona.
+      // Esto evita que onSnapshot pise el estado optimista durante el vuelo.
+      isWritingRef.current = true;
+
       const currentData = dataRef.current;
       const localNewData =
         typeof newDataOrUpdater === 'function'
@@ -103,6 +120,7 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
         const isValid = validate(localNewData, currentData);
         if (!isValid) {
           console.warn(`[useFirebaseSync] Validación fallida para ${collectionName}/${documentId}. Operación cancelada.`);
+          isWritingRef.current = false;
           return false;
         }
       }
@@ -126,19 +144,28 @@ export function useFirebaseSync(collectionName, documentId, initialData, options
           console.warn(`[useFirebaseSync] Reintento ${attempts}/3 para "${documentId}":`, err);
           if (attempts >= 3) {
             console.error(`[useFirebaseSync] Falló escritura definitiva en ${documentId}:`, err);
-            // Revertir estado local en caso de error crítico
-            setData(currentData);
-            dataRef.current = currentData;
+            // ⚠️ NO revertir estado local: hacerlo dispararía el efecto de
+            // sanitización en App.jsx que escribiría datos obsoletos en Firestore,
+            // causando pérdida masiva de acuestes. Se deja el estado optimista
+            // intacto; onSnapshot reconciliará con Firestore cuando vuelva
+            // la conectividad.
+            isWritingRef.current = false;
             return false;
           }
           await new Promise((res) => setTimeout(res, 300 * attempts));
         }
       }
 
+      // Liberar el bloqueo solo después de confirmar la escritura.
+      // El próximo evento de onSnapshot ya tendrá el estado correcto del servidor.
+      isWritingRef.current = false;
       return true;
     },
     [collectionName, documentId, validate]
   );
 
-  return [data, updateData, loading];
+  // isWritingRef se expone para que los efectos externos (ej. sanitizeBedsStructure
+  // en App.jsx) puedan evitar escribir sobre Firestore mientras hay una
+  // operación activa y prevenir así la sobreescritura de acuestes recientes.
+  return [data, updateData, loading, isWritingRef];
 }
