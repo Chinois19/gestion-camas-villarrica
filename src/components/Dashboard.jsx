@@ -365,17 +365,24 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
           </button>
           {(user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'administrador') && bed.previousPatient && (
             <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); onUndoDischarge(room.roomId, bed.id); }}>
-              <RotateCcw size={12} /> Revertir Alta
+              <RotateCcw size={12} /> Revocar Alta
             </button>
           )}
         </div>
       )}
 
-      {bed.status === 'available' && !bed.patient && canManageBlocks && (
-        <div style={{ padding: '0 12px 12px 12px', marginTop: 'auto' }}>
-          <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.4)' }} onClick={(e) => { e.stopPropagation(); onBlockBed(room.roomId, bed.id); }}>
-            <Lock size={12} /> Bloqueo de cama
-          </button>
+      {bed.status === 'available' && !bed.patient && (
+        <div style={{ padding: '0 12px 12px 12px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {canManageBlocks && (
+            <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', color: '#ef4444', borderColor: 'rgba(239,68,68,0.4)' }} onClick={(e) => { e.stopPropagation(); onBlockBed(room.roomId, bed.id); }}>
+              <Lock size={12} /> Bloqueo de cama
+            </button>
+          )}
+          {(user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'administrador') && bed.previousPatient && (
+            <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); onUndoDischarge(room.roomId, bed.id); }}>
+              <RotateCcw size={12} /> Revocar Alta
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -398,6 +405,9 @@ export default function Dashboard({
   onAddTransfers, 
   setWaitingListDischarges, 
   setDischargesLog, 
+  dischargesLog = [],
+  onUpdateDischarge,
+  onDeleteDischarge,
   setBlockLog, 
   onAddDischarge,
   onAddBlockLog,
@@ -1096,25 +1106,80 @@ export default function Dashboard({
     setDischargingPatient(null);
   };
 
-  const handleUndoDischarge = (roomId, bedId) => {
+  const handleUndoDischarge = async (roomId, bedId) => {
     let targetBed = null;
     for (const floor in bedsData) {
       for (const sector in bedsData[floor]) {
-        const room = bedsData[floor][sector].find(r => r.roomId === roomId);
+        const room = bedsData[floor][sector].find(r => String(r.roomId) === String(roomId));
         if (room) {
-          targetBed = room.beds.find(b => b.id === bedId);
+          targetBed = room.beds.find(b => String(b.id) === String(bedId));
           break;
         }
       }
       if (targetBed) break;
     }
 
-    if (targetBed && targetBed.previousPatient) {
-      const { id: _ignoreId, dischargeDocId, _dischargeId, ...cleanPrevData } = targetBed.previousPatient;
-      const restoredBed = { ...cleanPrevData, status: 'occupied', cleaningAt: null, previousPatient: null };
-      updateBedState(roomId, bedId, restoredBed);
-      toast.success(`Alta de la cama ${bedId} revocada; paciente restaurado`);
+    if (!targetBed || !targetBed.previousPatient) {
+      toast.error('No se encontró información del paciente previo para esta cama.');
+      return;
     }
+
+    const patientName = targetBed.previousPatient.patient || targetBed.previousPatient.nombre || 'el paciente';
+    if (!window.confirm(`¿Está seguro de que desea revocar el alta de ${patientName} y volver a acostarlo en la cama ${bedId}?`)) {
+      return;
+    }
+
+    const { id: _ignoreId, dischargeDocId, _dischargeId, ...cleanPrevData } = targetBed.previousPatient;
+
+    // Buscar el registro completo de alta en dischargesLog para restaurar todos los datos clínicos
+    let fullDischargeData = null;
+    if (dischargeDocId && Array.isArray(dischargesLog)) {
+      fullDischargeData = dischargesLog.find(d => d.id === dischargeDocId || d._logId === dischargeDocId);
+    }
+    if (!fullDischargeData && targetBed.previousPatient.rut && Array.isArray(dischargesLog)) {
+      const cleanRutTarget = String(targetBed.previousPatient.rut).replace(/[^0-9kK]/g, '').toUpperCase();
+      fullDischargeData = dischargesLog.find(d => String(d.rut || d.run || '').replace(/[^0-9kK]/g, '').toUpperCase() === cleanRutTarget);
+    }
+
+    // Marcar como revertido en Firestore
+    const targetDocId = dischargeDocId || fullDischargeData?.id;
+    if (targetDocId && onUpdateDischarge) {
+      try {
+        await onUpdateDischarge(targetDocId, {
+          _reverted: true,
+          _revertedAt: new Date().toISOString()
+        });
+      } catch (err) {
+        console.warn('Aviso: no se pudo actualizar documento de alta:', err.message);
+      }
+    }
+
+    const restoredBed = {
+      ...cleanPrevData,
+      ...(fullDischargeData ? {
+        patient: fullDischargeData.patient || fullDischargeData.nombre || cleanPrevData.patient,
+        rut: fullDischargeData.rut || fullDischargeData.run || cleanPrevData.rut,
+        diagnosis: fullDischargeData.diagnosis || (fullDischargeData.diagnosticos ? [fullDischargeData.diagnosticos] : []),
+        dxPrincipal: fullDischargeData.dxPrincipal || null,
+        dxCie10: fullDischargeData.dxCie10 || null,
+        age: fullDischargeData.age || fullDischargeData.edad || cleanPrevData.age,
+        fechaNacimiento: fullDischargeData.fechaNacimiento || null,
+        sex: fullDischargeData.sex || null,
+        prevision: fullDischargeData.prevision || null,
+        comuna: fullDischargeData.comuna || null,
+        especialidadTratante: Array.isArray(fullDischargeData.especialidadTratante) ? fullDischargeData.especialidadTratante : (fullDischargeData.especialidadTratante ? [String(fullDischargeData.especialidadTratante)] : []),
+        assignedAt: fullDischargeData.fechaIngreso || fullDischargeData.admissionDate || cleanPrevData.assignedAt || new Date().toISOString(),
+        admissionDate: fullDischargeData.fechaIngreso || fullDischargeData.admissionDate || null,
+        interconsultas: fullDischargeData.interconsultas || [],
+        evolutions: fullDischargeData.evolutions || []
+      } : {}),
+      status: 'occupied',
+      cleaningAt: null,
+      previousPatient: null
+    };
+
+    updateBedState(roomId, bedId, restoredBed);
+    toast.success(`Alta de la cama ${bedId} revocada exitosamente; paciente ${patientName} restaurado.`);
   };
 
   const handleUndoAssignment = async (roomId, bedId) => {

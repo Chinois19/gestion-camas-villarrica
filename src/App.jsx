@@ -780,6 +780,9 @@ function App() {
           onViewPatient={handleViewPatient}
           onAddTransfers={(items) => bulkAddFirestoreDocs('transfers', items)}
           onAddDischarge={(item) => addFirestoreDoc('discharges', item)}
+          onUpdateDischarge={(id, updates) => updateFirestoreDoc('discharges', id, updates)}
+          onDeleteDischarge={(id) => deleteFirestoreDoc('discharges', id)}
+          dischargesLog={dischargesLog || []}
           onAddBlockLog={(item) => addFirestoreDoc('blockLogs', item)}
           onUpdateBlockLog={(id, updates) => updateFirestoreDoc('blockLogs', id, updates)}
           blockLog={blockLog || []}
