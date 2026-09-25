@@ -166,8 +166,8 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
                     <User size={14} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <span className="patient-name has-tooltip" style={{ display: 'block', wordBreak: 'break-word' }}>
-                      {bed.patient}
+                    <span className="patient-name has-tooltip" style={{ display: 'block', wordBreak: 'break-word', textTransform: 'uppercase' }}>
+                      {bed.patient ? String(bed.patient).toUpperCase() : ''}
                       <div className="custom-tooltip">
                         <strong>Detalles de Hospitalización</strong><br />
                         <div style={{ marginTop: '4px' }}>
@@ -262,9 +262,9 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
               {bed.grdName ? `GRD: ${bed.grdName}` : (bed.status === 'pending_hodom' ? 'Pendiente HODOM' : 'Ocupada')}
               {!isVisor && <Pencil size={12} style={{ marginLeft: '4px', opacity: 0.6 }} />}
             </div>
-            {bed.especialidadTratante && bed.especialidadTratante.length > 0 && (
+            {bed.especialidadTratante && (
               <div style={{ fontSize: '0.65rem', color: '#00d4ff', marginTop: '4px', fontWeight: 600 }}>
-                Tratante: {bed.especialidadTratante.join(' • ')}
+                Tratante: {Array.isArray(bed.especialidadTratante) ? bed.especialidadTratante.join(' • ') : String(bed.especialidadTratante)}
               </div>
             )}
             <div style={{ fontSize: '0.7rem', color: '#06b6d4', marginTop: '4px', fontWeight: 700 }}>

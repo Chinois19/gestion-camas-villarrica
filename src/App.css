@@ -392,6 +392,7 @@ header.glass-panel {
   font-weight: 600;
   line-height: 1.3;
   color: var(--text-primary);
+  text-transform: uppercase;
 }
 .patient-meta {
   font-size: 0.68rem;

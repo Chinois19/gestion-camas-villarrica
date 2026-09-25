@@ -85,9 +85,9 @@ function DraggablePatientCard({ patient, waitTime, isSelected, onSelect, onViewD
 
         <div className="diagnosis-box">
           <p className="diagnosis-text">{patient.dxPrincipal || (Array.isArray(patient.diagnosis) ? patient.diagnosis.join(' • ') : patient.diagnosis)}</p>
-          {patient.especialidadTratante && patient.especialidadTratante.length > 0 && (
+          {patient.especialidadTratante && (
             <p className="diagnosis-text" style={{ marginTop: '4px', color: '#00d4ff', fontSize: '0.7rem', fontWeight: 600 }}>
-              Tratante: {patient.especialidadTratante.join(' • ')}
+              Tratante: {Array.isArray(patient.especialidadTratante) ? patient.especialidadTratante.join(' • ') : String(patient.especialidadTratante)}
             </p>
           )}
         </div>
