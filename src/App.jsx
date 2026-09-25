@@ -22,6 +22,7 @@ import GeneralBedStatusPanel from './components/GeneralBedStatusPanel';
 import GeneralDatabasePanel from './components/GeneralDatabasePanel';
 import Navbar from './components/Navbar';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
+import { useBedsCollection } from './hooks/useBedsCollection';
 import {
   useFirestoreCollection,
   addFirestoreDoc,
@@ -127,11 +128,8 @@ function App() {
   const isSyncEnabled = !!currentUser || isPublicRoute;
 
 
-  // ── ESTADO OPERATIVO DE CAMAS (Documentos ligeros fijos) ─────────────────────
-  // bedsWritingRef: ref expuesta por el hook que indica si hay una escritura
-  // en vuelo. Usarla para bloquear el efecto de sanitización y evitar que
-  // sobreescriba acuestes recién guardados con datos obsoletos.
-  const [bedsData, setBedsData, bedsLoading, bedsWritingRef] = useFirebaseSync('appState', 'bedsData', initialBedsData, { enabled: isSyncEnabled });
+  // ── ESTADO OPERATIVO DE CAMAS (Colección granular 'beds' con documentos individuales) ──
+  const [bedsData, setBedsData, bedsLoading, bedsWritingRef] = useBedsCollection({ enabled: isSyncEnabled, initialData: initialBedsData });
 
   // ── COLECCIÓN INDEPENDIENTE DE LISTA DE ESPERA (Tiempo Real) ───────────────
   const waitingCol = useFirestoreCollection('waitingList', {
