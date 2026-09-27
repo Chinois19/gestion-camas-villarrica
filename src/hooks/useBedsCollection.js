@@ -123,7 +123,13 @@ export function useBedsCollection(options = {}) {
       bedsColRef,
       (snapshot) => {
         if (isWritingRef.current) {
-          // Si hay una escritura optimista local en vuelo, esperar al siguiente ciclo
+          // Fix #4 — Aunque ignoremos el snapshot para la UI, actualizamos el mapa
+          // interno para que bedsMapRef no quede desincronizado con Firestore.
+          // Sin esto, la siguiente escritura compararía con datos viejos y podría
+          // sobrescribir cambios de otros usuarios con versiones obsoletas.
+          snapshot.forEach(docSnap => {
+            bedsMapRef.current.set(docSnap.id, docSnap.data());
+          });
           return;
         }
 
@@ -177,12 +183,24 @@ export function useBedsCollection(options = {}) {
    */
   const setBedsData = useCallback(async (newDataOrUpdater) => {
     isWritingRef.current = true;
+
+    // Fix #1 — Safety timeout: si la escritura queda colgada por error no capturado
+    // o pérdida de conectividad, el flag se libera a los 10s para que la app
+    // no quede "sorda" a los snapshots de Firestore indefinidamente.
+    const _writeTimeoutId = setTimeout(() => {
+      if (isWritingRef.current) {
+        console.warn('[useBedsCollection] ⚠️ Safety timeout: liberando isWritingRef tras 10s sin confirmar escritura.');
+        isWritingRef.current = false;
+      }
+    }, 10000);
+
     const currentTree = bedsDataRef.current;
     const nextTree = typeof newDataOrUpdater === 'function'
       ? newDataOrUpdater(currentTree)
       : newDataOrUpdater;
 
-    if (!nextTree || typeof nextTree !== 'object') {
+    if (!nextTree || typeof nextTree !== 'object' || Object.keys(nextTree).length === 0) {
+      clearTimeout(_writeTimeoutId);
       isWritingRef.current = false;
       return false;
     }
@@ -234,6 +252,12 @@ export function useBedsCollection(options = {}) {
       }
     }
 
+    if (changedBeds.length === 0) {
+      clearTimeout(_writeTimeoutId);
+      isWritingRef.current = false;
+      return true;
+    }
+
     try {
       // Escribir en paralelo únicamente las camas modificadas en 'beds/{canonicalId}'
       const writePromises = changedBeds.map(async (bedItem) => {
@@ -246,19 +270,26 @@ export function useBedsCollection(options = {}) {
 
       await Promise.all(writePromises);
 
-      // Mantener sincronizado appState/bedsData en segundo plano como respaldo pasivo
-      try {
-        const legacyRef = doc(db, 'appState', 'bedsData');
-        await setDoc(legacyRef, { data: nextTree, updatedAt: new Date().toISOString() });
-      } catch (legacyErr) {
-        console.warn('[useBedsCollection] Aviso: no se pudo escribir respaldo pasivo en appState/bedsData:', legacyErr.message);
-      }
+      // Fix #2 — Se elimina el respaldo pasivo en appState/bedsData.
+      // Escribir el árbol completo en ese documento causaba que al ser re-leído
+      // por el sanitizador o la migración, se sobrescribieran los documentos
+      // individuales de beds/ con datos obsoletos (bug detectado 26/09/2026).
+      // La única fuente de verdad son los documentos en beds/{canonicalId}.
 
+      clearTimeout(_writeTimeoutId);
       isWritingRef.current = false;
       return true;
     } catch (error) {
       console.error('[useBedsCollection] Error en actualización quirúrgica de camas:', error);
+      clearTimeout(_writeTimeoutId);
       isWritingRef.current = false;
+      // Revertir UI optimista al último estado confirmado por el servidor si la escritura falló
+      const currentServerList = Array.from(bedsMapRef.current.entries()).map(([canonicalId, data]) => ({ ...data, canonicalId }));
+      if (currentServerList.length > 0) {
+        const reverted = reconstructBedsTree(currentServerList, initialData);
+        setBedsDataState(reverted);
+        bedsDataRef.current = reverted;
+      }
       return false;
     }
   }, []);

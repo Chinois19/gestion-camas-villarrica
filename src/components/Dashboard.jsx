@@ -634,8 +634,27 @@ export default function Dashboard({
                     }
                   }
 
+                  // ── Atributos físicos fijos de la cama (no dependen del paciente) ──
+                  const physicalBedProps = {
+                    id: bed.id,
+                    canonicalId: bed.canonicalId || `${floor}_${sector}_${room.roomId}_${bed.id}`,
+                    type: bed.type || room.roomType || sector,
+                    tag: bed.tag || null
+                  };
+
+                  // ── Historial continuo: conservar evoluciones de solicitud y agregar hito de acueste ──
+                  const priorEvolutions = Array.isArray(patientData.evolutions) ? [...patientData.evolutions] : [];
+                  const acuesteEvolution = {
+                    id: Date.now().toString(),
+                    timestamp: new Date().toLocaleString('es-CL'),
+                    user: user?.name || 'Gestor de Camas',
+                    role: user?.roleName || user?.role || 'Gestor de Camas',
+                    note: `🛏️ Paciente acostado en Sala ${room.roomId} — Cama ${bed.id} (Servicio Solicitante: ${patientData.servicioSol || patientData.origin || 'Urgencia'})`
+                  };
+                  const continuousEvolutions = [acuesteEvolution, ...priorEvolutions];
+
                   return {
-                    ...bed,
+                    ...physicalBedProps,
                     status: 'occupied',
                     patient: assignmentData.patientName,
                     nombreSocial: patientData.nombreSocial || null,
@@ -651,8 +670,8 @@ export default function Dashboard({
                     reqEnfermeria: patientData.reqEnfermeria || null,
                     procedimientosPendientes: patientData.procedimientosPendientes || null,
                     aislamiento: patientData.aislamiento !== undefined ? patientData.aislamiento : null,
-                    servicioSol: patientData.servicioSol || null,
-                    destino: patientData.destino || null,
+                    servicioSol: patientData.servicioSol || patientData.origin || null,
+                    destino: patientData.destino || patientData.bedTypeRequired || null,
                     prioridad: patientData.prioridad || null,
                     diagnosis: (Array.isArray(assignmentData.diagnosis) && assignmentData.diagnosis.length > 0)
                       ? assignmentData.diagnosis
@@ -665,22 +684,22 @@ export default function Dashboard({
                     secondaryCodes: Array.isArray(patientData.secondaryCodes) && patientData.secondaryCodes.length > 0
                       ? patientData.secondaryCodes
                       : (Array.isArray(assignmentData.secondaryCodes) ? assignmentData.secondaryCodes : []),
-                    especialidadTratante: patientData.especialidadTratante,
-                    grdId: assignmentData.grdId,
-                    grdName: assignmentData.grdName,
-                    severity: assignmentData.severity,
-                    projectedDays: assignmentData.projectedDays,
-                    assignedAt: assignmentData.assignedAt,
-                    projectedReleaseDate: assignmentData.projectedReleaseDate,
-                    waitMinutes: assignmentData.waitMinutes,
-                    info: `Ingreso desde ${assignmentData.origin}`,
+                    especialidadTratante: patientData.especialidadTratante || [],
+                    grdId: assignmentData.grdId || null,
+                    grdName: assignmentData.grdName || null,
+                    severity: assignmentData.severity || null,
+                    projectedDays: assignmentData.projectedDays || null,
+                    assignedAt: assignmentData.assignedAt || new Date().toISOString(),
+                    projectedReleaseDate: assignmentData.projectedReleaseDate || null,
+                    waitMinutes: assignmentData.waitMinutes || null,
+                    info: `Ingreso desde ${assignmentData.origin || patientData.origin || 'Urgencia'}`,
                     originalWaitingRequest: patientData,
-                    // ── Limpiar datos del paciente anterior ──────────────────
+                    // ── Pizarra limpia: cero datos residuales de pacientes anteriores ──
                     novedades: [],
-                    interconsultas: [],
-                    evolutions: [],
+                    interconsultas: Array.isArray(patientData.interconsultas) ? patientData.interconsultas : [],
+                    evolutions: continuousEvolutions,
                     previousPatient: null,
-                    // Preservar historial acumulativo de altas anteriores
+                    // Preservar historial acumulativo de altas anteriores de esta cama física
                     dischargeHistory: preservedHistory
                   };
                 }
@@ -1338,10 +1357,19 @@ export default function Dashboard({
                       contenido: `Interconsulta ${formData.priorizacion ? formData.priorizacion.toLowerCase() : ''} a la especialidad de ${formData.especialidadDestino}.`
                     };
 
+                    const icEvolution = {
+                      id: Date.now().toString(),
+                      timestamp: formattedDate,
+                      user: formData.profesionalDeriva || user?.name || 'Médico Tratante',
+                      role: user?.roleName || user?.role || 'Médico',
+                      note: `🩺 Interconsulta ${formData.priorizacion ? formData.priorizacion.toLowerCase() : ''} solicitada a ${formData.especialidadDestino}.`
+                    };
+
                     return {
                       ...b,
                       interconsultas: [...currentICs, newIC],
-                      novedades: [newNovedad, ...currentNovedades]
+                      novedades: [newNovedad, ...currentNovedades],
+                      evolutions: [icEvolution, ...(b.evolutions || [])]
                     };
                   }
                   return b;
@@ -1362,8 +1390,42 @@ export default function Dashboard({
   const handleFinishCleaning = (roomId, bedId) => {
     updateBedState(roomId, bedId, { 
       status: 'available',
+      patient: null,
+      nombreSocial: null,
+      rut: null,
+      age: null,
+      fechaNacimiento: null,
+      sex: null,
+      prevision: null,
+      comuna: null,
+      medicoSol: null,
+      especialidadMedico: null,
+      requisitosUGP: null,
+      reqEnfermeria: null,
+      procedimientosPendientes: null,
+      aislamiento: null,
+      servicioSol: null,
+      destino: null,
+      prioridad: null,
+      diagnosis: null,
+      dxPrincipal: null,
+      dxCie10: null,
+      dxGrupo: null,
+      secondaryCodes: [],
+      grdId: null,
+      grdName: null,
+      severity: null,
+      projectedDays: null,
+      assignedAt: null,
+      projectedReleaseDate: null,
+      waitMinutes: null,
+      info: null,
+      especialidadTratante: null,
+      originalWaitingRequest: null,
+      interconsultas: [],
       novedades: [],
       evolutions: [],
+      previousPatient: null,
       cleaningAt: null
     });
   };
@@ -1685,14 +1747,22 @@ export default function Dashboard({
             const bIndex = room.beds.findIndex(b => String(b.id) === String(sourceBedId));
             if (bIndex !== -1) {
               if (transferType === 'enroque') {
-                const { id: _id, type: _t, tag: _tg, novedades: _n, evolutions: _e, ...targetPatientData } = targetBedInfo;
+                const targetEvol = {
+                  id: Date.now().toString(),
+                  timestamp: new Date().toLocaleString('es-CL'),
+                  user: user?.name || 'Gestor de Camas',
+                  role: user?.roleName || user?.role || 'Gestor de Camas',
+                  note: `🔄 Traslado por enroque hacia Sala ${sourceRoomId} — Cama ${sourceBedId}`
+                };
+                const { id: _id, type: _t, tag: _tg, ...targetPatientData } = targetBedInfo;
                 room.beds[bIndex] = {
                   id: room.beds[bIndex].id,
                   type: room.beds[bIndex].type,
                   tag: room.beds[bIndex].tag,
                   ...targetPatientData,
-                  novedades: [],
-                  evolutions: [],
+                  novedades: targetBedInfo.novedades || [],
+                  interconsultas: targetBedInfo.interconsultas || [],
+                  evolutions: [targetEvol, ...(targetBedInfo.evolutions || [])],
                   transferAt: new Date().toISOString()
                 };
               } else {
@@ -1701,8 +1771,42 @@ export default function Dashboard({
                   type: room.beds[bIndex].type,
                   tag: room.beds[bIndex].tag,
                   status: 'cleaning',
+                  patient: null,
+                  nombreSocial: null,
+                  rut: null,
+                  age: null,
+                  fechaNacimiento: null,
+                  sex: null,
+                  prevision: null,
+                  comuna: null,
+                  medicoSol: null,
+                  especialidadMedico: null,
+                  requisitosUGP: null,
+                  reqEnfermeria: null,
+                  procedimientosPendientes: null,
+                  aislamiento: null,
+                  servicioSol: null,
+                  destino: null,
+                  prioridad: null,
+                  diagnosis: null,
+                  dxPrincipal: null,
+                  dxCie10: null,
+                  dxGrupo: null,
+                  secondaryCodes: [],
+                  grdId: null,
+                  grdName: null,
+                  severity: null,
+                  projectedDays: null,
+                  assignedAt: null,
+                  projectedReleaseDate: null,
+                  waitMinutes: null,
+                  info: null,
+                  especialidadTratante: null,
+                  originalWaitingRequest: null,
+                  interconsultas: [],
                   novedades: [],
                   evolutions: [],
+                  previousPatient: null,
                   cleaningAt: new Date().toISOString()
                 };
               }
@@ -1714,12 +1818,22 @@ export default function Dashboard({
             const room = sectorRooms[tRoomIndex];
             const bIndex = room.beds.findIndex(b => String(b.id) === String(targetBedId));
             if (bIndex !== -1) {
+              const sourceEvol = {
+                id: (Date.now() + 1).toString(),
+                timestamp: new Date().toLocaleString('es-CL'),
+                user: user?.name || 'Gestor de Camas',
+                role: user?.roleName || user?.role || 'Gestor de Camas',
+                note: `🔄 Traslado ${transferType === 'enroque' ? 'por enroque ' : ''}desde Sala ${sourceRoomId} Cama ${sourceBedId} hacia Sala ${targetRoomId} Cama ${targetBedId}`
+              };
               const { id: _id, type: _t, tag: _tg, ...sourcePatientData } = sourceBedInfo;
               room.beds[bIndex] = {
                 id: room.beds[bIndex].id,
                 type: room.beds[bIndex].type,
                 tag: room.beds[bIndex].tag,
                 ...sourcePatientData,
+                interconsultas: sourceBedInfo.interconsultas || [],
+                novedades: sourceBedInfo.novedades || [],
+                evolutions: [sourceEvol, ...(sourceBedInfo.evolutions || [])],
                 status: 'occupied',
                 transferAt: new Date().toISOString()
               };

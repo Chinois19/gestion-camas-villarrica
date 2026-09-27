@@ -142,10 +142,10 @@ function App() {
 
   // ── Migración preventiva automática desde appState/waitingList si correspondiera ─
   useEffect(() => {
-    if (isSyncEnabled) {
+    if (isSyncEnabled && !isPublicRoute) {
       checkAndMigrateWaitingList();
     }
-  }, [isSyncEnabled]);
+  }, [isSyncEnabled, isPublicRoute]);
 
   // ── Adaptador seguro para componentes que llaman a setWaitingList(prev => ...) ──
   const setWaitingList = useCallback(async (updaterOrData) => {
@@ -186,7 +186,30 @@ function App() {
   // en vuelo. Sin este guard, el revert + sanitize combinados eran la causa
   // de la pérdida masiva de acuestes (bug detectado el 24/09/2026).
   useEffect(() => {
-    if (!bedsLoading && bedsData && isSyncEnabled && !bedsWritingRef.current) {
+    if (!bedsLoading && bedsData && isSyncEnabled && !isPublicRoute && !bedsWritingRef.current) {
+      // Fix #3 — Guard: detectar si bedsData contiene dischargeHistory anidado,
+      // que es el indicador de que los datos vienen del documento monolítico legacy
+      // (appState/bedsData) y NO de la colección granular beds/.
+      // En ese caso, NO escribir de vuelta para evitar sobrescribir beds/ con datos obsoletos.
+      let hasLegacyData = false;
+      outerCheck: for (const floor in bedsData) {
+        if (typeof bedsData[floor] !== 'object' || Array.isArray(bedsData[floor])) continue;
+        for (const sector in bedsData[floor]) {
+          for (const room of (bedsData[floor][sector] || [])) {
+            for (const bed of (room.beds || [])) {
+              if (Array.isArray(bed.dischargeHistory) && bed.dischargeHistory.length > 0) {
+                hasLegacyData = true;
+                break outerCheck;
+              }
+            }
+          }
+        }
+      }
+      if (hasLegacyData) {
+        console.warn('[App] 🛡️ Sanitizador detenido: datos legacy detectados (dischargeHistory anidado). No se sobreescribe beds/.');
+        return;
+      }
+
       const { cleaned, hasFixes } = sanitizeBedsStructure(bedsData);
       if (hasFixes) {
         console.log('[App] 🛡️ Sanitizando IDs de cama corruptos en bedsData...');
@@ -555,6 +578,10 @@ function App() {
         <Toaster position="top-right" richColors />
         <SolicitudForm
           onSubmit={async (newPatient) => {
+            if (bedsLoading || waitingLoading) {
+              toast.info('Sincronizando con el hospital... por favor espere unos segundos.');
+              return false;
+            }
             const cleanRut = (rut) => (rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
             const newRut = cleanRut(newPatient.rut);
             if (newRut) {
