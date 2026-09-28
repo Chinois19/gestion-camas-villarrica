@@ -618,22 +618,6 @@ export default function Dashboard({
             if (room.roomId === roomId) {
               const updatedBeds = room.beds.map(bed => {
                 if (bed.id === bedId) {
-                  // ── Migración legacy: si hay previousPatient sin dischargeHistory, conservarlo ──
-                  // Esto garantiza que altas registradas antes de implementar dischargeHistory
-                  // no se pierdan cuando se asigna un nuevo paciente a la cama.
-                  let preservedHistory = Array.isArray(bed.dischargeHistory) ? bed.dischargeHistory : [];
-                  if (bed.previousPatient && preservedHistory.length === 0) {
-                    // Migrar el registro legacy al nuevo formato acumulativo
-                    preservedHistory = [bed.previousPatient];
-                  } else if (bed.previousPatient && preservedHistory.length > 0) {
-                    // Si existe dischargeHistory pero también previousPatient con distinto _dischargeId,
-                    // asegurarse de que el legacy no se duplique
-                    const legacyId = bed.previousPatient._dischargeId;
-                    if (!legacyId || !preservedHistory.some(r => r._dischargeId === legacyId)) {
-                      preservedHistory = [bed.previousPatient, ...preservedHistory];
-                    }
-                  }
-
                   // ── Atributos físicos fijos de la cama (no dependen del paciente) ──
                   const physicalBedProps = {
                     id: bed.id,
@@ -698,9 +682,7 @@ export default function Dashboard({
                     novedades: [],
                     interconsultas: Array.isArray(patientData.interconsultas) ? patientData.interconsultas : [],
                     evolutions: continuousEvolutions,
-                    previousPatient: null,
-                    // Preservar historial acumulativo de altas anteriores de esta cama física
-                    dischargeHistory: preservedHistory
+                    previousPatient: null
                   };
                 }
                 return bed;
