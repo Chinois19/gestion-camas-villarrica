@@ -51,7 +51,6 @@ export function sanitizeBedsStructure(bedsData) {
               'cama',
               'habitacion',
               'piso',
-              'sector',
               'migratedAt'
             ];
 
