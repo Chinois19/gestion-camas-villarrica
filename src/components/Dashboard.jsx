@@ -1754,7 +1754,19 @@ export default function Dashboard({
                   role: user?.roleName || user?.role || 'Gestor de Camas',
                   note: `🔄 Traslado por enroque hacia Sala ${sourceRoomId} — Cama ${sourceBedId}`
                 };
-                const { id: _id, type: _t, tag: _tg, ...targetPatientData } = targetBedInfo;
+                const {
+                  id: _id,
+                  type: _t,
+                  tag: _tg,
+                  canonicalId: _cid,
+                  bedNumber: _bn,
+                  roomId: _rm,
+                  floor: _fl,
+                  sector: _sc,
+                  dischargeHistory: _dh,
+                  previousPatient: _pp,
+                  ...targetPatientData
+                } = targetBedInfo;
                 room.beds[bIndex] = {
                   id: room.beds[bIndex].id,
                   type: room.beds[bIndex].type,
@@ -1825,7 +1837,19 @@ export default function Dashboard({
                 role: user?.roleName || user?.role || 'Gestor de Camas',
                 note: `🔄 Traslado ${transferType === 'enroque' ? 'por enroque ' : ''}desde Sala ${sourceRoomId} Cama ${sourceBedId} hacia Sala ${targetRoomId} Cama ${targetBedId}`
               };
-              const { id: _id, type: _t, tag: _tg, ...sourcePatientData } = sourceBedInfo;
+              const {
+                id: _id,
+                type: _t,
+                tag: _tg,
+                canonicalId: _cid,
+                bedNumber: _bn,
+                roomId: _rm,
+                floor: _fl,
+                sector: _sc,
+                dischargeHistory: _dh,
+                previousPatient: _pp,
+                ...sourcePatientData
+              } = sourceBedInfo;
               room.beds[bIndex] = {
                 id: room.beds[bIndex].id,
                 type: room.beds[bIndex].type,

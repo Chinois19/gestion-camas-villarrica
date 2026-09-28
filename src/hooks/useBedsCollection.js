@@ -220,7 +220,8 @@ export function useBedsCollection(options = {}) {
         for (const room of rooms) {
           const beds = room.beds || [];
           for (const bed of beds) {
-            const canonicalId = bed.canonicalId || `${floor}_${sector}_${room.roomId}_${bed.id}`;
+            // La identidad física de la cama (canonicalId) es inmutable y determinada por su sala y número
+            const canonicalId = `${floor}_${sector}_${room.roomId}_${bed.id}`;
             const prevBed = bedsMapRef.current.get(canonicalId);
 
             // Comparar si cambió status, patient, rut, assignedAt, diagnosis, etc.
@@ -236,14 +237,25 @@ export function useBedsCollection(options = {}) {
               JSON.stringify(prevBed.evolutions) !== JSON.stringify(bed.evolutions);
 
             if (hasChanged) {
+              const {
+                canonicalId: _ignoreCid,
+                dischargeHistory: _ignoreDh,
+                floor: _ignoreFl,
+                sector: _ignoreSc,
+                roomId: _ignoreRm,
+                roomType: _ignoreRt,
+                bedNumber: _ignoreBn,
+                ...cleanBed
+              } = bed;
+
               changedBeds.push({
+                ...cleanBed,
                 canonicalId,
                 floor,
                 sector,
                 roomId: String(room.roomId),
                 roomType: room.roomType || sector,
                 bedNumber: String(bed.id),
-                ...bed,
                 _updatedAt: new Date().toISOString()
               });
             }
