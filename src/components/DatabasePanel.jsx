@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
 import { matchesSearch } from '../utils/search';
 import { formatAgeDetailed } from '../utils/age';
+import ActualizacionPill from './ActualizacionPill';
 
 const formatDateToDDMMYYYY = (dateVal) => {
   if (!dateVal) return '—';
@@ -496,21 +497,8 @@ export default function DatabasePanel({ bedsData, procedures = [], blockLog = []
                   <td>{row.edad}</td>
                   <td className="cell-truncate" title={row.diagnosticos}>{row.diagnosticos}</td>
                   <td>{row.especialidades}</td>
-                  <td className="cell-actualizacion" title={
-                    Array.isArray(row.actualizacion)
-                      ? row.actualizacion.map(act => `${act.texto} [${act.fecha}]`).join('\n')
-                      : row.actualizacion
-                  }>
-                    {Array.isArray(row.actualizacion) ? (
-                      row.actualizacion.map((act, idx) => (
-                        <div key={idx} className="actualizacion-row">
-                          <span className="actualizacion-text">{act.texto}</span>
-                          <span className="actualizacion-date">{act.fecha}</span>
-                        </div>
-                      ))
-                    ) : (
-                      row.actualizacion
-                    )}
+                  <td className="cell-actualizacion">
+                    <ActualizacionPill actualizacion={row.actualizacion} />
                   </td>
                   <td>{row.comuna}</td>
                 </tr>

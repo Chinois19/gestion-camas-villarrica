@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import './DatabasePanel.css';
 import { matchesSearch } from '../utils/search';
+import ActualizacionPill from './ActualizacionPill';
 
 const SERVICES = ['UCI', 'UTI', 'Cuidados Medios', 'GINE/PUERPERIO', 'Neonatología', 'Infantil', 'Básico'];
 
@@ -440,21 +441,8 @@ export default function TransfersDatabasePanel({ transferHistory = [] }) {
                   <td className="cell-truncate" title={row.diagnosticos}>{row.diagnosticos}</td>
                   <td>{row.especialidades}</td>
                   <td>{row.comuna}</td>
-                  <td className="cell-actualizacion" title={
-                    Array.isArray(row.actualizacion)
-                      ? row.actualizacion.map(act => `${act.texto} [${act.fecha}]`).join('\n')
-                      : row.actualizacion
-                  }>
-                    {Array.isArray(row.actualizacion) ? (
-                      row.actualizacion.map((act, idx) => (
-                        <div key={idx} className="actualizacion-row">
-                          <span className="actualizacion-text">{act.texto}</span>
-                          <span className="actualizacion-date">{act.fecha}</span>
-                        </div>
-                      ))
-                    ) : (
-                      row.actualizacion
-                    )}
+                  <td className="cell-actualizacion">
+                    <ActualizacionPill actualizacion={row.actualizacion} />
                   </td>
                 </tr>
               ))

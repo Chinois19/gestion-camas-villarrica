@@ -200,7 +200,7 @@ function App() {
   const isTransfersView = currentView === 'traslados_database' || currentView === 'insights' || currentView === 'general_database';
   const isBlockLogsView = currentView === 'blocked_beds' || currentView === 'insights';
   const isHodomView = currentView === 'hodom' || currentView === 'dashboard';
-  const isProceduresView = currentView === 'interconsultas' || currentView === 'database' || currentView === 'altas_database';
+  const isProceduresView = currentView === 'interconsultas' || currentView === 'database' || currentView === 'altas_database' || currentView === 'general_database';
 
   const dischargesCol = useFirestoreCollection('discharges', {
     orderByField: 'dischargeAt',
@@ -927,6 +927,8 @@ function App() {
           dischargesLog={dischargesLog || []}
           transferHistory={transferHistory || []}
           bedsData={bedsData}
+          waitingList={waitingList || []}
+          procedures={procedures || []}
         />
       )}
       {currentView === 'blocked_beds' && (
