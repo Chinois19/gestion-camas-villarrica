@@ -235,9 +235,9 @@ function ReadOnlyField({ label, value }) {
 
 export default function SolicitudForm({ onSubmit, editingPatient, viewingPatient, currentUser, onUpdatePatient, onClose, onSwitchToEdit, onRequestIC }) {
   const isVisor = currentUser?.role === 'visor';
-  const isSuperAdmin = currentUser?.role === 'superadmin';
-  const isGestor = currentUser?.role === 'gestor_camas';
-  const canEditDateTime = isSuperAdmin || isGestor;
+  const isSuperAdmin = currentUser?.role === 'superadmin' || currentUser?.role === 'administrador';
+  const isGestor = currentUser?.role === 'gestor_camas' || currentUser?.role === 'gestora_servicio' || isSuperAdmin;
+  const canEditDateTime = isGestor;
   const patientData = editingPatient || viewingPatient;
   const isViewMode = !!viewingPatient && !editingPatient;
   const isEditMode = !!editingPatient;

@@ -70,6 +70,50 @@ import { ESPECIALIDADES } from '../data/formData';
 
 const EditAltaModal = ({ row, onClose, onSave }) => {
   const p = row.rawBedData || {};
+
+  const parseDateTimeParts = (isoOrStr) => {
+    if (!isoOrStr || isoOrStr === '—') return { date: '', time: '' };
+    try {
+      if (typeof isoOrStr === 'string' && isoOrStr.includes('/')) {
+        const parts = isoOrStr.trim().split(/[\s,]+/);
+        if (parts.length >= 1) {
+          const datePart = parts[0].split('/');
+          if (datePart.length === 3) {
+            const day = datePart[0].padStart(2, '0');
+            const month = datePart[1].padStart(2, '0');
+            const year = datePart[2];
+            const timePart = parts[1] || '00:00';
+            return {
+              date: `${year}-${month}-${day}`,
+              time: timePart.slice(0, 5)
+            };
+          }
+        }
+      }
+      const d = new Date(isoOrStr);
+      if (isNaN(d.getTime())) return { date: '', time: '' };
+      const pad = (num) => String(num).padStart(2, '0');
+      return {
+        date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+        time: `${pad(d.getHours())}:${pad(d.getMinutes())}`
+      };
+    } catch {
+      return { date: '', time: '' };
+    }
+  };
+
+  const rawDischarge = p.dischargeAt || p.cleaningAt || p.fechaAlta || row.rawBedData?.dischargeAt || row.rawBedData?.cleaningAt || row.fechaAlta;
+  const initialDischargeDT = parseDateTimeParts(rawDischarge);
+
+  const rawAdmission = p.assignedAt || p.admissionDate || p.fechaIngreso || row.rawBedData?.assignedAt || row.rawBedData?.admissionDate || row.fechaIngreso;
+  const initialAdmissionDT = parseDateTimeParts(rawAdmission);
+
+  const [dischargeDate, setDischargeDate] = useState(initialDischargeDT.date);
+  const [dischargeTime, setDischargeTime] = useState(initialDischargeDT.time);
+
+  const [admissionDate, setAdmissionDate] = useState(initialAdmissionDT.date);
+  const [admissionTime, setAdmissionTime] = useState(initialAdmissionDT.time);
+
   const [formData, setFormData] = useState({
     nombre: p.patient || p.patientName || p.nombre || row.nombre || '',
     run: p.rut || row.run || '',
@@ -86,11 +130,90 @@ const EditAltaModal = ({ row, onClose, onSave }) => {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  const handleSaveClick = () => {
+    let finalDischargeIso = null;
+    if (dischargeDate && dischargeTime) {
+      const d = new Date(`${dischargeDate}T${dischargeTime}:00`);
+      if (!isNaN(d.getTime())) finalDischargeIso = d.toISOString();
+    } else if (dischargeDate) {
+      const d = new Date(`${dischargeDate}T12:00:00`);
+      if (!isNaN(d.getTime())) finalDischargeIso = d.toISOString();
+    }
+
+    let finalAdmissionIso = null;
+    if (admissionDate && admissionTime) {
+      const d = new Date(`${admissionDate}T${admissionTime}:00`);
+      if (!isNaN(d.getTime())) finalAdmissionIso = d.toISOString();
+    } else if (admissionDate) {
+      const d = new Date(`${admissionDate}T12:00:00`);
+      if (!isNaN(d.getTime())) finalAdmissionIso = d.toISOString();
+    }
+
+    onSave({
+      ...formData,
+      dischargeAt: finalDischargeIso,
+      cleaningAt: finalDischargeIso,
+      fechaAlta: finalDischargeIso,
+      assignedAt: finalAdmissionIso,
+      admissionDate: finalAdmissionIso,
+      fechaIngreso: finalAdmissionIso
+    });
+  };
+
   return (
     <div className="modal-overlay" style={{ zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-      <div className="modal-content glass-panel" style={{ width: 'min(96vw, 600px)', maxHeight: '90vh', overflowY: 'auto', padding: 24, background: 'var(--panel-bg)', border: '1px solid var(--glass-border)', borderRadius: 16 }}>
+      <div className="modal-content glass-panel" style={{ width: 'min(96vw, 640px)', maxHeight: '90vh', overflowY: 'auto', padding: 24, background: 'var(--panel-bg)', border: '1px solid var(--glass-border)', borderRadius: 16 }}>
         <h3 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)' }}>Editar Registro de Alta</h3>
         <p style={{ fontSize: '0.85rem', color: '#10b981', margin: '0 0 16px 0', fontWeight: 600 }}>Hab {row.sala} - Cama {row.cama}</p>
+
+        {/* Sección de Fechas y Horas Clínicas (Retroactivo) */}
+        <div style={{ background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+            📅 Tiempos Clínicos de Hospitalización (Editable)
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div>
+              <label style={{ fontSize: '0.7rem', fontWeight: 600, color: '#38bdf8', display: 'block', marginBottom: 3 }}>Fecha Ingreso</label>
+              <input
+                type="date"
+                className="glass-input"
+                style={{ width: '100%', boxSizing: 'border-box', color: '#38bdf8', fontWeight: 600, padding: '6px 8px' }}
+                value={admissionDate}
+                onChange={e => setAdmissionDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.7rem', fontWeight: 600, color: '#38bdf8', display: 'block', marginBottom: 3 }}>Hora Ingreso</label>
+              <input
+                type="time"
+                className="glass-input"
+                style={{ width: '100%', boxSizing: 'border-box', color: '#38bdf8', fontWeight: 600, padding: '6px 8px' }}
+                value={admissionTime}
+                onChange={e => setAdmissionTime(e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.7rem', fontWeight: 600, color: '#10b981', display: 'block', marginBottom: 3 }}>Fecha Alta</label>
+              <input
+                type="date"
+                className="glass-input"
+                style={{ width: '100%', boxSizing: 'border-box', color: '#10b981', fontWeight: 600, padding: '6px 8px' }}
+                value={dischargeDate}
+                onChange={e => setDischargeDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.7rem', fontWeight: 600, color: '#10b981', display: 'block', marginBottom: 3 }}>Hora Alta</label>
+              <input
+                type="time"
+                className="glass-input"
+                style={{ width: '100%', boxSizing: 'border-box', color: '#10b981', fontWeight: 600, padding: '6px 8px' }}
+                value={dischargeTime}
+                onChange={e => setDischargeTime(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div>
@@ -198,7 +321,7 @@ const EditAltaModal = ({ row, onClose, onSave }) => {
 
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '24px' }}>
           <button className="glass-button" onClick={onClose} style={{ padding: '8px 16px' }}>Cancelar</button>
-          <button className="glass-button primary" onClick={() => onSave(formData)} style={{ padding: '8px 16px', background: 'linear-gradient(135deg, #10b981, #059669)' }}>Guardar Cambios</button>
+          <button className="glass-button primary" onClick={handleSaveClick} style={{ padding: '8px 16px', background: 'linear-gradient(135deg, #10b981, #059669)' }}>Guardar Cambios</button>
         </div>
       </div>
     </div>
@@ -233,7 +356,7 @@ export default function DischargesDatabasePanel({
   const hasDateRange = Boolean(startDate && endDate);
 
   const isAdmin = userRole === 'superadmin' || userRole === 'administrador' || userRole === 'admin';
-  const isAdminOrGestor = isAdmin || userRole === 'gestor_camas';
+  const isAdminOrGestor = isAdmin || userRole === 'gestor_camas' || userRole === 'gestora_servicio';
 
   // Usar discharges prioritariamente, con fallback a dischargesLog
   const rawDischargesList = (Array.isArray(discharges) && discharges.length > 0)
@@ -813,25 +936,38 @@ export default function DischargesDatabasePanel({
       ? updatedData.especialidadTratante.split(',').map(s => s.trim()).filter(Boolean)
       : [];
 
+    const patchPayload = {
+      patient: updatedData.nombre, patientName: updatedData.nombre, nombre: updatedData.nombre,
+      rut: updatedData.run, run: updatedData.run,
+      diagnosis: updatedData.diagnosticos,
+      especialidadTratante: especialidadList,
+      destino: updatedData.destino,
+      establecimientoRed: updatedData.establecimientoRed,
+      otroEstablecimientoDetalle: updatedData.otroEstablecimientoDetalle || '',
+      redPrivadaDetalle: updatedData.redPrivadaDetalle || '',
+      observaciones: updatedData.observaciones || '',
+      _editedAt: new Date().toISOString()
+    };
+
+    if (updatedData.dischargeAt) {
+      patchPayload.dischargeAt = updatedData.dischargeAt;
+      patchPayload.cleaningAt = updatedData.dischargeAt;
+      patchPayload.fechaAlta = updatedData.dischargeAt;
+    }
+    if (updatedData.assignedAt) {
+      patchPayload.assignedAt = updatedData.assignedAt;
+      patchPayload.admissionDate = updatedData.assignedAt;
+      patchPayload.fechaIngreso = updatedData.assignedAt;
+    }
+
     if (docId && onUpdateDischarge) {
-      await onUpdateDischarge(docId, {
-        patient: updatedData.nombre, patientName: updatedData.nombre, nombre: updatedData.nombre,
-        rut: updatedData.run, run: updatedData.run,
-        diagnosis: updatedData.diagnosticos,
-        especialidadTratante: especialidadList,
-        destino: updatedData.destino,
-        establecimientoRed: updatedData.establecimientoRed,
-        otroEstablecimientoDetalle: updatedData.otroEstablecimientoDetalle || '',
-        redPrivadaDetalle: updatedData.redPrivadaDetalle || '',
-        observaciones: updatedData.observaciones || '',
-        _editedAt: new Date().toISOString()
-      });
+      await onUpdateDischarge(docId, patchPayload);
     }
     if (setWaitingListDischarges) {
-      setWaitingListDischarges(prev => prev.map(p => (p.id === docId) ? { ...p, ...updatedData, especialidadTratante: especialidadList } : p));
+      setWaitingListDischarges(prev => prev.map(p => (p.id === docId) ? { ...p, ...patchPayload, especialidadTratante: especialidadList } : p));
     }
     if (setDischargesLog) {
-      setDischargesLog(prev => prev.map(p => (p.id === docId) ? { ...p, ...updatedData, especialidadTratante: especialidadList } : p));
+      setDischargesLog(prev => prev.map(p => (p.id === docId) ? { ...p, ...patchPayload, especialidadTratante: especialidadList } : p));
     }
     toast.success('Registro de alta actualizado correctamente');
     setEditingRow(null);

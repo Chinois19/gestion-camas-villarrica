@@ -625,8 +625,8 @@ function App() {
   }
 
   // ── ROLE PERMISSIONS ───────────────────────────────────────────────────────
-  const isSuperAdmin = currentUser.role === 'superadmin';
-  const isGestor = currentUser.role === 'gestor_camas';
+  const isSuperAdmin = currentUser.role === 'superadmin' || currentUser.role === 'administrador';
+  const isGestor = currentUser.role === 'gestor_camas' || currentUser.role === 'gestora_servicio';
   const isMedico = currentUser.role === 'medico_general';
   const isAseo = currentUser.role === 'personal_aseo';
   const isVisor = currentUser.role === 'visor';

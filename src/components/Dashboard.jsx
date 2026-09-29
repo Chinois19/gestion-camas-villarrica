@@ -48,7 +48,7 @@ const getBedStayStatus = (bed) => {
 
 function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge, onFinishCleaning, onUndoDischarge, onUndoAssignment, onMarkHodomDoneByBed, onEditGrd, onBlockBed, onUnblockBed, userRole, user }) {
   const isVisor = userRole === 'visor';
-  const canManageBlocks = userRole === 'superadmin' || userRole === 'administrador' || userRole === 'gestor_camas';
+  const canManageBlocks = userRole === 'superadmin' || userRole === 'administrador' || userRole === 'gestor_camas' || userRole === 'gestora_servicio';
   const isCompatible = checkCompatibility(bed, selectedPatient);
   const isSelecting = !!selectedPatient;
   const { isOver, setNodeRef } = useDroppable({
@@ -326,7 +326,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
                   <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '8px', width: '100%', display: 'flex', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); onDischarge(room.roomId, bed.id); }}>
                     <LogOut size={12} /> Dar Alta
                   </button>
-                  {(user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'administrador') && (
+                  {(user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'gestora_servicio' || user?.role === 'administrador') && (
                     <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '4px', width: '100%', display: 'flex', justifyContent: 'center', borderColor: 'rgba(245,158,11,0.4)', color: '#f59e0b' }} onClick={(e) => { e.stopPropagation(); onUndoAssignment(room.roomId, bed.id); }}>
                       <RotateCcw size={12} /> Revocar Acueste
                     </button>
@@ -335,7 +335,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
               )
             )}
 
-            {bed.status === 'pending_hodom' && (user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'administrador') && bed.previousPatient && (
+            {bed.status === 'pending_hodom' && (user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'gestora_servicio' || user?.role === 'administrador') && bed.previousPatient && (
               <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginTop: '4px', width: '100%', display: 'flex', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); onUndoDischarge(room.roomId, bed.id); }}>
                 <RotateCcw size={12} /> Revertir Alta (Recuperar)
               </button>
@@ -363,7 +363,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
           <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', color: 'var(--status-available)', borderColor: 'var(--status-available)' }} onClick={(e) => { e.stopPropagation(); onFinishCleaning(room.roomId, bed.id); }}>
             <CheckCircle size={12} /> Finalizar Aseo
           </button>
-          {(user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'administrador') && bed.previousPatient && (
+          {(user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'gestora_servicio' || user?.role === 'administrador') && bed.previousPatient && (
             <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); onUndoDischarge(room.roomId, bed.id); }}>
               <RotateCcw size={12} /> Revocar Alta
             </button>
@@ -378,7 +378,7 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
               <Lock size={12} /> Bloqueo de cama
             </button>
           )}
-          {(user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'administrador') && bed.previousPatient && (
+          {(user?.role === 'superadmin' || user?.role === 'gestor_camas' || user?.role === 'gestora_servicio' || user?.role === 'administrador') && bed.previousPatient && (
             <button className="glass-button secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); onUndoDischarge(room.roomId, bed.id); }}>
               <RotateCcw size={12} /> Revocar Alta
             </button>
@@ -508,7 +508,7 @@ export default function Dashboard({
   };
 
   const handleAssignPatientClick = (roomId, bedId, patient) => {
-    if (isVisor || isGestoraServicio) return;
+    if (isVisor) return;
 
     // Encontrar la cama para checkear servicio y estado
     let targetBed = null;
@@ -973,8 +973,8 @@ export default function Dashboard({
         prevision: bed.prevision,
         diagnosis: bed.diagnosis,
         requestedAt: bed.requestedAt,
-        dischargeAt: new Date().toISOString(),
-        cleaningAt: new Date().toISOString(),
+        dischargeAt: formData.fechaAlta || new Date().toISOString(),
+        cleaningAt: formData.fechaAlta || new Date().toISOString(),
         destino: formData.destino || 'No definido',
         establecimientoRed: formData.establecimientoRed || '',
         otroEstablecimientoDetalle: formData.otroEstablecimientoDetalle || '',
@@ -1032,8 +1032,8 @@ export default function Dashboard({
       otroEstablecimientoDetalle: formData.otroEstablecimientoDetalle || '',
       redPrivadaDetalle: formData.redPrivadaDetalle || '',
       observaciones: formData.observaciones || '',
-      cleaningAt: new Date().toISOString(),
-      dischargeAt: new Date().toISOString()
+      cleaningAt: formData.fechaAlta || new Date().toISOString(),
+      dischargeAt: formData.fechaAlta || new Date().toISOString()
     };
 
     // 1. Guardar en colección permanente discharges de Firestore
@@ -2141,7 +2141,7 @@ export default function Dashboard({
           })}
         </main>
 
-        {!isGestoraServicio && (
+        {!isVisor && (
           <aside className="waiting-list-section">
             <div className="glass-panel sidebar-section">
               <WaitingList
@@ -2199,6 +2199,7 @@ export default function Dashboard({
         {dischargingPatient && (
           <DischargeModal
             bed={{ ...dischargingPatient.bed, roomId: dischargingPatient.roomId }}
+            user={user}
             onConfirm={handleDischargeConfirm}
             onHodomSubmit={onHodomSubmit}
             onClose={() => setDischargingPatient(null)}

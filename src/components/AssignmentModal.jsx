@@ -62,7 +62,7 @@ export default function AssignmentModal({ patient, bed, user, onConfirm, onClose
   const projectedDays = formData.grdId ? calculateProjectedDays(formData.grdId, parseInt(formData.severity)) : 0;
   const limitDays = formData.grdId ? getGrdLimit(formData.grdId, parseInt(formData.severity)) : 0;
   
-  const canEditRetroactive = user?.role === 'superadmin' || user?.role === 'gestor_camas';
+  const canEditRetroactive = user?.role === 'superadmin' || user?.role === 'administrador' || user?.role === 'gestor_camas' || user?.role === 'gestora_servicio';
 
   const [customDate, setCustomDate] = useState(() => {
     const d = new Date();

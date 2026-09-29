@@ -223,7 +223,23 @@ function HodomModal({ bed, onConfirm, onClose }) {
   );
 }
 
-export default function DischargeModal({ bed, onConfirm, onHodomSubmit, onClose }) {
+export default function DischargeModal({ bed, onConfirm, onHodomSubmit, onClose, user }) {
+  const isSuperAdmin = user?.role === 'superadmin' || user?.role === 'administrador';
+  const isGestor = user?.role === 'gestor_camas' || user?.role === 'gestora_servicio' || isSuperAdmin;
+
+  const getInitialDischargeDT = () => {
+    const d = new Date();
+    const pad = (num) => String(num).padStart(2, '0');
+    return {
+      date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+      time: `${pad(d.getHours())}:${pad(d.getMinutes())}`
+    };
+  };
+
+  const initialDT = getInitialDischargeDT();
+  const [customDate, setCustomDate] = useState(initialDT.date);
+  const [customTime, setCustomTime] = useState(initialDT.time);
+
   const [formData, setFormData] = useState({
     destino: '',
     establecimientoRed: '',
@@ -250,12 +266,21 @@ export default function DischargeModal({ bed, onConfirm, onHodomSubmit, onClose 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.destino) return;
+
+    let effectiveDischargeDate = new Date();
+    if (isGestor && customDate && customTime) {
+      const parsed = new Date(`${customDate}T${customTime}:00`);
+      if (!isNaN(parsed.getTime())) {
+        effectiveDischargeDate = parsed;
+      }
+    }
+
     onConfirm({
       ...formData,
       bedId: bed.id,
       roomId: bed.roomId,
       patientName: bed.patient,
-      fechaAlta: new Date().toISOString()
+      fechaAlta: effectiveDischargeDate.toISOString()
     });
   };
 
@@ -312,6 +337,37 @@ export default function DischargeModal({ bed, onConfirm, onHodomSubmit, onClose 
                       ))}
                     </div>
                   </div>
+
+                  {/* Fecha y Hora de Alta (Editable para gestores) */}
+                  {isGestor && (
+                    <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '12px' }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                        📅 Fecha y Hora de Alta (Retroactivo)
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Fecha de Alta</label>
+                          <input
+                            type="date"
+                            className="glass-input"
+                            style={{ width: '100%', padding: '6px 8px', fontSize: '0.8rem', color: '#f59e0b', fontWeight: 600, borderColor: 'rgba(245,158,11,0.4)' }}
+                            value={customDate}
+                            onChange={e => setCustomDate(e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Hora de Alta</label>
+                          <input
+                            type="time"
+                            className="glass-input"
+                            style={{ width: '100%', padding: '6px 8px', fontSize: '0.8rem', color: '#f59e0b', fontWeight: 600, borderColor: 'rgba(245,158,11,0.4)' }}
+                            value={customTime}
+                            onChange={e => setCustomTime(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* 2. Destino Inmediato del Paciente */}
                   <div>

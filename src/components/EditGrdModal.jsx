@@ -53,6 +53,7 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
   };
 
   const [formData, setFormData] = useState({
+    patient: bed.patient || '',
     grdId: bed.grdId || '',
     severity: bed.severity || 1,
     projectedDays: bed.projectedDays || 0,
@@ -96,11 +97,34 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
   const [isSaving, setIsSaving] = useState(false);
   const [viewingIC, setViewingIC] = useState(null);
 
-  // Permisos del rol Gestora de Servicio Clínico
-  const isGestoraServicio = user?.role === 'gestora_servicio';
+  // Permisos de roles de gestores (gestor_camas, gestora_servicio, superadmin, administrador)
+  const isSuperAdmin = user?.role === 'superadmin' || user?.role === 'administrador';
+  const isGestor = user?.role === 'gestor_camas' || user?.role === 'gestora_servicio' || isSuperAdmin;
+  const isVisor = user?.role === 'visor';
 
-  const assignedDate = bed.assignedAt ? new Date(bed.assignedAt) : null;
-  const daysOfStay = assignedDate ? Math.max(1, Math.ceil((new Date() - assignedDate) / (1000 * 60 * 60 * 24))) : 1;
+  const getInitialAssignedDT = () => {
+    let d = new Date();
+    if (bed.assignedAt) {
+      const parsed = new Date(bed.assignedAt);
+      if (!isNaN(parsed.getTime())) d = parsed;
+    }
+    const pad = (num) => String(num).padStart(2, '0');
+    return {
+      date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+      time: `${pad(d.getHours())}:${pad(d.getMinutes())}`
+    };
+  };
+
+  const initialAssignedDT = getInitialAssignedDT();
+  const [customAssignDate, setCustomAssignDate] = useState(initialAssignedDT.date);
+  const [customAssignTime, setCustomAssignTime] = useState(initialAssignedDT.time);
+
+  const computedAssignedDate = (customAssignDate && customAssignTime)
+    ? new Date(`${customAssignDate}T${customAssignTime}:00`)
+    : (bed.assignedAt ? new Date(bed.assignedAt) : null);
+  const daysOfStay = (computedAssignedDate && !isNaN(computedAssignedDate.getTime()))
+    ? Math.max(1, Math.ceil((new Date() - computedAssignedDate) / (1000 * 60 * 60 * 24)))
+    : 1;
 
   const handleGrdChange = (val) => {
     const newGrdId = val;
@@ -162,10 +186,19 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
       transferTarget = { roomId, bedId, type: formData.transferType };
     }
 
-    // Gestora de Servicio sólo persiste novedades (no puede cambiar GRD ni otros campos clínicos)
+    let effectiveAssignedAt = bed.assignedAt;
+    if (customAssignDate && customAssignTime) {
+      const d = new Date(`${customAssignDate}T${customAssignTime}:00`);
+      if (!isNaN(d.getTime())) {
+        effectiveAssignedAt = d.toISOString();
+      }
+    }
+
     setIsSaving(true);
     try {
       await onConfirm({
+        patient: formData.patient || bed.patient,
+        assignedAt: effectiveAssignedAt,
         grdId: formData.grdId,
         grdName: grd ? grd.name : '',
         severity: formData.severity,
@@ -176,6 +209,7 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
         nombreSocial: formData.nombreSocial || bed.nombreSocial || null,
         age: formData.age,
         fechaNacimiento: formData.fechaNacimiento,
+        sex: formData.sex,
         comuna: formData.comuna,
         prevision: formData.prevision,
         especialidadTratante: formData.especialidadTratante,
@@ -268,14 +302,56 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Paciente</div>
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{bed.patient}</div>
+                      <div style={{ fontSize: '0.65rem', color: isGestor ? '#f59e0b' : 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px', fontWeight: isGestor ? 700 : 500 }}>
+                        Paciente {isGestor && '(Editable)'}
+                      </div>
+                      {isGestor && !isVisor ? (
+                        <input
+                          type="text"
+                          className="glass-input"
+                          style={{ padding: '6px 10px', fontSize: '0.9rem', width: '100%', fontWeight: 700, color: 'var(--text-primary)' }}
+                          value={formData.patient}
+                          onChange={e => setFormData(prev => ({ ...prev, patient: e.target.value }))}
+                        />
+                      ) : (
+                        <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{formData.patient || bed.patient}</div>
+                      )}
                       {(bed.nombreSocial || bed.originalWaitingRequest?.nombreSocial) && (
                         <div style={{ fontSize: '0.75rem', color: 'var(--accent-color, #00d4ff)', fontWeight: 600, marginTop: '2px' }}>
                           <span style={{ fontSize: '0.65rem', opacity: 0.8, textTransform: 'uppercase' }}>Nombre Social: </span>
                           {bed.nombreSocial || bed.originalWaitingRequest?.nombreSocial}
                         </div>
                       )}
+                    </div>
+
+                    {/* Fecha y Hora de Ingreso / Acueste (Editable para gestores) */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div>
+                        <div style={{ fontSize: '0.65rem', color: isGestor ? '#f59e0b' : 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px', fontWeight: isGestor ? 700 : 500 }}>
+                          📅 Fecha Ingreso {isGestor && '(Editable)'}
+                        </div>
+                        <input
+                          type="date"
+                          className="glass-input"
+                          style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%', ...(isGestor ? { color: '#f59e0b', fontWeight: 600, borderColor: 'rgba(245,158,11,0.4)' } : {}) }}
+                          value={customAssignDate}
+                          onChange={e => setCustomAssignDate(e.target.value)}
+                          disabled={!isGestor || isVisor}
+                        />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.65rem', color: isGestor ? '#f59e0b' : 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px', fontWeight: isGestor ? 700 : 500 }}>
+                          🕐 Hora Ingreso {isGestor && '(Editable)'}
+                        </div>
+                        <input
+                          type="time"
+                          className="glass-input"
+                          style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%', ...(isGestor ? { color: '#f59e0b', fontWeight: 600, borderColor: 'rgba(245,158,11,0.4)' } : {}) }}
+                          value={customAssignTime}
+                          onChange={e => setCustomAssignTime(e.target.value)}
+                          disabled={!isGestor || isVisor}
+                        />
+                      </div>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -287,6 +363,7 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                           style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%' }}
                           value={formData.rut}
                           onChange={e => setFormData(prev => ({ ...prev, rut: formatRut(e.target.value) }))}
+                          disabled={isVisor}
                         />
                       </div>
                       <div>
@@ -311,15 +388,33 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                             }
                             setFormData(prev => ({ ...prev, fechaNacimiento: val, age: computedAge }));
                           }}
-                          readOnly={isGestoraServicio}
+                          disabled={isVisor}
                         />
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px' }}>
                       <div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Edad (Calculada) / Sexo</div>
-                        <div style={{ fontWeight: 600, fontSize: '0.8rem', marginTop: '6px' }}>{formatAgeDetailed(formData.fechaNacimiento, formData.age)} · {formData.sex}</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Edad (Calculada)</div>
+                        <div style={{ fontWeight: 600, fontSize: '0.8rem', marginTop: '6px' }}>{formatAgeDetailed(formData.fechaNacimiento, formData.age)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.65rem', color: isGestor ? '#f59e0b' : 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px' }}>Sexo</div>
+                        {isGestor && !isVisor ? (
+                          <select
+                            className="glass-input"
+                            style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%' }}
+                            value={formData.sex}
+                            onChange={e => setFormData(prev => ({ ...prev, sex: e.target.value }))}
+                          >
+                            <option value="Masculino">Masculino</option>
+                            <option value="Femenino">Femenino</option>
+                            <option value="Otro">Otro</option>
+                            <option value="Desconocido">Desconocido</option>
+                          </select>
+                        ) : (
+                          <div style={{ fontWeight: 600, fontSize: '0.8rem', marginTop: '6px' }}>{formData.sex || '—'}</div>
+                        )}
                       </div>
                     </div>
 
@@ -332,7 +427,7 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                           style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%' }}
                           value={formData.comuna}
                           onChange={e => setFormData(prev => ({ ...prev, comuna: e.target.value }))}
-                          readOnly={isGestoraServicio}
+                          disabled={isVisor}
                         />
                       </div>
                       <div>
@@ -343,7 +438,7 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                           style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100%' }}
                           value={formData.prevision}
                           onChange={e => setFormData(prev => ({ ...prev, prevision: e.target.value }))}
-                          readOnly={isGestoraServicio}
+                          disabled={isVisor}
                         />
                       </div>
                       <div style={{ gridColumn: 'span 2' }}>
@@ -353,70 +448,66 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                           style={{ padding: '6px 8px', fontSize: '0.8rem', width: '100%', minHeight: '50px', resize: 'vertical', fontFamily: 'inherit' }}
                           value={formData.dxPrincipal || ''}
                           onChange={e => setFormData(prev => ({ ...prev, dxPrincipal: e.target.value }))}
-                          readOnly={isGestoraServicio}
+                          disabled={isVisor}
                           placeholder="Descripción clínica del cuadro principal..."
                           rows={2}
                         />
                       </div>
-
                     </div>
 
-                    {!isGestoraServicio && (
-                      <div style={{ marginTop: '12px' }}>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>Destino (Unidad Requerida) / Serv. Acueste</div>
-                        <select
-                          className="glass-input"
-                          style={{ padding: '6px 10px', fontSize: '0.8rem', width: '100%', background: 'var(--inset-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}
-                          value={formData.destino}
-                          onChange={e => setFormData(prev => ({ ...prev, destino: e.target.value }))}
-                        >
-                          {['UCI', 'UTI', 'Cuidados Medios', 'GINE/PUERPERIO', 'Neonatología', 'Infantil', 'Básico'].map(d => (
-                            <option key={d} value={d} style={{ background: '#1e1b4b', color: '#fff' }}>{d}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
+                    <div style={{ marginTop: '12px' }}>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>Destino (Unidad Requerida) / Serv. Acueste</div>
+                      <select
+                        className="glass-input"
+                        style={{ padding: '6px 10px', fontSize: '0.8rem', width: '100%', background: 'var(--inset-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}
+                        value={formData.destino}
+                        onChange={e => setFormData(prev => ({ ...prev, destino: e.target.value }))}
+                        disabled={isVisor}
+                      >
+                        {['UCI', 'UTI', 'Cuidados Medios', 'GINE/PUERPERIO', 'Neonatología', 'Infantil', 'Básico'].map(d => (
+                          <option key={d} value={d} style={{ background: '#1e1b4b', color: '#fff' }}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
-                {/* 2. ESPECIALIDAD TRATANTE ACTUAL - oculto para gestora_servicio */}
-                {!isGestoraServicio && (
-                  <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', zIndex: 30 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
-                      <span style={{ fontSize: '1rem' }}>🩺</span>
-                      <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Especialidad Tratante</h4>
-                    </div>
-                    <MultiSearchableSelect
-                      options={ESPECIALIDADES_TRATANTES.map(e => ({ value: e, label: e }))}
-                      value={formData.especialidadTratante}
-                      onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))}
-                      placeholder="Buscar especialidad tratante..."
-                      maxSelections={2}
-                    />
+                {/* 2. ESPECIALIDAD TRATANTE ACTUAL */}
+                <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', zIndex: 30 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
+                    <span style={{ fontSize: '1rem' }}>🩺</span>
+                    <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Especialidad Tratante</h4>
                   </div>
-                )}
+                  <MultiSearchableSelect
+                    options={ESPECIALIDADES_TRATANTES.map(e => ({ value: e, label: e }))}
+                    value={formData.especialidadTratante}
+                    onChange={(val) => setFormData(prev => ({ ...prev, especialidadTratante: val }))}
+                    placeholder="Buscar especialidad tratante..."
+                    maxSelections={2}
+                    disabled={isVisor}
+                  />
+                </div>
 
-                {/* 3. AISLAMIENTO (PRECAUCIONES) - oculto para gestora_servicio */}
-                {!isGestoraServicio && (
-                  <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', zIndex: 20 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
-                      <span style={{ fontSize: '1rem' }}>🛡️</span>
-                      <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Aislamiento</h4>
-                    </div>
-                    <MultiSearchableSelect
-                      options={[
-                        { value: 'Precaución estándar', label: 'Precaución estándar' },
-                        { value: 'Precaución de contacto', label: 'Precaución de contacto' },
-                        { value: 'Precaución de gotitas', label: 'Precaución de gotitas' },
-                        { value: 'Precaución aérea', label: 'Precaución aérea' },
-                        { value: 'Aislamiento protector', label: 'Aislamiento protector' },
-                      ]}
-                      value={formData.aislamiento}
-                      onChange={(val) => setFormData(prev => ({ ...prev, aislamiento: val }))}
-                      placeholder="Seleccionar precaución..."
-                    />
+                {/* 3. AISLAMIENTO (PRECAUCIONES) */}
+                <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', zIndex: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
+                    <span style={{ fontSize: '1rem' }}>🛡️</span>
+                    <h4 style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-color)' }}>Aislamiento</h4>
                   </div>
-                )}
+                  <MultiSearchableSelect
+                    options={[
+                      { value: 'Precaución estándar', label: 'Precaución estándar' },
+                      { value: 'Precaución de contacto', label: 'Precaución de contacto' },
+                      { value: 'Precaución de gotitas', label: 'Precaución de gotitas' },
+                      { value: 'Precaución aérea', label: 'Precaución aérea' },
+                      { value: 'Aislamiento protector', label: 'Aislamiento protector' },
+                    ]}
+                    value={formData.aislamiento}
+                    onChange={(val) => setFormData(prev => ({ ...prev, aislamiento: val }))}
+                    placeholder="Seleccionar precaución..."
+                    disabled={isVisor}
+                  />
+                </div>
 
                 {/* 3.5 INTERCONSULTAS PENDIENTES */}
                 {(() => {
@@ -506,42 +597,37 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                       <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>➔</span>
                     </button>
 
-                    {/* Interconsulta y Traslado: ocultos para gestora_servicio */}
-                    {!isGestoraServicio && (
-                      <>
-                        <button
-                          type="button"
-                          className="glass-button"
-                          style={{
-                            justifyContent: 'space-between',
-                            padding: '10px 12px',
-                            fontSize: '0.78rem',
-                            borderColor: 'rgba(59,130,246,0.3)',
-                            background: 'rgba(59,130,246,0.03)'
-                          }}
-                          onClick={() => onRequestIC ? onRequestIC(bed) : null}
-                        >
-                          <span>📋 Interconsulta</span>
-                          <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>+</span>
-                        </button>
+                    <button
+                      type="button"
+                      className="glass-button"
+                      style={{
+                        justifyContent: 'space-between',
+                        padding: '10px 12px',
+                        fontSize: '0.78rem',
+                        borderColor: 'rgba(59,130,246,0.3)',
+                        background: 'rgba(59,130,246,0.03)'
+                      }}
+                      onClick={() => onRequestIC ? onRequestIC(bed) : null}
+                    >
+                      <span>📋 Interconsulta</span>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>+</span>
+                    </button>
 
-                        <button
-                          type="button"
-                          className="glass-button"
-                          style={{
-                            justifyContent: 'space-between',
-                            padding: '10px 12px',
-                            fontSize: '0.78rem',
-                            borderColor: formData.showTransferPanel ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)',
-                            background: formData.showTransferPanel ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)'
-                          }}
-                          onClick={() => setFormData(prev => ({ ...prev, showTransferPanel: !prev.showTransferPanel }))}
-                        >
-                          <span>🔄 Traslado de Paciente</span>
-                          <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{formData.showTransferPanel ? '▼' : '▲'}</span>
-                        </button>
-                      </>
-                    )}
+                    <button
+                      type="button"
+                      className="glass-button"
+                      style={{
+                        justifyContent: 'space-between',
+                        padding: '10px 12px',
+                        fontSize: '0.78rem',
+                        borderColor: formData.showTransferPanel ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)',
+                        background: formData.showTransferPanel ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)'
+                      }}
+                      onClick={() => setFormData(prev => ({ ...prev, showTransferPanel: !prev.showTransferPanel }))}
+                    >
+                      <span>🔄 Traslado de Paciente</span>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{formData.showTransferPanel ? '▼' : '▲'}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -550,9 +636,8 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
               {/* Right Column - GRD oculto para gestora_servicio */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-                {/* A. GESTIÓN CLÍNICA (GRD) - solo visible para roles con permisos clínicos */}
-                {!isGestoraServicio && (
-                  <div className="glass-panel" style={{ padding: '20px', zIndex: 40 }}>
+                {/* A. GESTIÓN CLÍNICA (GRD) */}
+                <div className="glass-panel" style={{ padding: '20px', zIndex: 40 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
                       <span style={{ fontSize: '1.1rem' }}>📋</span>
                       <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Gestión Clínica (GRD)</h3>
@@ -645,7 +730,7 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                     </div>
 
                   </div>
-                )} {/* fin !isGestoraServicio GRD */}
+                {/* fin GRD */}
 
                 {/* B. SECCIÓN OPCIONAL: TRASLADO DE PACIENTE (COLLAPSIBLE) */}
                 {formData.showTransferPanel && (
