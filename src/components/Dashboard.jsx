@@ -932,15 +932,17 @@ export default function Dashboard({
 
   const handleDischargeWaiting = (patient) => {
     const mockBed = {
+      ...patient,
       id: patient.id,
       roomId: 'Espera',
       patient: patient.name,
       rut: patient.rut || '—',
-      age: patient.age || '—',
-      sex: patient.sexo || '—',
+      age: patient.age ?? '—',
+      sex: patient.sexo || patient.sex || '—',
       prevision: patient.prevision || '—',
       diagnosis: patient.diagnosis || '—',
       requestedAt: patient.requestedAt || new Date().toISOString(),
+      originalWaitingRequest: patient,
       isWaiting: true
     };
     setDischargingPatient({ roomId: 'Espera', bed: mockBed, isWaiting: true });
@@ -952,11 +954,10 @@ export default function Dashboard({
     const bedId = bed.id;
 
     if (dischargingPatient.isWaiting) {
-      // 1. Remove from waiting list atómicamente
-      deleteFirestoreDoc('waitingList', bedId).catch(e => console.warn(e));
-      if (setWaitingList) setWaitingList(prev => prev.filter(p => p.id !== bedId));
+      const orig = bed.originalWaitingRequest || bed;
 
       const dischargeRecord = {
+        ...orig,
         id: `wait_dis_${bedId}`,
         _logId: `log-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
         _loggedAt: new Date().toISOString(),
@@ -965,14 +966,15 @@ export default function Dashboard({
         sector: '—',
         habitacion: 'Lista de Espera',
         cama: '—',
-        bedType: '—',
-        patient: bed.patient,
-        rut: bed.rut,
-        age: bed.age,
-        sex: bed.sex,
-        prevision: bed.prevision,
-        diagnosis: bed.diagnosis,
-        requestedAt: bed.requestedAt,
+        bedType: orig.bedTypeRequired || orig.bedType || '—',
+        patient: orig.name || orig.patient,
+        rut: orig.rut || '',
+        age: orig.age || '',
+        sex: orig.sexo || orig.sex || '',
+        prevision: orig.prevision || '',
+        diagnosis: orig.diagnosis || '',
+        requestedAt: orig.requestedAt || new Date().toISOString(),
+        originalWaitingRequest: orig,
         dischargeAt: formData.fechaAlta || new Date().toISOString(),
         cleaningAt: formData.fechaAlta || new Date().toISOString(),
         destino: formData.destino || 'No definido',
@@ -983,18 +985,22 @@ export default function Dashboard({
         isWaitingListDischarge: true
       };
 
-      // 2. Guardar en colección discharges de Firestore
+      // 1. Guardar primero en colección discharges de Firestore con respaldo completo
       if (onAddDischarge) {
         onAddDischarge(dischargeRecord);
       }
 
-      // 3. Compatibilidad con estado anterior
+      // 2. Compatibilidad con estado anterior
       if (setWaitingListDischarges) {
         setWaitingListDischarges(prev => [...(Array.isArray(prev) ? prev : []), dischargeRecord]);
       }
       if (setDischargesLog) {
         setDischargesLog(prev => [dischargeRecord, ...(Array.isArray(prev) ? prev : [])]);
       }
+
+      // 3. Remove from waiting list atómicamente
+      deleteFirestoreDoc('waitingList', bedId).catch(e => console.warn(e));
+      if (setWaitingList) setWaitingList(prev => prev.filter(p => p.id !== bedId));
 
       toast.success(`Alta de lista de espera registrada para ${bed.patient}`);
       setDischargingPatient(null);

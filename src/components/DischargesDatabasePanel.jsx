@@ -707,42 +707,126 @@ export default function DischargesDatabasePanel({
     const docId = row?.id || row?.rawBedData?.id || row?.rawBedData?._logId;
     const patientName = row.nombre || row?.rawBedData?.patient || 'el paciente';
 
+    // ── Helper para reconstruir fielmente un paciente de lista de espera ──
+    const buildRestoredWaitingPatient = (waitIdFallback) => {
+      const raw = row?.rawBedData || {};
+      const orig = raw.originalWaitingRequest || {};
+      const rawId = raw.id;
+      const waitId = orig.id || ((typeof rawId === 'string' && rawId.startsWith('wait_dis_'))
+        ? rawId.replace('wait_dis_', '')
+        : (rawId && rawId !== '—' ? rawId : waitIdFallback));
+
+      const {
+        _logId, _loggedAt, _source, _reverted, _revertedAt,
+        dischargeAt, cleaningAt, destino, establecimientoRed,
+        otroEstablecimientoDetalle, redPrivadaDetalle, observaciones,
+        isWaitingListDischarge, piso, sector, habitacion, cama,
+        ...restRaw
+      } = raw;
+
+      // Limpiar edad si viene formateada como "45 años"
+      const parsedAge = parseInt(
+        orig.age ?? raw.age ?? (typeof row.edad === 'string' ? row.edad.replace(/[^0-9]/g, '') : row.edad)
+      ) || 0;
+
+      // Normalizar diagnósticos como array
+      let parsedDiagnosis = orig.diagnosis || raw.diagnosis;
+      if (!parsedDiagnosis || (Array.isArray(parsedDiagnosis) && parsedDiagnosis.length === 0)) {
+        if (row.diagnosticos && row.diagnosticos !== 'No registrado') {
+          parsedDiagnosis = [row.diagnosticos];
+        } else {
+          parsedDiagnosis = ['Sin diagnóstico principal'];
+        }
+      } else if (!Array.isArray(parsedDiagnosis)) {
+        parsedDiagnosis = [String(parsedDiagnosis)];
+      }
+
+      const returnEvolution = {
+        id: Date.now().toString(),
+        timestamp: new Date().toLocaleString('es-CL'),
+        user: 'Sistema',
+        role: 'Gestor',
+        note: '↩️ Alta revocada (previa a asignación de cama) - Solicitud de cama restaurada en lista de espera'
+      };
+
+      const existingEvolutions = Array.isArray(orig.evolutions) && orig.evolutions.length > 0
+        ? orig.evolutions
+        : (Array.isArray(raw.evolutions) ? raw.evolutions : []);
+
+      return {
+        ...restRaw,
+        ...orig,
+        id: waitId,
+        name: orig.name || orig.patient || patientName,
+        nombreSocial: orig.nombreSocial || raw.nombreSocial || '',
+        rut: orig.rut || row.run || raw.rut || '',
+        diagnosis: parsedDiagnosis,
+        dxPrincipal: orig.dxPrincipal || raw.dxPrincipal || null,
+        dxCie10: orig.dxCie10 || raw.dxCie10 || null,
+        dxGrupo: orig.dxGrupo || raw.dxGrupo || null,
+        secondaryCodes: orig.secondaryCodes || raw.secondaryCodes || [],
+        age: parsedAge,
+        fechaNacimiento: orig.fechaNacimiento || raw.fechaNacimiento || null,
+        sexo: orig.sexo || orig.sex || raw.sex || raw.sexo || '',
+        prevision: orig.prevision || raw.prevision || '',
+        comuna: orig.comuna || raw.comuna || '',
+        priority: orig.priority || raw.priority || raw.prioridad || 3,
+        origin: orig.origin || orig.servicioSol || raw.origin || raw.servicioSol || 'Urgencia',
+        bedTypeRequired: orig.bedTypeRequired || orig.destino || raw.bedTypeRequired || raw.destino || 'Cuidados Medios',
+        ticket: orig.ticket || raw.ticket || `REQ-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900) + 100}`,
+        medicoSol: orig.medicoSol || raw.medicoSol || '',
+        especialidadMedico: orig.especialidadMedico || raw.especialidadMedico || '',
+        especialidadTratante: orig.especialidadTratante || raw.especialidadTratante || [],
+        requisitosUGP: orig.requisitosUGP || raw.requisitosUGP || '',
+        reqEnfermeria: orig.reqEnfermeria || raw.reqEnfermeria || '',
+        procedimientosPendientes: orig.procedimientosPendientes || raw.procedimientosPendientes || '',
+        hodom: orig.hodom || raw.hodom || false,
+        trr: orig.trr || raw.trr || false,
+        hfc: orig.hfc || raw.hfc || false,
+        ugcc: orig.ugcc || raw.ugcc || false,
+        paSist: orig.paSist || raw.paSist || '',
+        paDiast: orig.paDiast || raw.paDiast || '',
+        frecCard: orig.frecCard || raw.frecCard || '',
+        frecResp: orig.frecResp || raw.frecResp || '',
+        temp: orig.temp || raw.temp || '',
+        satO2: orig.satO2 || raw.satO2 || '',
+        glicemia: orig.glicemia || raw.glicemia || '',
+        evaDolor: orig.evaDolor || raw.evaDolor || '',
+        aislamiento: orig.aislamiento || raw.aislamiento || null,
+        evolutions: [...existingEvolutions, returnEvolution],
+        status: 'waiting',
+        requestedAt: orig.requestedAt || raw.requestedAt || new Date().toISOString()
+      };
+    };
+
     // ── CASO D: Alta desde Lista de Espera ─────────────────────────────────
-    if (roomId === 'Espera' || row?.isWaitingListDischarge) {
+    const isWaitingDischarge = roomId === 'Espera' || roomId === 'Lista de Espera' || row?.isWaitingListDischarge || row?._source === 'waitingList' || row?.rawBedData?._source === 'waitingList';
+    if (isWaitingDischarge) {
       if (!window.confirm(
         `¿Estás seguro de que deseas revocar el alta de ${patientName} y volver a colocarle en la lista de espera?`
       )) return;
 
       if (docId && onUpdateDischarge) {
         try { await onUpdateDischarge(docId, { _reverted: true, _revertedAt: new Date().toISOString() }); }
-        catch (e) { console.warn(e); }
+        catch (e) { console.warn('[RevocarAlta] No se pudo marcar _reverted en discharges:', e); }
       }
       if (setWaitingListDischarges) {
-        setWaitingListDischarges(prev => prev.filter(p => (p.id || p._logId) !== docId));
+        setWaitingListDischarges(prev => Array.isArray(prev) ? prev.filter(p => (p.id || p._logId) !== docId) : prev);
       }
-      const rawId = row?.rawBedData?.id;
-      const waitId = (typeof rawId === 'string' && rawId.startsWith('wait_dis_'))
-        ? rawId.replace('wait_dis_', '')
-        : (rawId || bedId || `wait_${Date.now()}`);
-      const restoredPatient = {
-        id: waitId,
-        name: patientName,
-        rut: row.run || row?.rawBedData?.rut || '',
-        diagnosis: row.diagnosticos || row?.rawBedData?.diagnosis || '',
-        age: row.edad || row?.rawBedData?.age || '',
-        status: 'waiting',
-        requestedAt: row.requestedAt || row?.rawBedData?.requestedAt || new Date().toISOString()
-      };
-      await addFirestoreDoc('waitingList', restoredPatient).catch(e => console.warn(e));
+
+      const restoredPatient = buildRestoredWaitingPatient(`wait_${Date.now()}`);
+
+      await addFirestoreDoc('waitingList', restoredPatient).catch(e => console.warn('[RevocarAlta] Error al agregar a waitingList:', e));
       if (setWaitingList) {
         setWaitingList(prev => {
-          if (prev.some(p => p.id === waitId || p.id === rawId || p.id === bedId)) return prev;
-          return [...prev, restoredPatient];
+          const list = Array.isArray(prev) ? prev : [];
+          if (list.some(p => p.id === restoredPatient.id)) return list;
+          return [...list, restoredPatient];
         });
       }
       // Eliminar de la vista inmediatamente
       if (docId) setRevokedIds(prev => new Set([...prev, docId]));
-      toast.success(`Alta revocada. ${patientName} devuelto/a a la Lista de Espera.`);
+      toast.success(`Alta revocada. ${patientName} devuelto/a a la Lista de Espera con todos sus datos.`);
       return;
     }
 
@@ -759,24 +843,24 @@ export default function DischargesDatabasePanel({
       )) return;
       if (docId && onUpdateDischarge) {
         try { await onUpdateDischarge(docId, { _reverted: true, _revertedAt: new Date().toISOString() }); }
-        catch (e) { console.warn(e); }
+        catch (e) { console.warn('[RevocarAlta] No se pudo marcar _reverted en discharges:', e); }
       }
-      const waitId = `wait_${Date.now()}`;
-      const restoredPatient = {
-        id: waitId,
-        name: patientName,
-        rut: row.run || raw.rut || '',
-        diagnosis: row.diagnosticos || raw.diagnosis || '',
-        age: row.edad || raw.age || '',
-        status: 'waiting',
-        requestedAt: new Date().toISOString()
-      };
-      await addFirestoreDoc('waitingList', restoredPatient).catch(e => console.warn(e));
+      if (setWaitingListDischarges) {
+        setWaitingListDischarges(prev => Array.isArray(prev) ? prev.filter(p => (p.id || p._logId) !== docId) : prev);
+      }
+
+      const restoredPatient = buildRestoredWaitingPatient(`wait_${Date.now()}`);
+
+      await addFirestoreDoc('waitingList', restoredPatient).catch(e => console.warn('[RevocarAlta] Error al agregar a waitingList:', e));
       if (setWaitingList) {
-        setWaitingList(prev => [...(Array.isArray(prev) ? prev : []), restoredPatient]);
+        setWaitingList(prev => {
+          const list = Array.isArray(prev) ? prev : [];
+          if (list.some(p => p.id === restoredPatient.id)) return list;
+          return [...list, restoredPatient];
+        });
       }
       if (docId) setRevokedIds(prev => new Set([...prev, docId]));
-      toast.success(`Alta revocada. ${patientName} enviado/a a la Lista de Espera.`);
+      toast.success(`Alta revocada. ${patientName} enviado/a a la Lista de Espera con todos sus datos.`);
       return;
     }
 
