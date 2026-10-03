@@ -948,7 +948,7 @@ export default function Dashboard({
     setDischargingPatient({ roomId: 'Espera', bed: mockBed, isWaiting: true });
   };
 
-  const handleDischargeConfirm = (formData) => {
+  const handleDischargeConfirm = async (formData) => {
     if (!dischargingPatient) return;
     const { roomId, bed } = dischargingPatient;
     const bedId = bed.id;
@@ -987,7 +987,13 @@ export default function Dashboard({
 
       // 1. Guardar primero en colección discharges de Firestore con respaldo completo
       if (onAddDischarge) {
-        onAddDischarge(dischargeRecord);
+        try {
+          await onAddDischarge(dischargeRecord);
+        } catch (err) {
+          console.error('[Dashboard] Error al registrar alta de lista de espera en Firestore:', err);
+          toast.error(`No se pudo registrar el alta en el servidor: ${err.message || 'Permisos insuficientes o sesión expirada'}`);
+          return;
+        }
       }
 
       // 2. Compatibilidad con estado anterior
@@ -1044,7 +1050,13 @@ export default function Dashboard({
 
     // 1. Guardar en colección permanente discharges de Firestore
     if (onAddDischarge) {
-      onAddDischarge(cleanDischargeRecord);
+      try {
+        await onAddDischarge(cleanDischargeRecord);
+      } catch (err) {
+        console.error('[Dashboard] Error al registrar alta médica en Firestore:', err);
+        toast.error(`No se pudo registrar el alta en el servidor: ${err.message || 'Permisos insuficientes o sesión expirada'}`);
+        return;
+      }
     }
 
     // 2. Compatibilidad con estado dischargesLog

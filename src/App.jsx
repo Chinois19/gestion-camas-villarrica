@@ -39,6 +39,8 @@ import { logoutUser } from './utils/authService';
 import { checkAndMigrateWaitingList } from './utils/waitingListMigration';
 import { auth } from './firebase';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+import InactivityModal from './components/InactivityModal';
+import { useInactivityTimeout, ACTIVITY_STORAGE_KEY } from './hooks/useInactivityTimeout';
 
 // Pre-fill some realistic interconsultas in the DUMMY_DATA to make the initial view visually rich
 const initialBedsData = JSON.parse(JSON.stringify(DUMMY_DATA));
@@ -262,6 +264,9 @@ function App() {
     }
     setCurrentUser(user);
     localStorage.setItem('villarrica_session', JSON.stringify(user));
+    try {
+      localStorage.setItem(ACTIVITY_STORAGE_KEY, String(Date.now()));
+    } catch {}
     setCurrentView('dashboard');
     toast.success(`Bienvenido/a, ${user.name}`);
   };
@@ -270,9 +275,31 @@ function App() {
     await logoutUser();
     setCurrentUser(null);
     localStorage.removeItem('villarrica_session');
+    try {
+      localStorage.removeItem(ACTIVITY_STORAGE_KEY);
+    } catch {}
     setCurrentView('dashboard');
     toast.info('Sesión cerrada');
   };
+
+  // ── CIERRE AUTOMÁTICO TRAS 30 MINUTOS DE INACTIVIDAD GENERAL ─────────────
+  const handleInactivityTimeout = useCallback(async () => {
+    await logoutUser();
+    setCurrentUser(null);
+    localStorage.removeItem('villarrica_session');
+    try {
+      localStorage.removeItem(ACTIVITY_STORAGE_KEY);
+    } catch {}
+    setCurrentView('dashboard');
+    toast.warning('Tu sesión se ha cerrado automáticamente tras 30 minutos de inactividad para resguardar la seguridad clínica.', {
+      duration: 10000
+    });
+  }, []);
+
+  const { showWarning: showInactivityWarning, secondsRemaining, resetActivity } = useInactivityTimeout({
+    enabled: !!currentUser && !isPublicRoute,
+    onTimeout: handleInactivityTimeout
+  });
 
 
   // ── CLINICAL HANDLERS ──────────────────────────────────────────────────────
@@ -652,6 +679,13 @@ function App() {
   return (
     <div className="app-container">
       <Toaster position="top-right" richColors />
+      {showInactivityWarning && (
+        <InactivityModal
+          secondsRemaining={secondsRemaining}
+          onKeepAlive={resetActivity}
+          onLogout={handleLogout}
+        />
+      )}
       {/* Universal Header */}
       <header className="glass-panel hide-on-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
         <div className="header-title" style={{ cursor: 'pointer' }} onClick={() => setCurrentView('dashboard')}>
