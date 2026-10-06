@@ -224,14 +224,30 @@ export function useBedsCollection(options = {}) {
             const canonicalId = `${floor}_${sector}_${room.roomId}_${bed.id}`;
             const prevBed = bedsMapRef.current.get(canonicalId);
 
-            // Comparar si cambió status, patient, rut, assignedAt, diagnosis, etc.
+            // Comparar si cambió algún campo clínico o del estado de la cama
             const hasChanged = !prevBed ||
               prevBed.status !== bed.status ||
               prevBed.patient !== bed.patient ||
               prevBed.rut !== bed.rut ||
               prevBed.assignedAt !== bed.assignedAt ||
               prevBed.cleaningAt !== bed.cleaningAt ||
+              // Datos demográficos editables en la tarjeta del paciente
+              prevBed.fechaNacimiento !== bed.fechaNacimiento ||
+              prevBed.sex !== bed.sex ||
+              prevBed.comuna !== bed.comuna ||
+              prevBed.prevision !== bed.prevision ||
+              prevBed.nombreSocial !== bed.nombreSocial ||
+              // Datos GRD / clínicos
+              prevBed.grdId !== bed.grdId ||
+              prevBed.grdName !== bed.grdName ||
+              prevBed.severity !== bed.severity ||
+              prevBed.projectedDays !== bed.projectedDays ||
+              prevBed.dxPrincipal !== bed.dxPrincipal ||
+              prevBed.destino !== bed.destino ||
+              prevBed.transferAt !== bed.transferAt ||
               JSON.stringify(prevBed.diagnosis) !== JSON.stringify(bed.diagnosis) ||
+              JSON.stringify(prevBed.especialidadTratante) !== JSON.stringify(bed.especialidadTratante) ||
+              JSON.stringify(prevBed.aislamiento) !== JSON.stringify(bed.aislamiento) ||
               JSON.stringify(prevBed.interconsultas) !== JSON.stringify(bed.interconsultas) ||
               JSON.stringify(prevBed.novedades) !== JSON.stringify(bed.novedades) ||
               JSON.stringify(prevBed.evolutions) !== JSON.stringify(bed.evolutions);
