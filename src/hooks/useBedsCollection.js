@@ -243,6 +243,9 @@ export function useBedsCollection(options = {}) {
               prevBed.severity !== bed.severity ||
               prevBed.projectedDays !== bed.projectedDays ||
               prevBed.dxPrincipal !== bed.dxPrincipal ||
+              prevBed.dxCie10 !== bed.dxCie10 ||
+              JSON.stringify(prevBed.secondaryCodes) !== JSON.stringify(bed.secondaryCodes) ||
+              JSON.stringify(prevBed.diagnosisHistory) !== JSON.stringify(bed.diagnosisHistory) ||
               prevBed.destino !== bed.destino ||
               prevBed.transferAt !== bed.transferAt ||
               JSON.stringify(prevBed.diagnosis) !== JSON.stringify(bed.diagnosis) ||

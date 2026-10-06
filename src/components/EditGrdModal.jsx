@@ -194,6 +194,40 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
       }
     }
 
+    // Extraer diagnósticos estructurados vigentes
+    const diagArray = Array.isArray(formData.diagnosis) ? formData.diagnosis : (formData.diagnosis ? [formData.diagnosis] : []);
+    let extractedDxCie10 = null;
+    const extractedSecondaryCodes = [];
+
+    diagArray.forEach((item, idx) => {
+      if (!item) return;
+      const match = String(item).match(/^([A-Z]\d{2,4})/i);
+      const code = match ? match[1].toUpperCase() : item.split(' - ')[0].trim();
+      if (idx === 0) {
+        extractedDxCie10 = code;
+      } else {
+        extractedSecondaryCodes.push(code);
+      }
+    });
+
+    const currentDxPrincipal = formData.dxPrincipal || (diagArray[0] || bed.dxPrincipal || null);
+
+    // Conservar trazabilidad del diagnóstico original de la solicitud si existe
+    const dxSolicitudCie10 = bed.dxSolicitudCie10 || bed.originalWaitingRequest?.dxCie10 || bed.dxCie10 || null;
+    const dxSolicitudPrincipal = bed.dxSolicitudPrincipal || bed.originalWaitingRequest?.dxPrincipal || bed.dxPrincipal || null;
+
+    // Historial continuo de iteración diagnóstica durante la estadía
+    const prevHistory = Array.isArray(bed.diagnosisHistory) ? bed.diagnosisHistory : [];
+    const newHistoryEntry = {
+      timestamp: new Date().toISOString(),
+      dxPrincipal: currentDxPrincipal,
+      dxCie10: extractedDxCie10,
+      secondaryCodes: extractedSecondaryCodes,
+      diagnosis: diagArray,
+      user: user?.name || user?.role || 'Gestor Clínico'
+    };
+    const updatedDiagnosisHistory = [newHistoryEntry, ...prevHistory];
+
     setIsSaving(true);
     try {
       await onConfirm({
@@ -203,8 +237,13 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
         grdName: grd ? grd.name : '',
         severity: formData.severity,
         projectedDays: parseInt(formData.projectedDays) || 0,
-        diagnosis: formData.diagnosis,
-        dxPrincipal: formData.dxPrincipal,
+        diagnosis: diagArray,
+        dxPrincipal: currentDxPrincipal,
+        dxCie10: extractedDxCie10,
+        secondaryCodes: extractedSecondaryCodes,
+        dxSolicitudCie10,
+        dxSolicitudPrincipal,
+        diagnosisHistory: updatedDiagnosisHistory,
         rut: formData.rut,
         nombreSocial: formData.nombreSocial || bed.nombreSocial || null,
         age: formData.age,

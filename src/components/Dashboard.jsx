@@ -209,19 +209,47 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
                 </div>
               );
             })()}
-            {(bed.dxPrincipal || bed.diagnosis) && (
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', marginTop: '2px', marginBottom: '2px', lineHeight: 1.3 }}>
-                {bed.dxPrincipal || (Array.isArray(bed.diagnosis) ? bed.diagnosis.join(' • ') : bed.diagnosis)}
-              </div>
-            )}
-            {(bed.dxCie10 || (bed.secondaryCodes && bed.secondaryCodes.length > 0)) && (
-              <div style={{ fontSize: '0.65rem', color: '#f59e0b', marginTop: '2px', marginBottom: '2px', fontWeight: 600, lineHeight: 1.3 }}>
-                {[bed.dxCie10, ...(bed.secondaryCodes || [])].filter(Boolean).map(code => {
-                  const item = cie10Data.find(c => c.code === code);
-                  return item ? `${code} - ${item.desc}` : code;
-                }).join(' • ')}
-              </div>
-            )}
+            {(() => {
+              const primaryText = bed.dxPrincipal || (Array.isArray(bed.diagnosis) ? bed.diagnosis[0] : bed.diagnosis);
+              
+              // Recopilar códigos CIE-10 vigentes (priorizar los del array diagnosis actual o los campos dxCie10/secondaryCodes)
+              let activeCodes = [];
+              if (Array.isArray(bed.diagnosis) && bed.diagnosis.length > 0) {
+                activeCodes = bed.diagnosis.map(d => {
+                  const match = String(d).match(/^([A-Z]\d{2,4})/i);
+                  return match ? match[1].toUpperCase() : d.split(' - ')[0].trim();
+                }).filter(Boolean);
+              } else if (bed.dxCie10 || (bed.secondaryCodes && bed.secondaryCodes.length > 0)) {
+                activeCodes = [bed.dxCie10, ...(bed.secondaryCodes || [])].filter(Boolean);
+              }
+
+              const cie10Strings = activeCodes.map(code => {
+                const item = cie10Data.find(c => c.code === code);
+                return item ? `${code} - ${item.desc}` : code;
+              });
+
+              // Filtrar para no duplicar exactamente la misma frase si ya está en primaryText
+              const cleanCie10List = cie10Strings.filter(str => {
+                if (!str || !primaryText) return true;
+                const normalize = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+                return normalize(str) !== normalize(primaryText) && !normalize(primaryText).includes(normalize(str));
+              });
+
+              return (
+                <>
+                  {primaryText && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', marginTop: '2px', marginBottom: '2px', lineHeight: 1.3, fontWeight: 500 }}>
+                      {primaryText}
+                    </div>
+                  )}
+                  {cleanCie10List.length > 0 && (
+                    <div style={{ fontSize: '0.65rem', color: '#f59e0b', marginTop: '2px', marginBottom: '2px', fontWeight: 600, lineHeight: 1.3 }}>
+                      {cleanCie10List.join(' • ')}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
             {(() => {
               const aislamientos = Array.isArray(bed.aislamiento)
                 ? bed.aislamiento.filter(a => a && a !== 'Sin Precauciones' && a !== 'Requiere Aislamiento')
