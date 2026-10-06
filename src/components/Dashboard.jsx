@@ -57,7 +57,16 @@ function DroppableBed({ bed, room, selectedPatient, onAssignPatient, onDischarge
     disabled: isVisor
   });
 
-  const styleTarget = bed.tag || bed.type;
+  const canonicalBedTypes = ['UCI', 'UTI', 'Cuidados Medios', 'Cuidados Básicos', 'GINE/PUERPERIO', 'Neonatología', 'Infantil'];
+  const normalizeBedType = (val) => {
+    if (!val) return 'Cuidados Medios';
+    const lower = String(val).toLowerCase().trim();
+    if (lower === 'pediatría' || lower === 'pediatria') return 'Infantil';
+    if (lower === 'básico' || lower === 'basico' || lower === 'cuidados basicos') return 'Cuidados Básicos';
+    const found = canonicalBedTypes.find(t => t.toLowerCase() === lower);
+    return found || val;
+  };
+  const styleTarget = normalizeBedType(bed.type || bed.tag);
 
   let progress = 0;
   let remainingDays = 0;
