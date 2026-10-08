@@ -107,27 +107,22 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
 
   useEffect(() => {
     if (Array.isArray(procedures)) {
-      setProceduresList(prev => {
-        const map = new Map();
-        // 1. Agregar registros de la colección procedures
-        procedures.forEach(p => map.set(String(p.id), p));
-        // 2. Conservar entradas locales recientes aún no emitidas por la suscripción
-        prev.forEach(p => {
-          if (!map.has(String(p.id))) {
-            map.set(String(p.id), p);
-          }
-        });
-        return Array.from(map.values()).sort((a, b) => {
-          return getProcedureTimestamp(b) - getProcedureTimestamp(a);
-        });
-      });
+      setProceduresList(procedures);
     }
   }, [procedures]);
 
   // Permisos de roles de gestores (gestor_camas, gestora_servicio, superadmin, administrador)
-  const isSuperAdmin = user?.role === 'superadmin' || user?.role === 'administrador';
-  const isGestor = user?.role === 'gestor_camas' || user?.role === 'gestora_servicio' || isSuperAdmin;
-  const isVisor = user?.role === 'visor';
+  const userRoleNormalized = (user?.role || '').toLowerCase().trim();
+  const userRoleNameNormalized = (user?.roleName || '').toLowerCase().trim();
+  const isSuperAdmin = userRoleNormalized === 'superadmin' || userRoleNormalized === 'administrador' || userRoleNormalized === 'admin';
+  const isGestor = isSuperAdmin || 
+    userRoleNormalized === 'gestor_camas' || 
+    userRoleNormalized === 'gestora_servicio' ||
+    userRoleNormalized.includes('gestor') || 
+    userRoleNormalized.includes('gestora') ||
+    userRoleNameNormalized.includes('gestor') || 
+    userRoleNameNormalized.includes('gestora');
+  const isVisor = userRoleNormalized === 'visor';
 
   const getInitialAssignedDT = () => {
     let d = new Date();
@@ -256,13 +251,13 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
     return false;
   };
 
-  // Permisos: Habilitado exclusivamente para perfiles de GESTOR
-  // (gestor_camas, gestora_servicio, superadmin, administrador).
-  // Los gestores pueden modificar y eliminar sus propias acciones registradas en su sesión,
-  // y superadmin / administrador tienen facultades globales de gestión/auditoría.
+  // Permisos: Habilitado para perfiles de GESTOR (gestor_camas, gestora_servicio, superadmin, administrador).
+  // Los gestores son los administradores clínicos de camas y novedades del paciente.
   const canManageNov = (nov) => {
-    if (!user || !isGestor) return false;
-    if (isSuperAdmin) return true;
+    if (!user) return false;
+    // Si el usuario autenticado es Gestor o Administrador, tiene acceso total a modificar y eliminar
+    if (isGestor) return true;
+    // Para otros perfiles (si aplicara), solo si coincide con su propia acción registrada
     return isOwnAction(nov);
   };
 
