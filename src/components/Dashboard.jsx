@@ -437,6 +437,8 @@ export default function Dashboard({
   setWaitingList, 
   procedures = [],
   onAddProcedure,
+  onUpdateProcedure,
+  onDeleteProcedure,
   onHodomSubmit, 
   onMarkHodomDoneByBed, 
   user, 
@@ -936,6 +938,8 @@ export default function Dashboard({
           fecha: newEntry.fecha || new Date().toLocaleString('es-CL'),
           createdAt: newEntry.createdAt || new Date().toISOString(),
           usuario: newEntry.usuario || user?.name || user?.username || 'Personal Clínico',
+          userId: newEntry.userId || user?.id || user?.firebaseUid || null,
+          username: newEntry.username || user?.username || null,
           rol: newEntry.rol || user?.role || 'Clínico',
           contenido: newEntry.contenido || '',
           tipo: 'procedimiento'
@@ -2239,6 +2243,8 @@ export default function Dashboard({
             onConfirm={confirmGrdEdit}
             onClose={() => setEditingGrdBed(null)}
             onSaveNovedad={(newEntry) => handleSaveNovedad(editingGrdBed.roomId, editingGrdBed.bed.id, newEntry)}
+            onUpdateNovedad={onUpdateProcedure}
+            onDeleteNovedad={onDeleteProcedure}
             onDischargeRequest={(b) => {
               setDischargingPatient({ roomId: editingGrdBed.roomId, bed: b });
               setEditingGrdBed(null);

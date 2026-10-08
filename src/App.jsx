@@ -820,6 +820,16 @@ function App() {
             proceduresCol.setData(prev => [saved, ...(prev || [])]);
             return saved;
           }}
+          onUpdateProcedure={async (id, updates) => {
+            await updateFirestoreDoc('procedures', id, updates);
+            proceduresCol.setData(prev => (prev || []).map(p => String(p.id) === String(id) ? { ...p, ...updates } : p));
+            return true;
+          }}
+          onDeleteProcedure={async (id) => {
+            await deleteFirestoreDoc('procedures', id);
+            proceduresCol.setData(prev => (prev || []).filter(p => String(p.id) !== String(id)));
+            return true;
+          }}
           onHodomSubmit={handleHodomSubmit}
           onMarkHodomDoneByBed={handleHodomMarkDoneByBed}
           onEditPatient={handleEditPatient}

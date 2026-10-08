@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Activity, Eye } from 'lucide-react';
+import { X, Save, Activity, Eye, Pencil, Trash2 } from 'lucide-react';
 import { GRD_DATA, calculateProjectedDays, getGrdLimit } from '../data/grd';
 import SearchableSelect from './SearchableSelect';
 import MultiSearchableSelect from './MultiSearchableSelect';
@@ -16,7 +16,7 @@ const formatRut = (val) => {
   return `${clean.slice(0, -1)}-${clean.slice(-1).toUpperCase()}`;
 };
 
-export default function EditGrdModal({ bed, procedures = [], allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onSaveNovedad }) {
+export default function EditGrdModal({ bed, procedures = [], allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onSaveNovedad, onUpdateNovedad, onDeleteNovedad }) {
   // Reconstruir diagnóstico CIE-10 priorizando los campos codificados.
   const buildDiagnosisCodes = () => {
     const cie10Regex = /^[A-Z]\d{2}/;
@@ -96,6 +96,11 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
   const [isSavingNovedad, setIsSavingNovedad] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [viewingIC, setViewingIC] = useState(null);
+
+  // Estados de modificación inline de novedades propias
+  const [editingNovId, setEditingNovId] = useState(null);
+  const [editingText, setEditingText] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Lista de procedimientos / novedades sincronizada exclusivamente con la colección 'procedures'
   const [proceduresList, setProceduresList] = useState(procedures || []);
@@ -183,6 +188,8 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
       createdAt: now.toISOString(),
       assignedAt: effectiveAssignedAt,
       usuario: user?.name || user?.username || 'Médico de Turno',
+      userId: user?.id || user?.firebaseUid || null,
+      username: user?.username || null,
       rol: user?.role || 'Clinico',
       contenido: newNovedadText.trim(),
       tipo: 'procedimiento'
@@ -203,6 +210,94 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
       } finally {
         setIsSavingNovedad(false);
       }
+    }
+  };
+
+  // Validación de autoría: solo el usuario que registró la acción en su sesión puede modificarla o eliminarla
+  const isOwnAction = (nov) => {
+    if (!user) return false;
+
+    // 1. Identificador único de usuario
+    if (nov.userId && (user.id || user.firebaseUid)) {
+      if (String(nov.userId) === String(user.id) || String(nov.userId) === String(user.firebaseUid)) {
+        return true;
+      }
+    }
+
+    // 2. Nombre de usuario / login
+    if (nov.username && user.username) {
+      if (nov.username.trim().toLowerCase() === user.username.trim().toLowerCase()) {
+        return true;
+      }
+    }
+
+    // 3. Nombre completo del usuario registrado en sesión
+    const novUser = (nov.usuario || '').trim().toLowerCase();
+    const currentUserName = (user.name || '').trim().toLowerCase();
+    const currentUsername = (user.username || '').trim().toLowerCase();
+
+    if (novUser && ((currentUserName && novUser === currentUserName) || (currentUsername && novUser === currentUsername))) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const handleStartEdit = (nov) => {
+    setEditingNovId(nov.id);
+    setEditingText(nov.contenido || nov.procedimiento || nov.note || '');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingNovId(null);
+    setEditingText('');
+  };
+
+  const handleSaveEdit = async (novId) => {
+    const trimmed = editingText.trim();
+    if (!trimmed) {
+      toast.info('El contenido no puede estar vacío.');
+      return;
+    }
+    setIsSavingEdit(true);
+    try {
+      setProceduresList(prev => prev.map(p => {
+        if (String(p.id) === String(novId)) {
+          return { ...p, contenido: trimmed, procedimiento: trimmed };
+        }
+        return p;
+      }));
+      if (onUpdateNovedad) {
+        await onUpdateNovedad(novId, {
+          contenido: trimmed,
+          procedimiento: trimmed,
+          updatedAt: new Date().toISOString()
+        });
+      }
+      toast.success('Procedimiento/novedad actualizada exitosamente');
+      setEditingNovId(null);
+      setEditingText('');
+    } catch (err) {
+      console.error('Error al actualizar novedad:', err);
+      toast.error('Error al actualizar el procedimiento');
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const handleDeleteNov = async (novId) => {
+    if (!window.confirm('¿Desea eliminar este procedimiento o novedad? Esta acción no se puede deshacer.')) {
+      return;
+    }
+    try {
+      setProceduresList(prev => prev.filter(p => String(p.id) !== String(novId)));
+      if (onDeleteNovedad) {
+        await onDeleteNovedad(novId);
+      }
+      toast.success('Procedimiento/novedad eliminada correctamente');
+    } catch (err) {
+      console.error('Error al eliminar novedad:', err);
+      toast.error('Error al eliminar el procedimiento');
     }
   };
 
@@ -930,15 +1025,107 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                             fontSize: '0.8rem'
                           }}
                         >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.72rem', opacity: 0.8 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px', fontSize: '0.72rem' }}>
                             <span style={{ fontWeight: 700, color: 'var(--accent-color)' }}>
                               👤 {nov.usuario || 'Personal Clínico'} ({nov.rol || 'Clínico'})
                             </span>
-                            <span style={{ color: 'var(--text-secondary)' }}>🕒 {nov.fecha || (nov.createdAt ? new Date(nov.createdAt).toLocaleString('es-CL') : '')}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>🕒 {nov.fecha || (nov.createdAt ? new Date(nov.createdAt).toLocaleString('es-CL') : '')}</span>
+                              {isOwnAction(nov) && editingNovId !== nov.id && (
+                                <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStartEdit(nov)}
+                                    title="Modificar esta novedad"
+                                    style={{
+                                      background: 'rgba(56, 189, 248, 0.12)',
+                                      color: '#38bdf8',
+                                      border: '1px solid rgba(56, 189, 248, 0.35)',
+                                      borderRadius: '5px',
+                                      padding: '2px 7px',
+                                      fontSize: '0.66rem',
+                                      fontWeight: 600,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '3px',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(56, 189, 248, 0.22)'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(56, 189, 248, 0.12)'; }}
+                                  >
+                                    <Pencil size={10} /> Modificar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteNov(nov.id)}
+                                    title="Eliminar esta novedad"
+                                    style={{
+                                      background: 'rgba(239, 68, 68, 0.12)',
+                                      color: '#f87171',
+                                      border: '1px solid rgba(239, 68, 68, 0.35)',
+                                      borderRadius: '5px',
+                                      padding: '2px 7px',
+                                      fontSize: '0.66rem',
+                                      fontWeight: 600,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '3px',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.22)'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)'; }}
+                                  >
+                                    <Trash2 size={10} /> Eliminar
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <div style={{ color: 'var(--text-primary)', lineHeight: 1.4, wordBreak: 'break-word' }}>
-                            {nov.contenido || nov.procedimiento || nov.note || ''}
-                          </div>
+
+                          {editingNovId === nov.id ? (
+                            <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              <textarea
+                                className="glass-input"
+                                value={editingText}
+                                onChange={(e) => setEditingText(e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  minHeight: '56px',
+                                  fontSize: '0.78rem',
+                                  padding: '8px',
+                                  resize: 'vertical',
+                                  lineHeight: 1.4
+                                }}
+                                autoFocus
+                              />
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                                <button
+                                  type="button"
+                                  className="glass-button"
+                                  onClick={handleCancelEdit}
+                                  disabled={isSavingEdit}
+                                  style={{ padding: '3px 8px', fontSize: '0.7rem' }}
+                                >
+                                  Cancelar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="glass-button primary"
+                                  onClick={() => handleSaveEdit(nov.id)}
+                                  disabled={isSavingEdit}
+                                  style={{ padding: '3px 8px', fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                >
+                                  <Save size={11} /> {isSavingEdit ? 'Guardando...' : 'Guardar'}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ color: 'var(--text-primary)', lineHeight: 1.4, wordBreak: 'break-word' }}>
+                              {nov.contenido || nov.procedimiento || nov.note || ''}
+                            </div>
+                          )}
                         </div>
                       ));
                     })()}
