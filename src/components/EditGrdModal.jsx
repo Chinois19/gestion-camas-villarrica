@@ -213,7 +213,17 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
     }
   };
 
-  // Validación de autoría: solo el usuario que registró la acción en su sesión puede modificarla o eliminarla
+  const normalizeStr = (str) => {
+    if (!str) return '';
+    return String(str)
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ');
+  };
+
+  // Validación de autoría: coincide con el usuario de la sesión actual
   const isOwnAction = (nov) => {
     if (!user) return false;
 
@@ -226,21 +236,34 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
 
     // 2. Nombre de usuario / login
     if (nov.username && user.username) {
-      if (nov.username.trim().toLowerCase() === user.username.trim().toLowerCase()) {
+      if (normalizeStr(nov.username) === normalizeStr(user.username)) {
         return true;
       }
     }
 
     // 3. Nombre completo del usuario registrado en sesión
-    const novUser = (nov.usuario || '').trim().toLowerCase();
-    const currentUserName = (user.name || '').trim().toLowerCase();
-    const currentUsername = (user.username || '').trim().toLowerCase();
+    const novUser = normalizeStr(nov.usuario || nov.user || nov.author);
+    const currentUserName = normalizeStr(user.name);
+    const currentUsername = normalizeStr(user.username);
 
-    if (novUser && ((currentUserName && novUser === currentUserName) || (currentUsername && novUser === currentUsername))) {
+    if (novUser && (
+      (currentUserName && novUser === currentUserName) || 
+      (currentUsername && novUser === currentUsername)
+    )) {
       return true;
     }
 
     return false;
+  };
+
+  // Permisos: Habilitado exclusivamente para perfiles de GESTOR
+  // (gestor_camas, gestora_servicio, superadmin, administrador).
+  // Los gestores pueden modificar y eliminar sus propias acciones registradas en su sesión,
+  // y superadmin / administrador tienen facultades globales de gestión/auditoría.
+  const canManageNov = (nov) => {
+    if (!user || !isGestor) return false;
+    if (isSuperAdmin) return true;
+    return isOwnAction(nov);
   };
 
   const handleStartEdit = (nov) => {
@@ -1031,7 +1054,7 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                             </span>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
                               <span style={{ color: 'var(--text-secondary)' }}>🕒 {nov.fecha || (nov.createdAt ? new Date(nov.createdAt).toLocaleString('es-CL') : '')}</span>
-                              {isOwnAction(nov) && editingNovId !== nov.id && (
+                              {canManageNov(nov) && editingNovId !== nov.id && (
                                 <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
                                   <button
                                     type="button"
