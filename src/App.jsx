@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Activity, Search, User, LogOut, KeyRound, Palette
 } from 'lucide-react';
@@ -31,6 +31,7 @@ import {
   bulkAddFirestoreDocs
 } from './hooks/useFirestoreCollection';
 import { sanitizeBedsStructure } from './utils/bedSanitizer';
+import { getProcedureTimestamp } from './utils/procedureUtils';
 import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
 import { MOCK_TRANSFERS } from './data/mockTransfers';
 import { Toaster, toast } from 'sonner';
@@ -202,7 +203,7 @@ function App() {
   const isTransfersView = currentView === 'traslados_database' || currentView === 'insights' || currentView === 'general_database';
   const isBlockLogsView = currentView === 'blocked_beds' || currentView === 'insights';
   const isHodomView = currentView === 'hodom' || currentView === 'dashboard';
-  const isProceduresView = currentView === 'interconsultas' || currentView === 'database' || currentView === 'altas_database' || currentView === 'general_database';
+  const isProceduresView = currentView === 'interconsultas' || currentView === 'database' || currentView === 'altas_database' || currentView === 'general_database' || currentView === 'dashboard';
 
   const dischargesCol = useFirestoreCollection('discharges', {
     orderByField: 'dischargeAt',
@@ -226,7 +227,6 @@ function App() {
     enabled: isSyncEnabled && isHodomView
   });
   const proceduresCol = useFirestoreCollection('procedures', {
-    orderByField: 'createdAt',
     realtime: false,
     enabled: isSyncEnabled && isProceduresView
   });
@@ -236,7 +236,11 @@ function App() {
   const transferHistory = transfersCol.data;
   const blockLog = blockLogsCol.data;
   const dischargesLog = dischargesCol.data;
-  const procedures = proceduresCol.data;
+  const rawProcedures = proceduresCol.data;
+  const procedures = useMemo(() => {
+    if (!Array.isArray(rawProcedures)) return [];
+    return [...rawProcedures].sort((a, b) => getProcedureTimestamp(b) - getProcedureTimestamp(a));
+  }, [rawProcedures]);
 
   useEffect(() => {
     const t = THEMES.find(t => t.id === theme) || THEMES[0];
@@ -811,7 +815,11 @@ function App() {
           waitingList={waitingList}
           setWaitingList={setWaitingList}
           procedures={procedures}
-          onAddProcedure={(item) => addFirestoreDoc('procedures', item)}
+          onAddProcedure={async (item) => {
+            const saved = await addFirestoreDoc('procedures', item);
+            proceduresCol.setData(prev => [saved, ...(prev || [])]);
+            return saved;
+          }}
           onHodomSubmit={handleHodomSubmit}
           onMarkHodomDoneByBed={handleHodomMarkDoneByBed}
           onEditPatient={handleEditPatient}

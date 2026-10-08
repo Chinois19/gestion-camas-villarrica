@@ -252,13 +252,13 @@ export function useBedsCollection(options = {}) {
               JSON.stringify(prevBed.especialidadTratante) !== JSON.stringify(bed.especialidadTratante) ||
               JSON.stringify(prevBed.aislamiento) !== JSON.stringify(bed.aislamiento) ||
               JSON.stringify(prevBed.interconsultas) !== JSON.stringify(bed.interconsultas) ||
-              JSON.stringify(prevBed.novedades) !== JSON.stringify(bed.novedades) ||
               JSON.stringify(prevBed.evolutions) !== JSON.stringify(bed.evolutions);
 
             if (hasChanged) {
               const {
                 canonicalId: _ignoreCid,
                 dischargeHistory: _ignoreDh,
+                novedades: _ignoreNov,
                 floor: _ignoreFl,
                 sector: _ignoreSc,
                 roomId: _ignoreRm,

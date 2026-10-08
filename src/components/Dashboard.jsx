@@ -36,6 +36,9 @@ const checkServiceMatch = (bed, patient) => {
 
 
 
+export { parseDateToMillis, getProcedureTimestamp, filterProceduresForStay } from '../utils/procedureUtils';
+import { parseDateToMillis, getProcedureTimestamp, filterProceduresForStay } from '../utils/procedureUtils';
+
 const getBedStayStatus = (bed) => {
   if ((bed.status !== 'occupied' && bed.status !== 'pending_hodom') || !bed.assignedAt || !bed.projectedDays) return 'none';
   const elapsed = (new Date() - new Date(bed.assignedAt)) / (1000 * 60 * 60 * 24);
@@ -916,36 +919,32 @@ export default function Dashboard({
       if (targetBed) break;
     }
 
-    // 1. Guardar en bedsData (objeto de cama)
-    try {
-      await updateBedState(roomId, bedId, {
-        novedades: [newEntry, ...(targetBed?.novedades || [])]
-      });
-    } catch (err) {
-      console.warn('[Dashboard] No se pudo actualizar novedades en bedsData:', err);
-    }
-
-    // 2. Guardar en la colección independiente 'procedures' de Firestore si está disponible
+    // Guardar EXCLUSIVAMENTE en la colección independiente 'procedures' de Firestore (sin escribir en beds)
     if (onAddProcedure) {
       try {
+        const activeBed = targetBed || (editingGrdBed?.bed && String(editingGrdBed.bed.id) === String(bedId) ? editingGrdBed.bed : null);
+        const effectiveAssignedAt = activeBed?.assignedAt || newEntry.assignedAt || new Date().toISOString();
         const procDoc = {
           id: String(newEntry.id || `proc_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`),
           bedId: String(bedId),
           roomId: String(roomId),
-          floor: targetFloor || '',
-          sector: targetSector || '',
-          patientName: targetBed?.patient || targetBed?.patientName || targetBed?.nombre || '',
-          rut: targetBed?.rut || targetBed?.run || '',
+          floor: targetFloor || activeBed?.floor || '',
+          sector: targetSector || activeBed?.sector || '',
+          patientName: activeBed?.patient || activeBed?.patientName || activeBed?.nombre || newEntry.patientName || '',
+          rut: activeBed?.rut || activeBed?.run || newEntry.rut || '',
+          assignedAt: effectiveAssignedAt,
           fecha: newEntry.fecha || new Date().toLocaleString('es-CL'),
-          createdAt: new Date().toISOString(),
+          createdAt: newEntry.createdAt || new Date().toISOString(),
           usuario: newEntry.usuario || user?.name || user?.username || 'Personal Clínico',
           rol: newEntry.rol || user?.role || 'Clínico',
           contenido: newEntry.contenido || '',
           tipo: 'procedimiento'
         };
         await onAddProcedure(procDoc);
+        return procDoc;
       } catch (procErr) {
-        console.warn('[Dashboard] Error al registrar procedure en Firestore (se guardó en cama):', procErr);
+        console.error('[Dashboard] Error al registrar procedure en Firestore:', procErr);
+        throw procErr;
       }
     }
   };
@@ -1381,18 +1380,27 @@ export default function Dashboard({
                 beds: room.beds.map(b => {
                   if (b.id === bedId) {
                     const currentICs = b.interconsultas || [];
-                    const currentNovedades = b.novedades || [];
-
                     const now = new Date();
                     const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-                    const newNovedad = {
-                      id: Date.now(),
-                      fecha: formattedDate,
-                      usuario: formData.profesionalDeriva || user?.name || 'Médico Tratante',
-                      rol: user?.role || 'Médico',
-                      contenido: `Interconsulta ${formData.priorizacion ? formData.priorizacion.toLowerCase() : ''} a la especialidad de ${formData.especialidadDestino}.`
-                    };
+                    if (onAddProcedure) {
+                      onAddProcedure({
+                        id: `proc_${Date.now()}_ic`,
+                        bedId: String(b.id),
+                        roomId: String(roomId),
+                        floor: f,
+                        sector: s,
+                        patientName: b.patient || '',
+                        rut: b.rut || '',
+                        assignedAt: b.assignedAt || now.toISOString(),
+                        fecha: formattedDate,
+                        createdAt: now.toISOString(),
+                        usuario: formData.profesionalDeriva || user?.name || 'Médico Tratante',
+                        rol: user?.role || 'Médico',
+                        contenido: `Interconsulta ${formData.priorizacion ? formData.priorizacion.toLowerCase() : ''} a la especialidad de ${formData.especialidadDestino}.`,
+                        tipo: 'interconsulta'
+                      }).catch(err => console.warn('[Dashboard] Error al registrar procedure de IC:', err));
+                    }
 
                     const icEvolution = {
                       id: Date.now().toString(),
@@ -1405,7 +1413,6 @@ export default function Dashboard({
                     return {
                       ...b,
                       interconsultas: [...currentICs, newIC],
-                      novedades: [newNovedad, ...currentNovedades],
                       evolutions: [icEvolution, ...(b.evolutions || [])]
                     };
                   }
@@ -1502,7 +1509,6 @@ export default function Dashboard({
       sourceBedInfo.prevision = newGrdData.prevision;
       sourceBedInfo.especialidadTratante = newGrdData.especialidadTratante;
       sourceBedInfo.aislamiento = newGrdData.aislamiento;
-      sourceBedInfo.novedades = newGrdData.novedades;
       sourceBedInfo.destino = newGrdData.destino;
       if (newGrdData.interconsultas) {
         sourceBedInfo.interconsultas = newGrdData.interconsultas;
@@ -2227,10 +2233,7 @@ export default function Dashboard({
         {editingGrdBed && (
           <EditGrdModal
             bed={{ ...editingGrdBed.bed, roomId: editingGrdBed.roomId }}
-            procedures={procedures.filter(p => 
-              (p.bedId === editingGrdBed.bed.id && (!editingGrdBed.bed.rut || !p.rut || p.rut === editingGrdBed.bed.rut)) ||
-              (editingGrdBed.bed.rut && p.rut && p.rut === editingGrdBed.bed.rut)
-            )}
+            procedures={filterProceduresForStay(procedures, editingGrdBed.bed, editingGrdBed.roomId)}
             allBeds={allBeds}
             user={user}
             onConfirm={confirmGrdEdit}

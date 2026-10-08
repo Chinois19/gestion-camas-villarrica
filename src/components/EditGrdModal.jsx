@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Save, Activity, Eye } from 'lucide-react';
 import { GRD_DATA, calculateProjectedDays, getGrdLimit } from '../data/grd';
 import SearchableSelect from './SearchableSelect';
@@ -8,6 +8,7 @@ import { ESPECIALIDADES, ESPECIALIDADES_TRATANTES } from '../data/formData';
 import { formatAgeDetailed } from '../utils/age';
 import ViewInterconsultaModal from './ViewInterconsultaModal';
 import { toast } from 'sonner';
+import { getProcedureTimestamp } from '../utils/procedureUtils';
 const formatRut = (val) => {
   if (!val) return '';
   const clean = val.replace(/[^0-9kK]/g, '');
@@ -85,7 +86,6 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
       }
       return [];
     })(),
-    novedades: bed.novedades || [],
     destino: bed.destino || 'Cuidados Medios',
     showTransferPanel: false,
     transferType: 'libre'
@@ -96,6 +96,28 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
   const [isSavingNovedad, setIsSavingNovedad] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [viewingIC, setViewingIC] = useState(null);
+
+  // Lista de procedimientos / novedades sincronizada exclusivamente con la colección 'procedures'
+  const [proceduresList, setProceduresList] = useState(procedures || []);
+
+  useEffect(() => {
+    if (Array.isArray(procedures)) {
+      setProceduresList(prev => {
+        const map = new Map();
+        // 1. Agregar registros de la colección procedures
+        procedures.forEach(p => map.set(String(p.id), p));
+        // 2. Conservar entradas locales recientes aún no emitidas por la suscripción
+        prev.forEach(p => {
+          if (!map.has(String(p.id))) {
+            map.set(String(p.id), p);
+          }
+        });
+        return Array.from(map.values()).sort((a, b) => {
+          return getProcedureTimestamp(b) - getProcedureTimestamp(a);
+        });
+      });
+    }
+  }, [procedures]);
 
   // Permisos de roles de gestores (gestor_camas, gestora_servicio, superadmin, administrador)
   const isSuperAdmin = user?.role === 'superadmin' || user?.role === 'administrador';
@@ -148,27 +170,36 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
     }
     const now = new Date();
     const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const effectiveAssignedAt = (computedAssignedDate && !isNaN(computedAssignedDate.getTime())) 
+      ? computedAssignedDate.toISOString() 
+      : (bed.assignedAt || now.toISOString());
     const newEntry = {
-      id: Date.now(),
+      id: `proc_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      bedId: String(bed.id),
+      roomId: String(bed.roomId),
+      rut: bed.rut || '',
+      patientName: bed.patient || bed.patientName || '',
       fecha: formattedDate,
+      createdAt: now.toISOString(),
+      assignedAt: effectiveAssignedAt,
       usuario: user?.name || user?.username || 'Médico de Turno',
       rol: user?.role || 'Clinico',
-      contenido: newNovedadText.trim()
+      contenido: newNovedadText.trim(),
+      tipo: 'procedimiento'
     };
-    // 1. Actualizar estado local del modal (respuesta inmediata en UI)
-    setFormData(prev => ({
-      ...prev,
-      novedades: [newEntry, ...prev.novedades]
-    }));
+    // 1. Feedback visual inmediato en la lista de procedimientos
+    setProceduresList(prev => [newEntry, ...prev]);
     setNewNovedadText('');
-    // 2. Persistir en Firebase y esperar confirmación antes de re-habilitar el botón
+
+    // 2. Persistir EXCLUSIVAMENTE en la colección 'procedures' de Firestore (sin escribir en la cama)
     if (onSaveNovedad) {
       setIsSavingNovedad(true);
       try {
         await onSaveNovedad(newEntry);
         toast.success("Novedad guardada exitosamente");
       } catch (error) {
-        toast.error("Error al guardar la novedad", error);
+        console.error('Error al guardar en procedures:', error);
+        toast.error("Error al guardar la novedad");
       } finally {
         setIsSavingNovedad(false);
       }
@@ -253,7 +284,6 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
         prevision: formData.prevision,
         especialidadTratante: formData.especialidadTratante,
         aislamiento: formData.aislamiento,
-        novedades: formData.novedades,
         destino: formData.destino
       }, transferTarget);
     } catch (err) {
@@ -677,98 +707,98 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
 
                 {/* A. GESTIÓN CLÍNICA (GRD) */}
                 <div className="glass-panel" style={{ padding: '20px', zIndex: 40 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>📋</span>
-                      <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Gestión Clínica (GRD)</h3>
-                    </div>
-
-                    <div className="form-group" style={{ marginBottom: '16px' }}>
-                      <label style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
-                        Diagnóstico de Ingreso (Hasta 5)
-                      </label>
-                      <MultiSearchableSelect
-                        options={CIE10_OPTIONS}
-                        value={formData.diagnosis}
-                        onChange={(val) => setFormData(prev => ({ ...prev, diagnosis: val }))}
-                        placeholder="Buscar diagnósticos CIE-10..."
-                        maxSelections={5}
-                      />
-                    </div>
-
-                    <div className="form-group" style={{ marginBottom: '16px' }}>
-                      <label style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
-                        Grupo Diagnóstico (GRD)
-                      </label>
-                      <SearchableSelect
-                        options={GRD_DATA.map(g => ({ value: g.id, label: `${g.id} - ${g.name}` }))}
-                        value={formData.grdId}
-                        onChange={handleGrdChange}
-                        placeholder="Seleccione GRD..."
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'end', marginTop: '16px' }}>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
-                          Nivel de Severidad
-                        </label>
-                        <div className="severity-selector" style={{ display: 'flex', gap: '8px' }}>
-                          {[1, 2, 3].map(level => {
-                            const isSelected = parseInt(formData.severity) === level;
-                            return (
-                              <button
-                                key={level}
-                                type="button"
-                                className={`severity-btn ${isSelected ? `active s-${level}` : ''}`}
-                                style={{
-                                  flex: 1,
-                                  padding: '8px 12px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 700,
-                                  borderRadius: '8px',
-                                  cursor: formData.grdId ? 'pointer' : 'not-allowed',
-                                  opacity: formData.grdId ? 1 : 0.5,
-                                  transition: 'all 0.2s ease'
-                                }}
-                                onClick={() => handleSeverityChange(level)}
-                                disabled={!formData.grdId}
-                              >
-                                {level === 1 ? 'Menor' : level === 2 ? 'Moderada' : 'Mayor'}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
-                        {/* Límite Outliers (Most Prominent) */}
-                        {limitDays > 0 && (
-                          <div className="outlier-warning">
-                            🚨 Límite Outliers: {limitDays} días
-                          </div>
-                        )}
-
-                        {/* Promedio días de estada Hospital de Villarrica (Less Prominent) */}
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                          <label style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px', display: 'block', fontWeight: 600 }}>
-                            Promedio días de estada Hospital de Villarrica
-                          </label>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <input
-                              type="number"
-                              value={formData.projectedDays}
-                              onChange={handleChangeDays}
-                              className="glass-input"
-                              style={{ width: '70px', padding: '5px 8px', textAlign: 'center', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.01)', borderColor: 'rgba(255,255,255,0.08)' }}
-                              min="0"
-                            />
-                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>días (histórico referencial)</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
+                    <span style={{ fontSize: '1.1rem' }}>📋</span>
+                    <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Gestión Clínica (GRD)</h3>
                   </div>
+
+                  <div className="form-group" style={{ marginBottom: '16px' }}>
+                    <label style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                      Diagnóstico de Ingreso (Hasta 5)
+                    </label>
+                    <MultiSearchableSelect
+                      options={CIE10_OPTIONS}
+                      value={formData.diagnosis}
+                      onChange={(val) => setFormData(prev => ({ ...prev, diagnosis: val }))}
+                      placeholder="Buscar diagnósticos CIE-10..."
+                      maxSelections={5}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: '16px' }}>
+                    <label style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                      Grupo Diagnóstico (GRD)
+                    </label>
+                    <SearchableSelect
+                      options={GRD_DATA.map(g => ({ value: g.id, label: `${g.id} - ${g.name}` }))}
+                      value={formData.grdId}
+                      onChange={handleGrdChange}
+                      placeholder="Seleccione GRD..."
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'end', marginTop: '16px' }}>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                        Nivel de Severidad
+                      </label>
+                      <div className="severity-selector" style={{ display: 'flex', gap: '8px' }}>
+                        {[1, 2, 3].map(level => {
+                          const isSelected = parseInt(formData.severity) === level;
+                          return (
+                            <button
+                              key={level}
+                              type="button"
+                              className={`severity-btn ${isSelected ? `active s-${level}` : ''}`}
+                              style={{
+                                flex: 1,
+                                padding: '8px 12px',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                borderRadius: '8px',
+                                cursor: formData.grdId ? 'pointer' : 'not-allowed',
+                                opacity: formData.grdId ? 1 : 0.5,
+                                transition: 'all 0.2s ease'
+                              }}
+                              onClick={() => handleSeverityChange(level)}
+                              disabled={!formData.grdId}
+                            >
+                              {level === 1 ? 'Menor' : level === 2 ? 'Moderada' : 'Mayor'}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                      {/* Límite Outliers (Most Prominent) */}
+                      {limitDays > 0 && (
+                        <div className="outlier-warning">
+                          🚨 Límite Outliers: {limitDays} días
+                        </div>
+                      )}
+
+                      {/* Promedio días de estada Hospital de Villarrica (Less Prominent) */}
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px', display: 'block', fontWeight: 600 }}>
+                          Promedio días de estada Hospital de Villarrica
+                        </label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <input
+                            type="number"
+                            value={formData.projectedDays}
+                            onChange={handleChangeDays}
+                            className="glass-input"
+                            style={{ width: '70px', padding: '5px 8px', textAlign: 'center', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.01)', borderColor: 'rgba(255,255,255,0.08)' }}
+                            min="0"
+                          />
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>días (histórico referencial)</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
                 {/* fin GRD */}
 
                 {/* B. SECCIÓN OPCIONAL: TRASLADO DE PACIENTE (COLLAPSIBLE) */}
@@ -881,7 +911,7 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                   {/* Lista de Registros */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '200px', overflowY: 'auto', paddingRight: '4px' }}>
                     {(() => {
-                      const displayedList = (procedures && procedures.length > 0) ? procedures : (formData.novedades || []);
+                      const displayedList = proceduresList;
                       if (displayedList.length === 0) {
                         return (
                           <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
@@ -902,12 +932,12 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.72rem', opacity: 0.8 }}>
                             <span style={{ fontWeight: 700, color: 'var(--accent-color)' }}>
-                              👤 {nov.usuario} ({nov.rol})
+                              👤 {nov.usuario || 'Personal Clínico'} ({nov.rol || 'Clínico'})
                             </span>
-                            <span style={{ color: 'var(--text-secondary)' }}>🕒 {nov.fecha}</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>🕒 {nov.fecha || (nov.createdAt ? new Date(nov.createdAt).toLocaleString('es-CL') : '')}</span>
                           </div>
                           <div style={{ color: 'var(--text-primary)', lineHeight: 1.4, wordBreak: 'break-word' }}>
-                            {nov.contenido || nov.procedimiento}
+                            {nov.contenido || nov.procedimiento || nov.note || ''}
                           </div>
                         </div>
                       ));

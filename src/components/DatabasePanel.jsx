@@ -216,24 +216,20 @@ export default function DatabasePanel({ bedsData, procedures = [], blockLog = []
                   const prRut = (pr.rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
                   const prName = (pr.patientName || pr.nombre || '').toLowerCase().trim();
 
-                  // 1. Coincidencia por RUN exacto del paciente
-                  if (patientRut && prRut && patientRut === prRut) return true;
+                  const matchRut = Boolean(patientRut && prRut && patientRut === prRut);
+                  const matchName = Boolean(patientName && prName && patientName === prName);
+                  const matchBed = Boolean(pr.bedId && pr.bedId === bed.id && (!pr.roomId || String(pr.roomId) === String(room.roomId)));
 
-                  // 2. Coincidencia por nombre exacto del paciente
-                  if (patientName && prName && patientName === prName) return true;
+                  if (!matchRut && !matchName && !matchBed) return false;
 
-                  // 3. Coincidencia por sala y cama: solo si ocurrió durante la estadía del paciente actual
-                  if (pr.bedId && pr.bedId === bed.id && (!pr.roomId || String(pr.roomId) === String(room.roomId))) {
-                    if (admDate) {
-                      const procDate = new Date(pr.createdAt || pr.fecha);
-                      const admDateTime = new Date(admDate);
-                      if (!isNaN(procDate.getTime()) && !isNaN(admDateTime.getTime())) {
-                        return procDate >= admDateTime;
-                      }
+                  if (admDate) {
+                    const procDate = new Date(pr.createdAt || pr.fecha);
+                    const admDateTime = new Date(admDate);
+                    if (!isNaN(procDate.getTime()) && !isNaN(admDateTime.getTime())) {
+                      if (procDate < new Date(admDateTime.getTime() - 60000)) return false;
                     }
                   }
-
-                  return false;
+                  return true;
                 });
                 matchedProcs.forEach(nov => {
                   if (nov.contenido || nov.procedimiento) {

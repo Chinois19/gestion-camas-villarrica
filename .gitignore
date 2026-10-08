@@ -25,3 +25,7 @@ dist-ssr
 .vercel
 backups/
 skills/
+*.xlsx
+*.xls
+*.pdf
+scripts/*.json

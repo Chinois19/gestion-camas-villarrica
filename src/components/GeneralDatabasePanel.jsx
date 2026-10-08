@@ -208,19 +208,19 @@ const getPatientUpdates = (p, orig, procedures = []) => {
       const prRut = cleanRut(pr.rut || pr.run || '');
       const prName = (pr.patientName || pr.nombre || '').toLowerCase().trim();
 
-      if (pRut && prRut && pRut === prRut) return true;
-      if (pName && prName && pName === prName) return true;
+      const matchRut = Boolean(pRut && prRut && pRut === prRut);
+      const matchName = Boolean(pName && prName && pName === prName);
+      const matchBed = Boolean(p.bedId && pr.bedId && String(pr.bedId) === String(p.bedId));
 
-      // Coincidencia por cama si ocurrió durante la estadía
-      if (p.bedId && pr.bedId && pr.bedId === p.bedId) {
-        const procDate = new Date(pr.createdAt || pr.fecha);
-        if (!isNaN(procDate.getTime())) {
-          if (admDate && procDate < new Date(admDate)) return false;
-          if (disDate && procDate > new Date(disDate)) return false;
-          return true;
-        }
+      if (!matchRut && !matchName && !matchBed) return false;
+
+      // Validar ventana temporal del acueste y estadía
+      const procDate = new Date(pr.createdAt || pr.fecha);
+      if (!isNaN(procDate.getTime())) {
+        if (admDate && procDate < new Date(new Date(admDate).getTime() - 60000)) return false;
+        if (disDate && procDate > new Date(new Date(disDate).getTime() + 60000)) return false;
       }
-      return false;
+      return true;
     });
 
     matched.forEach(pr => {

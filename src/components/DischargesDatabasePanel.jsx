@@ -435,22 +435,19 @@ export default function DischargesDatabasePanel({
           const prRut = (pr.rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
           const prName = (pr.patientName || pr.nombre || '').toLowerCase().trim();
 
-          // 1. Coincidencia por RUN exacto del paciente
-          if (patientRut && prRut && patientRut === prRut) return true;
+          const matchRut = Boolean(patientRut && prRut && patientRut === prRut);
+          const matchName = Boolean(patientName && prName && patientName === prName);
+          const matchBed = Boolean(p.bedId && pr.bedId && String(pr.bedId) === String(p.bedId));
 
-          // 2. Coincidencia por nombre exacto del paciente
-          if (patientName && prName && patientName === prName) return true;
+          if (!matchRut && !matchName && !matchBed) return false;
 
-          // 3. Coincidencia por cama: solo si ocurrió durante la hospitalización de este paciente
-          if (p.bedId && pr.bedId && pr.bedId === p.bedId) {
-            const procDate = new Date(pr.createdAt || pr.fecha);
-            if (!isNaN(procDate.getTime())) {
-              if (admDate && procDate < new Date(admDate)) return false;
-              if (disDate && procDate > new Date(disDate)) return false;
-              return true;
-            }
+          // Validar ventana temporal de la estadía (acueste hasta alta)
+          const procDate = new Date(pr.createdAt || pr.fecha);
+          if (!isNaN(procDate.getTime())) {
+            if (admDate && procDate < new Date(new Date(admDate).getTime() - 60000)) return false;
+            if (disDate && procDate > new Date(new Date(disDate).getTime() + 60000)) return false;
           }
-          return false;
+          return true;
         });
         matchedProcs.forEach(nov => {
           if (nov.contenido || nov.procedimiento) {
