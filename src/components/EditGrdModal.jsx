@@ -16,7 +16,7 @@ const formatRut = (val) => {
   return `${clean.slice(0, -1)}-${clean.slice(-1).toUpperCase()}`;
 };
 
-export default function EditGrdModal({ bed, procedures = [], allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onSaveNovedad, onUpdateNovedad, onDeleteNovedad }) {
+export default function EditGrdModal({ bed, procedures = [], isLoadingProcedures = false, allBeds = [], user, onConfirm, onClose, onDischargeRequest, onRequestIC, onSaveNovedad, onUpdateNovedad, onDeleteNovedad }) {
   // Reconstruir diagnóstico CIE-10 priorizando los campos codificados.
   const buildDiagnosisCodes = () => {
     const cie10Regex = /^[A-Z]\d{2}/;
@@ -1024,6 +1024,14 @@ export default function EditGrdModal({ bed, procedures = [], allBeds = [], user,
                   {/* Lista de Registros */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '200px', overflowY: 'auto', paddingRight: '4px' }}>
                     {(() => {
+                      if (isLoadingProcedures) {
+                        return (
+                          <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                            <div className="spinner" style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#38bdf8', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                            <span>Cargando novedades del paciente...</span>
+                          </div>
+                        );
+                      }
                       const displayedList = proceduresList;
                       if (displayedList.length === 0) {
                         return (

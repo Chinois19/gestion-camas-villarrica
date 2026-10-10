@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Bed, User, LayoutDashboard, X, Pencil, LogOut, CheckCircle, Filter, RotateCcw, Lock, Unlock } from 'lucide-react';
 import { getBedTypeClass } from '../data/dummy';
 import WaitingList from './WaitingList';
@@ -38,6 +38,7 @@ const checkServiceMatch = (bed, patient) => {
 
 export { parseDateToMillis, getProcedureTimestamp, filterProceduresForStay } from '../utils/procedureUtils';
 import { parseDateToMillis, getProcedureTimestamp, filterProceduresForStay } from '../utils/procedureUtils';
+import { fetchProceduresForBed } from '../utils/procedureService';
 
 const getBedStayStatus = (bed) => {
   if ((bed.status !== 'occupied' && bed.status !== 'pending_hodom') || !bed.assignedAt || !bed.projectedDays) return 'none';
@@ -463,6 +464,61 @@ export default function Dashboard({
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [pendingAssignment, setPendingAssignment] = useState(null); // { patient, bedId, roomId, serviceMismatch, bedType }
   const [editingGrdBed, setEditingGrdBed] = useState(null); // { roomId, bed }
+
+  // Procedimientos bajo demanda por paciente/cama activa (Optimización de lecturas Firestore)
+  const [activeBedProcedures, setActiveBedProcedures] = useState([]);
+  const [loadingBedProcedures, setLoadingBedProcedures] = useState(false);
+  const proceduresCacheRef = useRef(new Map());
+
+  useEffect(() => {
+    if (!editingGrdBed || !editingGrdBed.bed) {
+      setActiveBedProcedures([]);
+      setLoadingBedProcedures(false);
+      return;
+    }
+
+    const { bed, roomId } = editingGrdBed;
+    const cleanRut = (bed.rut || bed.run || '').replace(/[^0-9kK]/g, '').toLowerCase();
+    const cacheKey = cleanRut ? `rut_${cleanRut}` : `bed_${roomId}_${bed.id}_${bed.assignedAt || ''}`;
+
+    // 1. Revisar si ya los cargamos en esta sesión
+    if (proceduresCacheRef.current.has(cacheKey)) {
+      setActiveBedProcedures(proceduresCacheRef.current.get(cacheKey));
+      return;
+    }
+
+    // 2. Si procedures ya vino cargado desde App (ej. visita previa a Interconsultas)
+    if (Array.isArray(procedures) && procedures.length > 0) {
+      const filtered = filterProceduresForStay(procedures, bed, roomId);
+      setActiveBedProcedures(filtered);
+      proceduresCacheRef.current.set(cacheKey, filtered);
+      return;
+    }
+
+    // 3. Consulta quirúrgica bajo demanda a Firestore solo para este paciente
+    let isMounted = true;
+    setLoadingBedProcedures(true);
+
+    fetchProceduresForBed(bed, roomId)
+      .then((res) => {
+        if (isMounted) {
+          setActiveBedProcedures(res);
+          proceduresCacheRef.current.set(cacheKey, res);
+          setLoadingBedProcedures(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.error('[Dashboard] Error al consultar procedimientos bajo demanda:', err);
+          setActiveBedProcedures([]);
+          setLoadingBedProcedures(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [editingGrdBed, procedures]);
   const [viewingPatient, setViewingPatient] = useState(null);
   const [dischargingPatient, setDischargingPatient] = useState(null); // { roomId, bed }
   const [requestingIC, setRequestingIC] = useState(null); // { roomId, bed }
@@ -944,8 +1000,16 @@ export default function Dashboard({
           contenido: newEntry.contenido || '',
           tipo: 'procedimiento'
         };
-        await onAddProcedure(procDoc);
-        return procDoc;
+        const saved = await onAddProcedure(procDoc);
+        const resolvedDoc = saved || procDoc;
+        setActiveBedProcedures(prev => [resolvedDoc, ...(prev || [])]);
+        if (editingGrdBed?.bed) {
+          const cleanRut = (editingGrdBed.bed.rut || editingGrdBed.bed.run || '').replace(/[^0-9kK]/g, '').toLowerCase();
+          const cacheKey = cleanRut ? `rut_${cleanRut}` : `bed_${roomId}_${bedId}_${effectiveAssignedAt}`;
+          const currentCached = proceduresCacheRef.current.get(cacheKey) || [];
+          proceduresCacheRef.current.set(cacheKey, [resolvedDoc, ...currentCached]);
+        }
+        return resolvedDoc;
       } catch (procErr) {
         console.error('[Dashboard] Error al registrar procedure en Firestore:', procErr);
         throw procErr;
@@ -2237,14 +2301,33 @@ export default function Dashboard({
         {editingGrdBed && (
           <EditGrdModal
             bed={{ ...editingGrdBed.bed, roomId: editingGrdBed.roomId }}
-            procedures={filterProceduresForStay(procedures, editingGrdBed.bed, editingGrdBed.roomId)}
+            procedures={activeBedProcedures}
+            isLoadingProcedures={loadingBedProcedures}
             allBeds={allBeds}
             user={user}
             onConfirm={confirmGrdEdit}
             onClose={() => setEditingGrdBed(null)}
             onSaveNovedad={(newEntry) => handleSaveNovedad(editingGrdBed.roomId, editingGrdBed.bed.id, newEntry)}
-            onUpdateNovedad={onUpdateProcedure}
-            onDeleteNovedad={onDeleteProcedure}
+            onUpdateNovedad={async (id, updates) => {
+              if (onUpdateProcedure) await onUpdateProcedure(id, updates);
+              setActiveBedProcedures(prev => (prev || []).map(p => String(p.id) === String(id) ? { ...p, ...updates } : p));
+              if (editingGrdBed?.bed) {
+                const cleanRut = (editingGrdBed.bed.rut || editingGrdBed.bed.run || '').replace(/[^0-9kK]/g, '').toLowerCase();
+                const cacheKey = cleanRut ? `rut_${cleanRut}` : `bed_${editingGrdBed.roomId}_${editingGrdBed.bed.id}_${editingGrdBed.bed.assignedAt || ''}`;
+                const cached = proceduresCacheRef.current.get(cacheKey) || [];
+                proceduresCacheRef.current.set(cacheKey, cached.map(p => String(p.id) === String(id) ? { ...p, ...updates } : p));
+              }
+            }}
+            onDeleteNovedad={async (id) => {
+              if (onDeleteProcedure) await onDeleteProcedure(id);
+              setActiveBedProcedures(prev => (prev || []).filter(p => String(p.id) !== String(id)));
+              if (editingGrdBed?.bed) {
+                const cleanRut = (editingGrdBed.bed.rut || editingGrdBed.bed.run || '').replace(/[^0-9kK]/g, '').toLowerCase();
+                const cacheKey = cleanRut ? `rut_${cleanRut}` : `bed_${editingGrdBed.roomId}_${editingGrdBed.bed.id}_${editingGrdBed.bed.assignedAt || ''}`;
+                const cached = proceduresCacheRef.current.get(cacheKey) || [];
+                proceduresCacheRef.current.set(cacheKey, cached.filter(p => String(p.id) !== String(id)));
+              }
+            }}
             onDischargeRequest={(b) => {
               setDischargingPatient({ roomId: editingGrdBed.roomId, bed: b });
               setEditingGrdBed(null);
