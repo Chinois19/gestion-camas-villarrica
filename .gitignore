@@ -29,3 +29,4 @@ skills/
 *.xls
 *.pdf
 scripts/*.json
+.backup_daemon.pid
