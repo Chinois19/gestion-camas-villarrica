@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Activity, Lock, User, Eye, EyeOff, LogIn } from 'lucide-react';
+import { useState } from 'react';
+import { User, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { authenticateUser } from '../utils/authService';
 import './Login.css';
@@ -129,10 +129,6 @@ const Login = ({ onLogin }) => {
               ¿No tiene cuenta? <a href="#">Solicitar acceso</a>
             </div>
           </form>
-
-          <div className="login-footer">
-            <p>Creado por Antigravity / ssaraucania.cl</p>
-          </div>
         </div>
       </div>
     </div>
