@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { UserPlus, Search, Shield, User, Mail, MoreVertical, Trash2, Edit2, Check, X, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { UserPlus, Search, Shield, User, Trash2, Edit2, X, RefreshCw } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import { useFirebaseSync } from '../hooks/useFirebaseSync';
 import { createAuthUserBackground } from '../utils/authService';

@@ -47,7 +47,7 @@ export async function authenticateUser(loginInput, rawPassword) {
   const email = formatAuthEmail(loginInput);
   const authPassword = formatAuthPassword(rawPassword);
 
-  let firebaseUser = null;
+  let firebaseUser;
 
   // 1. Intentar iniciar sesión en Firebase Auth
   try {
@@ -60,7 +60,7 @@ export async function authenticateUser(loginInput, rawPassword) {
       authError.code === 'auth/invalid-credential' || 
       authError.code === 'auth/invalid-email'
     ) {
-      throw new Error('Usuario o contraseña incorrectos');
+      throw new Error('Usuario o contraseña incorrectos', { cause: authError });
     }
     throw authError;
   }

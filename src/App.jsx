@@ -21,7 +21,6 @@ import BlockedBedsReportPanel from './components/BlockedBedsReportPanel';
 import GeneralBedStatusPanel from './components/GeneralBedStatusPanel';
 import GeneralDatabasePanel from './components/GeneralDatabasePanel';
 import Navbar from './components/Navbar';
-import { useFirebaseSync } from './hooks/useFirebaseSync';
 import { useBedsCollection } from './hooks/useBedsCollection';
 import {
   useFirestoreCollection,
@@ -45,8 +44,6 @@ import { useInactivityTimeout, ACTIVITY_STORAGE_KEY } from './hooks/useInactivit
 
 // Pre-fill some realistic interconsultas in the DUMMY_DATA to make the initial view visually rich
 const initialBedsData = JSON.parse(JSON.stringify(DUMMY_DATA));
-
-const initialHodomRequests = [];
 
 // All available themes
 const THEMES = [
@@ -187,7 +184,7 @@ function App() {
         setBedsData(cleaned);
       }
     }
-  }, [bedsData, bedsLoading, isSyncEnabled, setBedsData, bedsWritingRef]);
+  }, [bedsData, bedsLoading, isSyncEnabled, setBedsData, bedsWritingRef, isPublicRoute]);
 
   // ── COLECCIONES INDEPENDIENTES DE FIRESTORE (Carga por demanda / Lazy Loading) ──
   const isDischargesView = currentView === 'altas_database' || currentView === 'insights' || currentView === 'general_database';
@@ -264,7 +261,9 @@ function App() {
     localStorage.setItem('villarrica_session', JSON.stringify(safeUser));
     try {
       localStorage.setItem(ACTIVITY_STORAGE_KEY, String(Date.now()));
-    } catch {}
+    } catch {
+      // Ignorar errores de cuota o modo privado en storage
+    }
     setCurrentView('dashboard');
     toast.success(`Bienvenido/a, ${safeUser.name}`);
   };
@@ -275,7 +274,9 @@ function App() {
     localStorage.removeItem('villarrica_session');
     try {
       localStorage.removeItem(ACTIVITY_STORAGE_KEY);
-    } catch {}
+    } catch {
+      // Ignorar errores de cuota o modo privado en storage
+    }
     setCurrentView('dashboard');
     toast.info('Sesión cerrada');
   };
@@ -287,7 +288,9 @@ function App() {
     localStorage.removeItem('villarrica_session');
     try {
       localStorage.removeItem(ACTIVITY_STORAGE_KEY);
-    } catch {}
+    } catch {
+      // Ignorar errores de cuota o modo privado en storage
+    }
     setCurrentView('dashboard');
     toast.warning('Tu sesión se ha cerrado automáticamente tras 30 minutos de inactividad para resguardar la seguridad clínica.', {
       duration: 10000
