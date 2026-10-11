@@ -8,12 +8,12 @@ import { matchesSearch } from '../utils/search';
 import { toast } from 'sonner';
 
 const defaultUsers = [
-  { id: 1, name: 'Super Administrador', username: 'admin', password: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', roleName: 'Super Administrador', status: 'active' },
-  { id: 2, name: 'Visor Institucional', username: 'visor', password: 'visor', email: 'visor@hospitalvillarrica.cl', role: 'visor', roleName: 'Visor Institucional', status: 'active' },
-  { id: 3, name: 'Médico General', username: 'medico', password: 'medico', email: 'medico@hospitalvillarrica.cl', role: 'medico_general', roleName: 'Médico', status: 'active' },
-  { id: 4, name: 'Gestor de Camas', username: 'gestor', password: 'gestor', email: 'gestor@hospitalvillarrica.cl', role: 'gestor_camas', roleName: 'Gestor de Camas', status: 'active' },
-  { id: 5, name: 'Médico HODOM', username: 'hodom', password: 'hodom', email: 'hodom@hospitalvillarrica.cl', role: 'medico_hodom', roleName: 'Médico HODOM', status: 'active' },
-  { id: 6, name: 'Personal de Aseo', username: 'aseo', password: 'aseo', email: 'aseo@hospitalvillarrica.cl', role: 'personal_aseo', roleName: 'Personal de Aseo', status: 'active' }
+  { id: 1, name: 'Super Administrador', username: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', roleName: 'Super Administrador', status: 'active' },
+  { id: 2, name: 'Visor Institucional', username: 'visor', email: 'visor@hospitalvillarrica.cl', role: 'visor', roleName: 'Visor Institucional', status: 'active' },
+  { id: 3, name: 'Médico General', username: 'medico', email: 'medico@hospitalvillarrica.cl', role: 'medico_general', roleName: 'Médico', status: 'active' },
+  { id: 4, name: 'Gestor de Camas', username: 'gestor', email: 'gestor@hospitalvillarrica.cl', role: 'gestor_camas', roleName: 'Gestor de Camas', status: 'active' },
+  { id: 5, name: 'Médico HODOM', username: 'hodom', email: 'hodom@hospitalvillarrica.cl', role: 'medico_hodom', roleName: 'Médico HODOM', status: 'active' },
+  { id: 6, name: 'Personal de Aseo', username: 'aseo', email: 'aseo@hospitalvillarrica.cl', role: 'personal_aseo', roleName: 'Personal de Aseo', status: 'active' }
 ];
 
 const UserManagement = ({ notify }) => {
@@ -58,7 +58,8 @@ const UserManagement = ({ notify }) => {
       await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
       
       const id = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
-      setUsers([...users, { ...newUser, id, status: 'active', password: generatedPassword }]);
+      // Seguridad: NO almacenar la contraseña en Firestore
+      setUsers([...users, { ...newUser, id, status: 'active' }]);
       toast.success(`Profesional ${newUser.name} agregado. Se enviaron sus credenciales al correo.`);
       if (notify) notify(`Profesional ${newUser.name} agregado. Se enviaron sus credenciales al correo.`);
       setNewUser({ name: '', username: '', email: '', role: 'visor' });
@@ -67,9 +68,9 @@ const UserManagement = ({ notify }) => {
       console.error('Error enviando correo con EmailJS:', error);
       // Aún así creamos el usuario en la BD si falló el envío de correo
       const id = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
-      setUsers([...users, { ...newUser, id, status: 'active', password: generatedPassword }]);
+      setUsers([...users, { ...newUser, id, status: 'active' }]);
       toast.warning(`Usuario creado en el sistema con contraseña: ${generatedPassword} (El correo no se pudo enviar automáticamente).`);
-      if (notify) notify(`Usuario creado. Contraseña: ${generatedPassword}`);
+      if (notify) notify(`Usuario creado. Contraseña provisoria: ${generatedPassword}`);
       setNewUser({ name: '', username: '', email: '', role: 'visor' });
       setIsAdding(false);
     } finally {

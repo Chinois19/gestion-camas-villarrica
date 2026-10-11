@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { X, Eye, EyeOff, Lock, Check, AlertTriangle } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
-import { updateAuthPassword } from '../utils/authService';
+import { db, auth } from '../firebase';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import { formatAuthPassword, formatAuthEmail } from '../utils/authService';
 import { toast } from 'sonner';
 
 
@@ -60,70 +61,63 @@ const ChangePasswordModal = ({ currentUser, onClose, notify }) => {
     setIsSubmitting(true);
 
     try {
-      // 1. Leer usuarios actuales directamente de Firestore (fuente de verdad)
-      const docRef = doc(db, 'appState', 'users');
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
-        setError('No se pudo acceder a la base de datos de usuarios.');
-        toast.error('No se pudo acceder a la base de datos de usuarios.');
+      if (!auth.currentUser) {
+        setError('No hay sesión activa de autenticación en Firebase.');
+        toast.error('No hay sesión activa.');
         setIsSubmitting(false);
         return;
       }
 
-      const users = docSnap.data().data;
+      // 1. Re-autenticar con la contraseña actual
+      const email = auth.currentUser.email || formatAuthEmail(currentUser?.username || currentUser?.email);
+      const formattedCurrent = formatAuthPassword(currentPassword);
+      const formattedNew = formatAuthPassword(newPassword);
 
-      // 2. Verificar contraseña actual
-      const userIndex = users.findIndex(
-        u => u.username === currentUser.username && u.password === currentPassword
-      );
-
-      if (userIndex === -1) {
-        setError('La contraseña actual es incorrecta.');
-        toast.error('La contraseña actual es incorrecta.');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // 3. Crear backup antes de modificar (misma lógica de protección)
-      const backupRef = doc(db, 'appState', 'users_lastBackup');
-      await setDoc(backupRef, {
-        data: users,
-        backedUpAt: new Date().toISOString(),
-        userCount: users.length,
-        reason: 'backup_before_password_change'
-      });
-
-      // 4. Actualizar SOLO el campo password del usuario actual
-      const updatedUsers = users.map((u, idx) => {
-        if (idx === userIndex) {
-          return { ...u, password: newPassword };
-        }
-        return u;
-      });
-
-      // 5. Verificación de integridad: mismo número de usuarios
-      if (updatedUsers.length !== users.length) {
-        setError('Error de integridad. Operación cancelada.');
-        toast.error('Error de integridad. Operación cancelada.');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // 6. Escribir a Firestore
-      await setDoc(docRef, { data: updatedUsers });
-
-      // 7. Actualizar en Firebase Auth
       try {
-        await updateAuthPassword(newPassword);
-      } catch (authPwdErr) {
-        console.warn('Advertencia al actualizar contraseña en Firebase Auth:', authPwdErr);
+        const credential = EmailAuthProvider.credential(email, formattedCurrent);
+        await reauthenticateWithCredential(auth.currentUser, credential);
+      } catch (authErr) {
+        if (
+          authErr.code === 'auth/wrong-password' || 
+          authErr.code === 'auth/invalid-credential'
+        ) {
+          setError('La contraseña actual es incorrecta.');
+          toast.error('La contraseña actual es incorrecta.');
+          setIsSubmitting(false);
+          return;
+        }
+        throw authErr;
+      }
+
+      // 2. Actualizar la contraseña en Firebase Auth (cifrado nativo seguro)
+      await updatePassword(auth.currentUser, formattedNew);
+
+      // 3. Sanitizar: asegurar que en Firestore appState/users NO quede campo password en texto plano
+      try {
+        const docRef = doc(db, 'appState', 'users');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const users = docSnap.data().data || [];
+          const userIndex = users.findIndex(u => u.username === currentUser.username);
+          if (userIndex !== -1) {
+            const updatedUsers = users.map((u, idx) => {
+              if (idx === userIndex) {
+                const cleanUser = { ...u };
+                delete cleanUser.password;
+                return cleanUser;
+              }
+              return u;
+            });
+            await setDoc(docRef, { data: updatedUsers });
+          }
+        }
+      } catch (cleanErr) {
+        console.warn('Nota de sanitización en Firestore:', cleanErr);
       }
 
       setSuccess(true);
       toast.success('Contraseña actualizada exitosamente.');
       if (notify) notify('Contraseña actualizada exitosamente.');
-
 
       // Cerrar después de 2 segundos
       setTimeout(() => {

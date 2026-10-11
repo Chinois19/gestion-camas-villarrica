@@ -2,21 +2,20 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
-  updatePassword,
-  onAuthStateChanged
+  updatePassword
 } from 'firebase/auth';
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
 export const DEFAULT_USERS = [
-  { id: 1, name: 'Super Administrador', username: 'admin', password: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', roleName: 'Super Administrador', status: 'active' },
-  { id: 2, name: 'Visor Institucional', username: 'visor', password: 'visor', email: 'visor@hospitalvillarrica.cl', role: 'visor', roleName: 'Visor Institucional', status: 'active' },
-  { id: 3, name: 'Médico General', username: 'medico', password: 'medico', email: 'medico@hospitalvillarrica.cl', role: 'medico_general', roleName: 'Médico', status: 'active' },
-  { id: 4, name: 'Gestor de Camas', username: 'gestor', password: 'gestor', email: 'gestor@hospitalvillarrica.cl', role: 'gestor_camas', roleName: 'Gestor de Camas', status: 'active' },
-  { id: 5, name: 'Médico HODOM', username: 'hodom', password: 'hodom', email: 'hodom@hospitalvillarrica.cl', role: 'medico_hodom', roleName: 'Médico HODOM', status: 'active' },
-  { id: 6, name: 'Personal de Aseo', username: 'aseo', password: 'aseo', email: 'aseo@hospitalvillarrica.cl', role: 'personal_aseo', roleName: 'Personal de Aseo', status: 'active' }
+  { id: 1, name: 'Super Administrador', username: 'admin', email: 'admin@hospitalvillarrica.cl', role: 'superadmin', roleName: 'Super Administrador', status: 'active' },
+  { id: 2, name: 'Visor Institucional', username: 'visor', email: 'visor@hospitalvillarrica.cl', role: 'visor', roleName: 'Visor Institucional', status: 'active' },
+  { id: 3, name: 'Médico General', username: 'medico', email: 'medico@hospitalvillarrica.cl', role: 'medico_general', roleName: 'Médico', status: 'active' },
+  { id: 4, name: 'Gestor de Camas', username: 'gestor', email: 'gestor@hospitalvillarrica.cl', role: 'gestor_camas', roleName: 'Gestor de Camas', status: 'active' },
+  { id: 5, name: 'Médico HODOM', username: 'hodom', email: 'hodom@hospitalvillarrica.cl', role: 'medico_hodom', roleName: 'Médico HODOM', status: 'active' },
+  { id: 6, name: 'Personal de Aseo', username: 'aseo', email: 'aseo@hospitalvillarrica.cl', role: 'personal_aseo', roleName: 'Personal de Aseo', status: 'active' }
 ];
 
 /**
@@ -55,34 +54,15 @@ export async function authenticateUser(loginInput, rawPassword) {
     const credential = await signInWithEmailAndPassword(auth, email, authPassword);
     firebaseUser = credential.user;
   } catch (authError) {
-    // Si el usuario no existe en Firebase Auth aún (migración en primer ingreso), intentamos auto-registrarlo
     if (
       authError.code === 'auth/user-not-found' || 
+      authError.code === 'auth/wrong-password' ||
       authError.code === 'auth/invalid-credential' || 
       authError.code === 'auth/invalid-email'
     ) {
-      // Verificamos si coincide con los usuarios por defecto o lista conocida
-      const fallbackUser = DEFAULT_USERS.find(
-        u => (u.username.toLowerCase() === loginInput.toLowerCase() || u.email.toLowerCase() === email) && 
-             u.password === rawPassword
-      );
-
-      if (fallbackUser) {
-        try {
-          const newCred = await createUserWithEmailAndPassword(auth, email, authPassword);
-          firebaseUser = newCred.user;
-        } catch (createErr) {
-          if (createErr.code === 'auth/email-already-in-use') {
-            throw new Error('Contraseña incorrecta');
-          }
-          throw createErr;
-        }
-      } else {
-        throw new Error('Usuario o contraseña incorrectos');
-      }
-    } else {
-      throw authError;
+      throw new Error('Usuario o contraseña incorrectos');
     }
+    throw authError;
   }
 
   // 2. Con Firebase Auth activo (request.auth != null), leer el perfil completo desde Firestore
@@ -112,7 +92,6 @@ export async function authenticateUser(loginInput, rawPassword) {
     );
   }
 
-
   if (!userProfile) {
     userProfile = {
       id: firebaseUser.uid,
@@ -124,8 +103,12 @@ export async function authenticateUser(loginInput, rawPassword) {
     };
   }
 
+  // Sanitizar: nunca retornar la propiedad password al estado ni a la vista
+  const cleanProfile = { ...userProfile };
+  delete cleanProfile.password;
+
   return {
-    ...userProfile,
+    ...cleanProfile,
     firebaseUid: firebaseUser.uid
   };
 }

@@ -11,6 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+*.env
+.env.backup
 
 # Editor directories and files
 .vscode/*
@@ -30,3 +34,13 @@ skills/
 *.pdf
 scripts/*.json
 .backup_daemon.pid
+
+# Scripts de diagnóstico y auditoría (pueden contener credenciales de prueba)
+scripts/find_pwd.mjs
+scripts/check_auth_exist.mjs
+scripts/check_old_jespinoza.mjs
+scripts/compare_users_and_backup.mjs
+scripts/inspect_last_users.mjs
+scripts/inspect_users_collections.mjs
+scripts/test_recent_users_auth.mjs
+scripts/test_security_rules.mjs

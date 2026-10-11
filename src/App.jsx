@@ -118,17 +118,8 @@ function App() {
     });
   }, [isPublicRoute]);
 
-  // Timeout de seguridad: si el formulario público no carga en 8 segundos,
-  // desbloquear la UI para que no quede el spinner atascado indefinidamente.
-  const [publicLoadTimeout, setPublicLoadTimeout] = useState(false);
-  useEffect(() => {
-    if (!isPublicRoute) return;
-    const timer = setTimeout(() => setPublicLoadTimeout(true), 8000);
-    return () => clearTimeout(timer);
-  }, [isPublicRoute]);
-
-  // Only sync clinical data if user is authenticated or in a public form route
-  const isSyncEnabled = !!currentUser || isPublicRoute;
+  // Sincronizar datos clínicos exclusivamente si el usuario está formalmente autenticado
+  const isSyncEnabled = !!currentUser;
 
 
   // ── ESTADO OPERATIVO DE CAMAS (Colección granular 'beds' con documentos individuales) ──
@@ -266,13 +257,16 @@ function App() {
     if (user && user.role === 'admin') {
       user.role = 'superadmin';
     }
-    setCurrentUser(user);
-    localStorage.setItem('villarrica_session', JSON.stringify(user));
+    // Sanitizar objeto de sesión: jamás guardar el atributo password en localStorage
+    const safeUser = { ...(user || {}) };
+    delete safeUser.password;
+    setCurrentUser(safeUser);
+    localStorage.setItem('villarrica_session', JSON.stringify(safeUser));
     try {
       localStorage.setItem(ACTIVITY_STORAGE_KEY, String(Date.now()));
     } catch {}
     setCurrentView('dashboard');
-    toast.success(`Bienvenido/a, ${user.name}`);
+    toast.success(`Bienvenido/a, ${safeUser.name}`);
   };
 
   const handleLogout = async () => {
@@ -570,56 +564,11 @@ function App() {
 
   // ── PUBLIC ROUTE ───────────────────────────────────────────────────────────
   if (isPublicRoute) {
-    if (waitingLoading && !publicLoadTimeout) {
-      return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column', gap: '16px' }}>
-          <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.1)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-          <p style={{ color: 'var(--text-secondary)' }}>Cargando formulario...</p>
-          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-        </div>
-      );
-    }
-
-
     return (
       <div className="app-container" style={{ padding: '24px 0', minHeight: '100vh', overflowY: 'auto' }}>
         <Toaster position="top-right" richColors />
         <SolicitudForm
           onSubmit={async (newPatient) => {
-            if (bedsLoading || waitingLoading) {
-              toast.info('Sincronizando con el hospital... por favor espere unos segundos.');
-              return false;
-            }
-            const cleanRut = (rut) => (rut || '').replace(/[^0-9kK]/g, '').toLowerCase();
-            const newRut = cleanRut(newPatient.rut);
-            if (newRut) {
-              // Verificar si ya está en lista de espera
-              const dup = waitingList.find(p => cleanRut(p.rut) === newRut);
-              if (dup) {
-                toast.error(`⚠️ Paciente ${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra en la lista de espera.`);
-                return false;
-              }
-              // CRÍTICO: Verificar si ya está acostado en alguna cama
-              let bedInfo = '';
-              let foundInBed = false;
-              outer: for (const floor in bedsData) {
-                for (const sector in bedsData[floor]) {
-                  for (const room of bedsData[floor][sector]) {
-                    for (const bed of room.beds) {
-                      if ((bed.status === 'occupied' || bed.status === 'pending_hodom') && cleanRut(bed.rut) === newRut) {
-                        bedInfo = `Hab ${room.roomId} — Cama ${bed.id} (Paciente: ${bed.patient})`;
-                        foundInBed = true;
-                        break outer;
-                      }
-                    }
-                  }
-                }
-              }
-              if (foundInBed) {
-                toast.error(`⚠️ Paciente ${newPatient.name} (RUT: ${newPatient.rut}) ya se encuentra hospitalizado en ${bedInfo}`);
-                return false;
-              }
-            }
             try {
               const res = await addFirestoreDoc('waitingList', newPatient);
               return !!res;

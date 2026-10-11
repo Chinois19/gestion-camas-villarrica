@@ -32,8 +32,10 @@ export async function executeBackupCycle() {
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // Autenticación silenciosa de servicio
-    await signInWithEmailAndPassword(auth, 'admin@hospitalvillarrica.cl', 'admin0');
+    // Autenticación de servicio (preferentemente vía variable de entorno protegida)
+    const backupEmail = process.env.BACKUP_ADMIN_EMAIL || 'admin@hospitalvillarrica.cl';
+    const backupPassword = process.env.BACKUP_ADMIN_PASSWORD || 'admin0';
+    await signInWithEmailAndPassword(auth, backupEmail, backupPassword);
 
     const backupData = {
       metadata: {
