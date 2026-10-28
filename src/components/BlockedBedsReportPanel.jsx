@@ -246,7 +246,7 @@ export default function BlockedBedsReportPanel({ blockLog, setBlockLog, userRole
     return () => clearInterval(timer);
   }, []);
 
-  const canEdit = userRole === 'superadmin' || userRole === 'gestor_camas';
+  const canEdit = userRole === 'superadmin' || userRole === 'administrador' || userRole === 'gestor_camas';
 
   /* ── Filter & sort data ── */
   const rows = useMemo(() => {

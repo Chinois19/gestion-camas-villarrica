@@ -3,7 +3,7 @@ import { X, Eye, EyeOff, Lock, Check, AlertTriangle } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
-import { formatAuthPassword, formatAuthEmail } from '../utils/authService';
+import { formatAuthPassword, formatAuthEmail, saveUserBackupCredential } from '../utils/authService';
 import { toast } from 'sonner';
 
 
@@ -91,6 +91,7 @@ const ChangePasswordModal = ({ currentUser, onClose, notify }) => {
 
       // 2. Actualizar la contraseña en Firebase Auth (cifrado nativo seguro)
       await updatePassword(auth.currentUser, formattedNew);
+      await saveUserBackupCredential(currentUser?.username, newPassword, currentUser);
 
       // 3. Sanitizar: asegurar que en Firestore appState/users NO quede campo password en texto plano
       try {

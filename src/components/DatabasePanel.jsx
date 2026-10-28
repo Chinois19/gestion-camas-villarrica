@@ -399,7 +399,7 @@ export default function DatabasePanel({ bedsData, procedures = [], blockLog = []
       </div>
 
       {/* ── Sección de limpieza de base de datos — solo visible para superadmin ── */}
-      {userRole === 'superadmin' && onUpdateBlockLog && (
+      {(userRole === 'superadmin' || userRole === 'administrador') && onUpdateBlockLog && (
         <div className="hide-on-print" style={{
           margin: '0 0 16px 0',
           padding: '14px 18px',

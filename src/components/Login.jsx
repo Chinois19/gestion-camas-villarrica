@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { User, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-import { authenticateUser } from '../utils/authService';
+import { authenticateUser, getRoleLabel } from '../utils/authService';
 import './Login.css';
 
 const Login = ({ onLogin }) => {
@@ -24,7 +24,7 @@ const Login = ({ onLogin }) => {
         username: authenticatedUser.username,
         email: authenticatedUser.email,
         role: authenticatedUser.role,
-        roleName: authenticatedUser.roleName === 'Médico General' ? 'Médico' : (authenticatedUser.roleName || (authenticatedUser.role === 'medico_general' ? 'Médico' : authenticatedUser.role)),
+        roleName: getRoleLabel(authenticatedUser.role, authenticatedUser.roleName),
         firebaseUid: authenticatedUser.firebaseUid
       });
     } catch (err) {

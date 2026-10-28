@@ -167,7 +167,7 @@ export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRo
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    {(userRole === 'superadmin' || userRole === 'medico_hodom' || userRole === 'gestor_camas') && userRole !== 'visor' ? (
+                    {(userRole === 'superadmin' || userRole === 'administrador' || userRole === 'medico_hodom' || userRole === 'gestor_camas') && userRole !== 'visor' ? (
                       <>
                         <button
                           className="glass-button primary"
@@ -176,7 +176,7 @@ export default function HodomPanel({ hodomRequests, onMarkDone, onDelete, userRo
                         >
                           ✓ Confirmación de Ingreso a HODOM
                         </button>
-                        {userRole === 'superadmin' && (
+                        {(userRole === 'superadmin' || userRole === 'administrador') && (
                           <button
                             className="glass-button"
                             style={{ padding: '6px 12px', fontSize: '0.75rem', color: '#ef4444' }}

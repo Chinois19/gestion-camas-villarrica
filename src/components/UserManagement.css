@@ -177,25 +177,31 @@ body.theme-light .um-table tr:hover {
   font-weight: 600;
 }
 
-.role-badge.admin {
-  background: rgba(124, 58, 237, 0.1);
+.role-badge.admin,
+.role-badge.superadmin,
+.role-badge.administrador {
+  background: rgba(124, 58, 237, 0.12);
   color: #a78bfa;
-  border: 1px solid rgba(124, 58, 237, 0.2);
+  border: 1px solid rgba(124, 58, 237, 0.28);
 }
 
-.role-badge.viewer {
+.role-badge.viewer,
+.role-badge.visor {
   background: rgba(0, 240, 255, 0.1);
   color: var(--accent-color);
   border: 1px solid rgba(0, 240, 255, 0.2);
 }
 
-body.theme-light .role-badge.admin {
+body.theme-light .role-badge.admin,
+body.theme-light .role-badge.superadmin,
+body.theme-light .role-badge.administrador {
   background: rgba(109, 40, 217, 0.08);
   color: #7c3aed;
   border-color: rgba(109, 40, 217, 0.2);
 }
 
-body.theme-light .role-badge.viewer {
+body.theme-light .role-badge.viewer,
+body.theme-light .role-badge.visor {
   background: rgba(79, 70, 229, 0.08);
   color: #4f46e5;
   border-color: rgba(79, 70, 229, 0.2);

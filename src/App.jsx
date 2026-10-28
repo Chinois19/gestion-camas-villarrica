@@ -35,9 +35,10 @@ import { DUMMY_DATA, WAITING_LIST } from './data/dummy';
 import { MOCK_TRANSFERS } from './data/mockTransfers';
 import { Toaster, toast } from 'sonner';
 
-import { logoutUser } from './utils/authService';
+import { logoutUser, findUserProfileInList, getRoleLabel } from './utils/authService';
 import { checkAndMigrateWaitingList } from './utils/waitingListMigration';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import InactivityModal from './components/InactivityModal';
 import { useInactivityTimeout, ACTIVITY_STORAGE_KEY } from './hooks/useInactivityTimeout';
@@ -93,7 +94,33 @@ function App() {
 
   // Keep Firebase Auth state synchronized
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser && !firebaseUser.isAnonymous && currentUser && !isPublicRoute) {
+        try {
+          const snap = await getDoc(doc(db, 'appState', 'users'));
+          if (snap.exists()) {
+            const usersList = snap.data().data || [];
+            const profile = findUserProfileInList(usersList, currentUser.username || firebaseUser.email, firebaseUser.email);
+            if (profile) {
+              const nextRoleName = getRoleLabel(profile.role, profile.roleName);
+              if (profile.role !== currentUser.role || nextRoleName !== currentUser.roleName || profile.name !== currentUser.name) {
+                const syncedUser = {
+                  ...currentUser,
+                  name: profile.name || currentUser.name,
+                  email: profile.email || currentUser.email,
+                  role: profile.role,
+                  roleName: nextRoleName
+                };
+                delete syncedUser.password;
+                setCurrentUser(syncedUser);
+                localStorage.setItem('villarrica_session', JSON.stringify(syncedUser));
+              }
+            }
+          }
+        } catch {
+          // Ignorar errores de sincronización silenciosa de perfil
+        }
+      }
       if (!firebaseUser && !isPublicRoute) {
         if (currentUser) {
           setCurrentUser(null);
@@ -608,7 +635,7 @@ function App() {
   }
 
   // ── ROLE PERMISSIONS ───────────────────────────────────────────────────────
-  const isSuperAdmin = currentUser.role === 'superadmin' || currentUser.role === 'administrador';
+  const isSuperAdmin = currentUser.role === 'superadmin' || currentUser.role === 'administrador' || currentUser.role === 'admin';
   const isGestor = currentUser.role === 'gestor_camas' || currentUser.role === 'gestora_servicio';
   const isMedico = currentUser.role === 'medico_general';
   const isAseo = currentUser.role === 'personal_aseo';
@@ -884,7 +911,13 @@ function App() {
         />
       )}
       {currentView === 'usuarios' && isSuperAdmin && (
-        <UserManagement />
+        <UserManagement
+          currentUser={currentUser}
+          onCurrentUserUpdated={(updatedUser) => {
+            setCurrentUser(updatedUser);
+            localStorage.setItem('villarrica_session', JSON.stringify(updatedUser));
+          }}
+        />
       )}
       {currentView === 'infraestructura' && isSuperAdmin && (
         <InfrastructureManagement bedsData={bedsData} setBedsData={setBedsData} />
