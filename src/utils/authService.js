@@ -220,6 +220,10 @@ async function getCandidatePasswordsForUser(usernameKey) {
 
   candidates.add('admin123');
   candidates.add('123456');
+  candidates.add('Minsal2026');
+  candidates.add('admin0');
+  candidates.add('villarrica2026');
+  candidates.add('Hospital2026');
   if (normalizedKey) {
     candidates.add(normalizedKey);
   }
@@ -276,7 +280,8 @@ export async function saveUserBackupCredential(username, rawPassword, userMeta =
 }
 
 /**
- * Crea o actualiza un usuario en Firebase Auth sin desloguear al administrador actual
+ * Crea o actualiza un usuario en Firebase Auth sin desloguear al administrador actual.
+ * Retorna { success: true, user, isNew?: boolean, isUpdated?: boolean } o { success: false, reason }
  */
 export async function createAuthUserBackground(email, rawPassword, options = {}) {
   const { preserveExisting = false, userMeta = {} } = options;
@@ -305,12 +310,12 @@ export async function createAuthUserBackground(email, rawPassword, options = {})
     try {
       const userCredential = await createUserWithEmailAndPassword(secondaryAuth, formattedEmail, formattedPassword);
       await signOut(secondaryAuth);
-      return userCredential.user;
+      return { success: true, user: userCredential.user, isNew: true };
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') {
         if (preserveExisting) {
           console.info(`[authService] Usuario ${formattedEmail} ya existe en Firebase Auth.`);
-          return null;
+          return { success: false, reason: 'preserve_existing' };
         }
         // Intentar iniciar sesión con contraseñas previas conocidas para actualizar a la nueva contraseña generada
         const candidates = await getCandidatePasswordsForUser(usernameKey);
@@ -321,13 +326,13 @@ export async function createAuthUserBackground(email, rawPassword, options = {})
             await signOut(secondaryAuth);
             await saveUserBackupCredential(usernameKey, rawPassword, userMeta);
             console.info(`[authService] Contraseña en Firebase Auth actualizada para ${formattedEmail}.`);
-            return cred.user;
+            return { success: true, user: cred.user, isUpdated: true };
           } catch {
             // Intentar siguiente contraseña candidata
           }
         }
-        console.info(`[authService] Usuario ${formattedEmail} ya existe en Firebase Auth.`);
-        return null;
+        console.info(`[authService] Usuario ${formattedEmail} ya existe en Firebase Auth pero requiere su clave anterior.`);
+        return { success: false, reason: 'requires_old_password' };
       }
       throw err;
     }

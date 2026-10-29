@@ -256,9 +256,11 @@ const UserManagement = ({ notify, currentUser, onCurrentUserUpdated }) => {
 
       // Si el administrador ingresó una nueva contraseña para restablecer el acceso del usuario
       if (optionalNewPassword) {
+        let passwordUpdated = false;
+        let emailSent = false;
         try {
           const canonicalEmail = formatAuthEmail(cleanUsername);
-          await createAuthUserBackground(canonicalEmail, optionalNewPassword, {
+          const authResult = await createAuthUserBackground(canonicalEmail, optionalNewPassword, {
             preserveExisting: false,
             userMeta: {
               id: editingUser.id,
@@ -269,9 +271,55 @@ const UserManagement = ({ notify, currentUser, onCurrentUserUpdated }) => {
               roleName
             }
           });
+          if (authResult?.success) {
+            passwordUpdated = true;
+          }
         } catch (authErr) {
           console.warn('Advertencia al actualizar contraseña en Firebase Auth:', authErr);
         }
+
+        if (passwordUpdated) {
+          // Enviar credenciales por correo mediante EmailJS
+          try {
+            await emailjs.send(
+              EMAILJS_SERVICE_ID,
+              EMAILJS_TEMPLATE_ID,
+              {
+                to_email: cleanEmail,
+                to_name: cleanName,
+                username: cleanUsername,
+                password: optionalNewPassword,
+                role: roleName
+              },
+              EMAILJS_PUBLIC_KEY
+            );
+            emailSent = true;
+          } catch (emailErr) {
+            console.warn('Aviso al enviar correo con EmailJS:', emailErr);
+          }
+
+          setCreatedCredentials({
+            name: cleanName,
+            username: cleanUsername,
+            email: cleanEmail,
+            password: optionalNewPassword,
+            roleName,
+            emailSent
+          });
+          setCopiedCreds(false);
+
+          if (emailSent) {
+            toast.success(`Contraseña actualizada y enviada a ${cleanEmail}.`);
+          } else {
+            toast.success(`Contraseña actualizada en el sistema. Copie las credenciales en pantalla.`);
+          }
+        } else {
+          toast.warning(
+            `Datos de ${cleanName} actualizados, pero no fue posible sobrescribir la contraseña en Firebase Auth sin la clave previa.`
+          );
+        }
+      } else {
+        toast.success(`Profesional ${cleanName} actualizado correctamente (${roleName}).`);
       }
 
       // Si el usuario editado es el usuario actualmente en sesión, sincronizar su sesión local
@@ -292,7 +340,6 @@ const UserManagement = ({ notify, currentUser, onCurrentUserUpdated }) => {
         }
       }
 
-      toast.success(`Profesional ${cleanName} actualizado correctamente (${roleName}).`);
       if (notify) notify(`Profesional ${cleanName} actualizado a ${roleName}.`);
       setEditingUser(null);
     } catch (err) {
